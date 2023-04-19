@@ -51,7 +51,8 @@ func NewEnrichCommand(logger *log.Logger) *cobra.Command {
 					update := query(purl)
 					logger.Printf("Looking up: %s", i)
 					// TODO catch out of range error in runtime
-					component.Description = *(*update.JSON200)[0].Description
+					component.Description = *(*update.JSON200).Description
+
 					newcs = append(newcs, component)
 				}(component.PackageURL)
 			}
@@ -66,7 +67,7 @@ func NewEnrichCommand(logger *log.Logger) *cobra.Command {
 	return &cmd
 }
 
-func query(i packageurl.PackageURL) packages.LookupPackageResponse {
+func query(i packageurl.PackageURL) packages.GetRegistryPackageResponse {
 	resp, err := parlay.GetPackageData(i)
 	if err != nil {
 		panic(err)
