@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/snyk/parlay/pkg/ecosystems/packages"
 	"github.com/snyk/parlay/pkg/parlay"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
@@ -39,27 +38,26 @@ func NewEnrichCommand(logger *log.Logger) *cobra.Command {
 				panic(err)
 			}
 
-			wg := sizedwaitgroup.New(40)
+			wg := sizedwaitgroup.New(20)
 
-			var newcs []cdx.Component
+      newComponents := make([]cdx.Component, len(*bom.Components))
 
-			for _, component := range *bom.Components {
+			for i, component := range *bom.Components {
 				wg.Add()
-				go func(i string) {
-					defer wg.Done()
-					purl, _ := packageurl.FromString(i)
+				go func(component cdx.Component, i int) {
+					purl, _ := packageurl.FromString(component.PackageURL)
 					update := query(purl)
-					logger.Printf("Looking up: %s", i)
-					// TODO catch out of range error in runtime
-					component.Description = *(*update.JSON200).Description
-
-					newcs = append(newcs, component)
-				}(component.PackageURL)
+					//logger.Printf("Looking up: %s", i)
+					component.Description = update
+          //logger.Printf("Desc for %s: %s", i, update)
+					newComponents[i] = component
+					wg.Done()
+				}(component, i)
 			}
 
 			wg.Wait()
 
-			bom.Components = &newcs
+			bom.Components = &newComponents
 
 			err = cdx.NewBOMEncoder(os.Stdout, cdx.BOMFileFormatJSON).Encode(bom)
 		},
@@ -67,10 +65,10 @@ func NewEnrichCommand(logger *log.Logger) *cobra.Command {
 	return &cmd
 }
 
-func query(i packageurl.PackageURL) packages.GetRegistryPackageResponse {
+func query(i packageurl.PackageURL) string {
 	resp, err := parlay.GetPackageData(i)
 	if err != nil {
 		panic(err)
 	}
-	return *resp
+  return *resp.JSON200.Description
 }
