@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/snyk/parlay/pkg/parlay"
+	"github.com/snyk/parlay/pkg/ecosystems/packages"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/package-url/packageurl-go"
@@ -46,9 +47,11 @@ func NewEnrichCommand(logger *log.Logger) *cobra.Command {
 				wg.Add()
 				go func(component cdx.Component, i int) {
 					purl, _ := packageurl.FromString(component.PackageURL)
-					update := query(purl)
+					packageData := query(purl)
 					//logger.Printf("Looking up: %s", i)
-					component.Description = update
+					component.Description = *packageData.Description
+          lice := cdx.LicenseChoice{Expression: *packageData.Licenses}
+					component.Licenses = &cdx.Licenses{lice}
           //logger.Printf("Desc for %s: %s", i, update)
 					newComponents[i] = component
 					wg.Done()
@@ -65,10 +68,10 @@ func NewEnrichCommand(logger *log.Logger) *cobra.Command {
 	return &cmd
 }
 
-func query(i packageurl.PackageURL) string {
+func query(i packageurl.PackageURL) packages.Package {
 	resp, err := parlay.GetPackageData(i)
 	if err != nil {
 		panic(err)
 	}
-  return *resp.JSON200.Description
+  return *resp.JSON200
 }
