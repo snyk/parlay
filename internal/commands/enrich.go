@@ -7,8 +7,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/snyk/parlay/pkg/parlay"
 	"github.com/snyk/parlay/pkg/ecosystems/packages"
+	"github.com/snyk/parlay/pkg/parlay"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/package-url/packageurl-go"
@@ -41,7 +41,7 @@ func NewEnrichCommand(logger *log.Logger) *cobra.Command {
 
 			wg := sizedwaitgroup.New(20)
 
-      newComponents := make([]cdx.Component, len(*bom.Components))
+			newComponents := make([]cdx.Component, len(*bom.Components))
 
 			for i, component := range *bom.Components {
 				wg.Add()
@@ -50,9 +50,9 @@ func NewEnrichCommand(logger *log.Logger) *cobra.Command {
 					packageData := query(purl)
 					//logger.Printf("Looking up: %s", i)
 					component.Description = *packageData.Description
-          lice := cdx.LicenseChoice{Expression: *packageData.Licenses}
+					lice := cdx.LicenseChoice{Expression: *packageData.Licenses}
 					component.Licenses = &cdx.Licenses{lice}
-          //logger.Printf("Desc for %s: %s", i, update)
+					//logger.Printf("Desc for %s: %s", i, update)
 					newComponents[i] = component
 					wg.Done()
 				}(component, i)
@@ -73,5 +73,5 @@ func query(i packageurl.PackageURL) packages.Package {
 	if err != nil {
 		panic(err)
 	}
-  return *resp.JSON200
+	return *resp.JSON200
 }
