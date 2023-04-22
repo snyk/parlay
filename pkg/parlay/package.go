@@ -18,13 +18,22 @@ func GetPackageData(purl packageurl.PackageURL) (*packages.GetRegistryPackageRes
 		return nil, err
 	}
 
-	// Ecosyste.ms has a purl based API, but it's much slower
-	//p := purl.ToString()
-	//params := packages.LookupPackageParams{Purl: &p}
-	//resp, err := client.LookupPackageWithResponse(context.Background(), &params)
+	// Ecosyste.ms has a purl based API, but unfortunately slower
+	// so we break the purl down to registry and name values locally
+	// params := packages.LookupPackageParams{Purl: &p}
+	// resp, err := client.LookupPackageWithResponse(context.Background(), &params)
+	name := purlToEcosystemsName(purl)
+	registry := purlToEcosystemsRegistry(purl)
+	resp, err := client.GetRegistryPackageWithResponse(context.Background(), registry, name)
 
-	// Currently doesn't deal with namespaced packages yet
-	mapping := map[string]string{
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func purlToEcosystemsRegistry(purl packageurl.PackageURL) string {
+	return map[string]string{
 		"npm":       "npmjs.org",
 		"golang":    "proxy.golang.org",
 		"nuget":     "nuget.org",
@@ -36,9 +45,14 @@ func GetPackageData(purl packageurl.PackageURL) (*packages.GetRegistryPackageRes
 		"cargo":     "crates.io",
 		"cocoapods": "cocoapod.org",
 		"apk":       "alpine",
-	}
+	}[purl.Type]
+}
 
+func purlToEcosystemsName(purl packageurl.PackageURL) string {
 	var name string
+	// npm names in the ecosyste.ms API include the purl namespace
+	// followed by a / and are url encoded. Other package managers
+	// appear to separate the purl namespace and name with a :
 	if purl.Type == "npm" {
 		if purl.Namespace != "" {
 			name = url.QueryEscape(fmt.Sprintf("%s/%s", purl.Namespace, purl.Name))
@@ -52,11 +66,5 @@ func GetPackageData(purl packageurl.PackageURL) (*packages.GetRegistryPackageRes
 			name = purl.Name
 		}
 	}
-
-	resp, err := client.GetRegistryPackageWithResponse(context.Background(), mapping[purl.Type], name)
-
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
+	return name
 }
