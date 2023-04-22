@@ -2,6 +2,8 @@ package parlay
 
 import (
 	"context"
+	"fmt"
+	"net/url"
 
 	"github.com/snyk/parlay/pkg/ecosystems/packages"
 
@@ -36,7 +38,22 @@ func GetPackageData(purl packageurl.PackageURL) (*packages.GetRegistryPackageRes
 		"apk":       "alpine",
 	}
 
-	resp, err := client.GetRegistryPackageWithResponse(context.Background(), mapping[purl.Type], purl.Name)
+	var name string
+	if purl.Type == "npm" {
+		if purl.Namespace != "" {
+			name = url.QueryEscape(fmt.Sprintf("%s/%s", purl.Namespace, purl.Name))
+		} else {
+			name = purl.Name
+		}
+	} else {
+		if purl.Namespace != "" {
+			name = fmt.Sprintf("%s:%s", purl.Namespace, purl.Name)
+		} else {
+			name = purl.Name
+		}
+	}
+
+	resp, err := client.GetRegistryPackageWithResponse(context.Background(), mapping[purl.Type], name)
 
 	if err != nil {
 		return nil, err
