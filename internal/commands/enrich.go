@@ -3,6 +3,7 @@ package commands
 import (
 	"bufio"
 	"bytes"
+  "fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -18,7 +19,7 @@ func NewEnrichCommand(logger *log.Logger) *cobra.Command {
 		Use:   "enrich <sbom>",
 		Short: "Enrich an SBOM with ecosyste.ms data",
 		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			var err error
 			var b []byte
 			if args[0] == "-" {
@@ -27,18 +28,22 @@ func NewEnrichCommand(logger *log.Logger) *cobra.Command {
 				b, err = os.ReadFile(args[0])
 			}
 			if err != nil {
-				panic(err)
+        return fmt.Errorf("%w", err)
 			}
 
 			bom := new(cdx.BOM)
 			decoder := cdx.NewBOMDecoder(bytes.NewReader(b), cdx.BOMFileFormatJSON)
 			if err = decoder.Decode(bom); err != nil {
-				panic(err)
+        return fmt.Errorf("%w", err)
 			}
 
 			bom = parlay.EnrichSBOM(bom)
-
 			err = cdx.NewBOMEncoder(os.Stdout, cdx.BOMFileFormatJSON).Encode(bom)
+			if err != nil {
+        return fmt.Errorf("%w", err)
+			}
+
+      return nil
 		},
 	}
 	return &cmd
