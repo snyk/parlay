@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 
@@ -23,7 +23,7 @@ func NewEnrichCommand(logger *log.Logger) *cobra.Command {
 			var err error
 			var b []byte
 			if args[0] == "-" {
-				b, err = ioutil.ReadAll(bufio.NewReader(os.Stdin))
+				b, err = io.ReadAll(bufio.NewReader(os.Stdin))
 			} else {
 				b, err = os.ReadFile(args[0])
 			}
