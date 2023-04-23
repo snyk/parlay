@@ -20,5 +20,11 @@ jobs:
     - name: Build
       run: go build -v ./...
 
-    - name: Test
+    - name: Unit tests
       run: go test -v ./...
+
+    - name: Setup BATS
+      uses: mig4/setup-bats@v1
+
+    - name: Acceptance tests
+      run: bats -r .
