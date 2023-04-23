@@ -5,6 +5,11 @@
   [ "$status" -eq 0 ]
 }
 
+@test "Not fail when testing an SBOM on stdin" {
+  run bash -c "cat testing/sbom.cyclonedx.json | ./parlay enrich -"
+  [ "$status" -eq 0 ]
+}
+
 @test "Not fail when testing a Java SBOM" {
   run ./parlay enrich testing/sbom2.cyclonedx.json
   [ "$status" -eq 0 ]
