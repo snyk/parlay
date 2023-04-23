@@ -1,4 +1,4 @@
-package parlay
+package lib
 
 import (
 	"context"

@@ -8,7 +8,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/snyk/parlay/pkg/parlay"
+	"github.com/snyk/parlay/lib"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/spf13/cobra"
@@ -37,7 +37,7 @@ func NewEnrichCommand(logger *log.Logger) *cobra.Command {
         return fmt.Errorf("%w", err)
 			}
 
-			bom = parlay.EnrichSBOM(bom)
+			bom = lib.EnrichSBOM(bom)
 			err = cdx.NewBOMEncoder(os.Stdout, cdx.BOMFileFormatJSON).Encode(bom)
 			if err != nil {
         return fmt.Errorf("%w", err)

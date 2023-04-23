@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/snyk/parlay/pkg/parlay"
+	"github.com/snyk/parlay/lib"
 
 	"github.com/package-url/packageurl-go"
 	"github.com/spf13/cobra"
@@ -22,7 +22,7 @@ func NewPackageCommand() *cobra.Command {
 			if err != nil {
 				log.Fatal(err)
 			}
-			resp, err := parlay.GetPackageData(purl)
+			resp, err := lib.GetPackageData(purl)
 			if err != nil {
 				log.Fatal(err)
 			}
