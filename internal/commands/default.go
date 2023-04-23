@@ -14,7 +14,7 @@ func NewDefaultCommand() *cobra.Command {
 		Long:         ``,
 		SilenceUsage: true,
 		Run: func(cmd *cobra.Command, args []string) {
-			cmd.Help()
+			_ = cmd.Help()
 		},
 	}
 

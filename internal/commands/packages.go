@@ -10,8 +10,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const server = "https://packages.ecosyste.ms/api/v1"
-
 func NewPackageCommand() *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "package <purl> ",
