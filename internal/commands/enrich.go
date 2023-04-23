@@ -3,7 +3,7 @@ package commands
 import (
 	"bufio"
 	"bytes"
-  "fmt"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -28,22 +28,22 @@ func NewEnrichCommand(logger *log.Logger) *cobra.Command {
 				b, err = os.ReadFile(args[0])
 			}
 			if err != nil {
-        return fmt.Errorf("%w", err)
+				return fmt.Errorf("%w", err)
 			}
 
 			bom := new(cdx.BOM)
 			decoder := cdx.NewBOMDecoder(bytes.NewReader(b), cdx.BOMFileFormatJSON)
 			if err = decoder.Decode(bom); err != nil {
-        return fmt.Errorf("%w", err)
+				return fmt.Errorf("%w", err)
 			}
 
 			bom = lib.EnrichSBOM(bom)
 			err = cdx.NewBOMEncoder(os.Stdout, cdx.BOMFileFormatJSON).Encode(bom)
 			if err != nil {
-        return fmt.Errorf("%w", err)
+				return fmt.Errorf("%w", err)
 			}
 
-      return nil
+			return nil
 		},
 	}
 	return &cmd

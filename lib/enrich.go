@@ -1,7 +1,6 @@
 package lib
 
 import (
-
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/package-url/packageurl-go"
 	"github.com/remeh/sizedwaitgroup"
