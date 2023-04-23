@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/snyk/parlay/pkg/ecosystems/packages"
+	"github.com/snyk/parlay/ecosystems/packages"
 
 	"github.com/package-url/packageurl-go"
 )

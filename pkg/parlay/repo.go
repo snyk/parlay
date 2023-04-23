@@ -3,7 +3,7 @@ package parlay
 import (
 	"context"
 
-	"github.com/snyk/parlay/pkg/ecosystems/repos"
+	"github.com/snyk/parlay/ecosystems/repos"
 )
 
 const repos_server = "https://repos.ecosyste.ms/api/v1"
