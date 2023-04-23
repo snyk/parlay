@@ -2,7 +2,7 @@ build:
 	@go build -v
 
 test:
-	@go test -v ./...
+	@go test -cover -v ./...
 
 acceptance: build
 	@bats -r .
@@ -10,4 +10,8 @@ acceptance: build
 lint:
 	@golangci-lint run --fix
 
-.PHONY: build test acceptance lint
+cover:
+	@go test ./... -coverprofile=/tmp/cover.out
+	@go tool cover -html=/tmp/cover.out
+
+.PHONY: build test acceptance lint cover
