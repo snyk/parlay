@@ -28,7 +28,6 @@ Not a comprehensive list, but a few things that need work if we want to share mo
 * Map ecosyste.ms data to CycloneDX schema
 * Enrichment using other backends, eg. ClearlyDefined or deps.dev
 * UI for `enrich` command
-* Currently hardcoded to npm, as the purl ecostste.ms API is slow. Just needs mapping purl types to ecosyste.ms registries/names
 
 ## Ecosyste.ms utilities
 
