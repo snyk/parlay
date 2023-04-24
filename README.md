@@ -1,5 +1,7 @@
 # Parlay
 
+[![CI](https://github.com/snyk/parlay/actions/workflows/ci.yml/badge.svg)](https://github.com/snyk/parlay/actions/workflows/ci.yml)
+
 ## Enrich SBOMs
 
 This will take a CycloneDX document and add descriptions to the component taken from [ecosyste.ms](https://ecosyste.ms).
@@ -16,8 +18,6 @@ $ cat testing/sbom.cyclonedx.json | parlay enrich -
 ```
 
 This isn't _that_ useful. But demonstrates the concept of enrichment nicely.
-
-*WARNING* This is very proof of concept. It will likely break horribly with lots of different SBOMs.
 
 ## TODO
 
