@@ -9,6 +9,10 @@ import (
 func EnrichSBOM(bom *cdx.BOM) *cdx.BOM {
 	wg := sizedwaitgroup.New(20)
 
+	if bom.Components == nil {
+		return bom
+	}
+
 	newComponents := make([]cdx.Component, len(*bom.Components))
 
 	for i, component := range *bom.Components {

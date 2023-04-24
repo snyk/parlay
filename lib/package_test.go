@@ -2,10 +2,32 @@ package lib
 
 import (
 	"fmt"
-	"github.com/package-url/packageurl-go"
 	"net/url"
 	"testing"
+
+	"github.com/jarcoal/httpmock"
+	"github.com/package-url/packageurl-go"
+	"github.com/stretchr/testify/assert"
 )
+
+func TestGetPackageData(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder(
+		"GET",
+		`=~^https://packages.ecosyste.ms/api/v1/registries`,
+		httpmock.NewBytesResponder(200, []byte{}),
+	)
+
+	purl, _ := packageurl.FromString("pkg:maven/org.springframework.boot/spring-boot-starter-jdb")
+
+	_, _ = GetPackageData(purl)
+
+	httpmock.GetTotalCallCount()
+	calls := httpmock.GetCallCountInfo()
+	assert.Equal(t, 1, calls[`GET =~^https://packages.ecosyste.ms/api/v1/registries`])
+}
 
 func TestPurlToEcosystemsRegistry(t *testing.T) {
 	testCases := []struct {
