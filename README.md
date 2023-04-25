@@ -24,7 +24,6 @@ This isn't _that_ useful. But demonstrates the concept of enrichment nicely.
 Not a comprehensive list, but a few things that need work if we want to share more widely.
 
 * Nice output formatting
-* Useful enrichments (eg. license information)
 * Map ecosyste.ms data to CycloneDX schema
 * Enrichment using other backends, eg. ClearlyDefined or deps.dev
 * UI for `enrich` command
@@ -36,11 +35,11 @@ _Note these commands will probably be pulled out into a separate toool, but docu
 Return information on a specific package:
 
 ```
-parlay package pkg:npm/snyk
+parlay ecosystems package pkg:npm/snyk
 ```
 
 Return information on a specific repo:
 
 ```
-parlay repo https://github.com/open-policy-agent/conftest | jq
+parlay ecosystems repo https://github.com/open-policy-agent/conftest
 ```

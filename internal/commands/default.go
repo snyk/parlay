@@ -4,6 +4,8 @@ import (
 	"log"
 	"os"
 
+  "github.com/snyk/parlay/internal/commands/ecosystems"
+
 	"github.com/spf13/cobra"
 )
 
@@ -21,8 +23,7 @@ func NewDefaultCommand() *cobra.Command {
 	logger := log.New(os.Stdout, "", log.LstdFlags)
 
 	cmd.AddCommand(NewEnrichCommand(logger))
-	cmd.AddCommand(NewPackageCommand())
-	cmd.AddCommand(NewRepoCommand())
+	cmd.AddCommand(ecosystems.NewEcosystemsRootCommand())
 
 	return &cmd
 }
