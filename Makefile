@@ -14,4 +14,13 @@ cover:
 	@go test ./... -coverprofile=/tmp/cover.out
 	@go tool cover -html=/tmp/cover.out
 
-.PHONY: build test acceptance lint cover
+specs:
+	@curl --silent https://packages.ecosyste.ms/docs/api/v1/openapi.yaml -o specs/packages.yaml
+	@curl --silent https://repos.ecosyste.ms/docs/api/v1/openapi.yaml -o specs/repos.yaml
+
+clients: specs
+	@oapi-codegen -generate types,client -package packages specs/packages.yaml > ecosystems/packages/packages.go
+	@oapi-codegen -generate types,client -package repos specs/repos.yaml > ecosystems/repos/repos.go
+
+
+.PHONY: build test acceptance lint cover specs clients
