@@ -26,9 +26,12 @@ func EnrichSBOM(bom *cdx.BOM) *cdx.BOM {
 					if packageData.Description != nil {
 						component.Description = *packageData.Description
 					}
-					if packageData.Licenses != nil {
-						licences := cdx.LicenseChoice{Expression: *packageData.Licenses}
-						component.Licenses = &cdx.Licenses{licences}
+					if packageData.NormalizedLicenses != nil {
+            if len(packageData.NormalizedLicenses) > 0 {
+              expression := packageData.NormalizedLicenses[0]
+              licences := cdx.LicenseChoice{Expression: expression}
+              component.Licenses = &cdx.Licenses{licences}
+            }
 					}
 				}
 			}

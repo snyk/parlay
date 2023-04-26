@@ -37,8 +37,11 @@ type Ecosystem struct {
 // Host defines model for Host.
 type Host struct {
 	HostUrl            *string `json:"host_url,omitempty"`
+	IconUrl            *string `json:"icon_url,omitempty"`
 	Kind               *string `json:"kind,omitempty"`
 	Name               *string `json:"name,omitempty"`
+	OwnersCount        *int    `json:"owners_count,omitempty"`
+	OwnersUrl          *string `json:"owners_url,omitempty"`
 	RepositoriesCount  *int    `json:"repositories_count,omitempty"`
 	RepositorisUrl     *string `json:"repositoris_url,omitempty"`
 	RepositoryNamesUrl *string `json:"repository_names_url,omitempty"`
@@ -59,11 +62,12 @@ type Manifest struct {
 
 // Owner defines model for Owner.
 type Owner struct {
-	AvatarUrl         *string                 `json:"avatar_url,omitempty"`
 	Company           *string                 `json:"company,omitempty"`
 	CreatedAt         *time.Time              `json:"created_at,omitempty"`
 	Description       *string                 `json:"description,omitempty"`
 	Email             *string                 `json:"email,omitempty"`
+	HtmlUrl           *string                 `json:"html_url,omitempty"`
+	IconUrl           *string                 `json:"icon_url,omitempty"`
 	Kind              *string                 `json:"kind,omitempty"`
 	LastSyncedAt      *time.Time              `json:"last_synced_at,omitempty"`
 	Location          *string                 `json:"location,omitempty"`
@@ -72,6 +76,7 @@ type Owner struct {
 	Name              *string                 `json:"name,omitempty"`
 	OwnerUrl          *string                 `json:"owner_url,omitempty"`
 	RepositoriesCount *int                    `json:"repositories_count,omitempty"`
+	RepositoriesUrl   *string                 `json:"repositories_url,omitempty"`
 	Twitter           *string                 `json:"twitter,omitempty"`
 	UpdatedAt         *time.Time              `json:"updated_at,omitempty"`
 	Uuid              *string                 `json:"uuid,omitempty"`
@@ -109,11 +114,11 @@ type Repository struct {
 	Homepage             *string                 `json:"homepage,omitempty"`
 	Host                 *Host                   `json:"host,omitempty"`
 	HtmlUrl              *string                 `json:"html_url,omitempty"`
+	IconUrl              *string                 `json:"icon_url,omitempty"`
 	Language             *string                 `json:"language,omitempty"`
 	LastSyncedAt         *time.Time              `json:"last_synced_at,omitempty"`
 	LatestCommitSha      *string                 `json:"latest_commit_sha,omitempty"`
 	License              *string                 `json:"license,omitempty"`
-	LogoUrl              *string                 `json:"logo_url,omitempty"`
 	ManifestsUrl         *string                 `json:"manifests_url,omitempty"`
 	Metadata             *map[string]interface{} `json:"metadata,omitempty"`
 	MirrorUrl            *string                 `json:"mirror_url,omitempty"`
@@ -181,6 +186,27 @@ type GetHostParams struct {
 
 // GetHostOwnersParams defines parameters for GetHostOwners.
 type GetHostOwnersParams struct {
+	// Page pagination page number
+	Page *int `form:"page,omitempty" json:"page,omitempty"`
+
+	// PerPage Number of records to return
+	PerPage *int `form:"per_page,omitempty" json:"per_page,omitempty"`
+
+	// CreatedAfter filter by created_at after given time
+	CreatedAfter *time.Time `form:"created_after,omitempty" json:"created_after,omitempty"`
+
+	// UpdatedAfter filter by updated_at after given time
+	UpdatedAfter *time.Time `form:"updated_after,omitempty" json:"updated_after,omitempty"`
+
+	// Sort field to order results by
+	Sort *string `form:"sort,omitempty" json:"sort,omitempty"`
+
+	// Order direction to order results by
+	Order *string `form:"order,omitempty" json:"order,omitempty"`
+}
+
+// GetHostOwnerRepositoriesParams defines parameters for GetHostOwnerRepositories.
+type GetHostOwnerRepositoriesParams struct {
 	// Page pagination page number
 	Page *int `form:"page,omitempty" json:"page,omitempty"`
 
@@ -369,6 +395,9 @@ type ClientInterface interface {
 	// GetHostOwner request
 	GetHostOwner(ctx context.Context, hostName string, ownerLogin string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetHostOwnerRepositories request
+	GetHostOwnerRepositories(ctx context.Context, hostName string, ownerLogin string, params *GetHostOwnerRepositoriesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetHostRepositories request
 	GetHostRepositories(ctx context.Context, hostName string, params *GetHostRepositoriesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -441,6 +470,18 @@ func (c *Client) GetHostOwners(ctx context.Context, hostName string, params *Get
 
 func (c *Client) GetHostOwner(ctx context.Context, hostName string, ownerLogin string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetHostOwnerRequest(c.Server, hostName, ownerLogin)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetHostOwnerRepositories(ctx context.Context, hostName string, ownerLogin string, params *GetHostOwnerRepositoriesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetHostOwnerRepositoriesRequest(c.Server, hostName, ownerLogin, params)
 	if err != nil {
 		return nil, err
 	}
@@ -882,6 +923,147 @@ func NewGetHostOwnerRequest(server string, hostName string, ownerLogin string) (
 	if err != nil {
 		return nil, err
 	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetHostOwnerRepositoriesRequest generates requests for GetHostOwnerRepositories
+func NewGetHostOwnerRepositoriesRequest(server string, hostName string, ownerLogin string, params *GetHostOwnerRepositoriesParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "hostName", runtime.ParamLocationPath, hostName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "ownerLogin", runtime.ParamLocationPath, ownerLogin)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/hosts/%s/owners/%s/repositories", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	queryValues := queryURL.Query()
+
+	if params.Page != nil {
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "page", runtime.ParamLocationQuery, *params.Page); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
+	if params.PerPage != nil {
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "per_page", runtime.ParamLocationQuery, *params.PerPage); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
+	if params.CreatedAfter != nil {
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "created_after", runtime.ParamLocationQuery, *params.CreatedAfter); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
+	if params.UpdatedAfter != nil {
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "updated_after", runtime.ParamLocationQuery, *params.UpdatedAfter); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
+	if params.Sort != nil {
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "sort", runtime.ParamLocationQuery, *params.Sort); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
+	if params.Order != nil {
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "order", runtime.ParamLocationQuery, *params.Order); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
+	queryURL.RawQuery = queryValues.Encode()
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -1687,6 +1869,9 @@ type ClientWithResponsesInterface interface {
 	// GetHostOwner request
 	GetHostOwnerWithResponse(ctx context.Context, hostName string, ownerLogin string, reqEditors ...RequestEditorFn) (*GetHostOwnerResponse, error)
 
+	// GetHostOwnerRepositories request
+	GetHostOwnerRepositoriesWithResponse(ctx context.Context, hostName string, ownerLogin string, params *GetHostOwnerRepositoriesParams, reqEditors ...RequestEditorFn) (*GetHostOwnerRepositoriesResponse, error)
+
 	// GetHostRepositories request
 	GetHostRepositoriesWithResponse(ctx context.Context, hostName string, params *GetHostRepositoriesParams, reqEditors ...RequestEditorFn) (*GetHostRepositoriesResponse, error)
 
@@ -1803,6 +1988,28 @@ func (r GetHostOwnerResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetHostOwnerResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetHostOwnerRepositoriesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]Repository
+}
+
+// Status returns HTTPResponse.Status
+func (r GetHostOwnerRepositoriesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetHostOwnerRepositoriesResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -2087,6 +2294,15 @@ func (c *ClientWithResponses) GetHostOwnerWithResponse(ctx context.Context, host
 	return ParseGetHostOwnerResponse(rsp)
 }
 
+// GetHostOwnerRepositoriesWithResponse request returning *GetHostOwnerRepositoriesResponse
+func (c *ClientWithResponses) GetHostOwnerRepositoriesWithResponse(ctx context.Context, hostName string, ownerLogin string, params *GetHostOwnerRepositoriesParams, reqEditors ...RequestEditorFn) (*GetHostOwnerRepositoriesResponse, error) {
+	rsp, err := c.GetHostOwnerRepositories(ctx, hostName, ownerLogin, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetHostOwnerRepositoriesResponse(rsp)
+}
+
 // GetHostRepositoriesWithResponse request returning *GetHostRepositoriesResponse
 func (c *ClientWithResponses) GetHostRepositoriesWithResponse(ctx context.Context, hostName string, params *GetHostRepositoriesParams, reqEditors ...RequestEditorFn) (*GetHostRepositoriesResponse, error) {
 	rsp, err := c.GetHostRepositories(ctx, hostName, params, reqEditors...)
@@ -2280,6 +2496,32 @@ func ParseGetHostOwnerResponse(rsp *http.Response) (*GetHostOwnerResponse, error
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Owner
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetHostOwnerRepositoriesResponse parses an HTTP response from a GetHostOwnerRepositoriesWithResponse call
+func ParseGetHostOwnerRepositoriesResponse(rsp *http.Response) (*GetHostOwnerRepositoriesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetHostOwnerRepositoriesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []Repository
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

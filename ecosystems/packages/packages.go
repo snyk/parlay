@@ -39,6 +39,7 @@ type Advisory struct {
 
 // Dependency defines model for Dependency.
 type Dependency struct {
+	Ecosystem    string  `json:"ecosystem"`
 	Kind         *string `json:"kind"`
 	Optional     *bool   `json:"optional"`
 	PackageName  string  `json:"package_name"`
@@ -107,6 +108,7 @@ type Package struct {
 	Metadata                 *map[string]interface{} `json:"metadata"`
 	Name                     string                  `json:"name"`
 	Namespace                *string                 `json:"namespace"`
+	NormalizedLicenses       []string                `json:"normalized_licenses"`
 	Purl                     string                  `json:"purl"`
 	Rankings                 map[string]interface{}  `json:"rankings"`
 	RegistryUrl              *string                 `json:"registry_url"`
@@ -125,6 +127,7 @@ type Registry struct {
 	Default          bool                    `json:"default"`
 	Ecosystem        string                  `json:"ecosystem"`
 	Github           *string                 `json:"github"`
+	IconUrl          string                  `json:"icon_url"`
 	KeywordsCount    *int64                  `json:"keywords_count,omitempty"`
 	MaintainersCount int64                   `json:"maintainers_count"`
 	MaintainersUrl   string                  `json:"maintainers_url"`
