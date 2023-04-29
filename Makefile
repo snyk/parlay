@@ -22,5 +22,8 @@ clients: specs
 	@oapi-codegen -generate types,client -package packages specs/packages.yaml > ecosystems/packages/packages.go
 	@oapi-codegen -generate types,client -package repos specs/repos.yaml > ecosystems/repos/repos.go
 
+fmt:
+	@gofmt -s -w -l .
 
-.PHONY: build test acceptance lint cover specs clients
+
+.PHONY: build test acceptance lint cover specs clients fmt
