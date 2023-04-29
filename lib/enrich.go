@@ -1,10 +1,30 @@
 package lib
 
 import (
+	"github.com/snyk/parlay/ecosystems/packages"
+
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/package-url/packageurl-go"
 	"github.com/remeh/sizedwaitgroup"
 )
+
+func enrichDescription(component cdx.Component, packageData *packages.Package) cdx.Component {
+	if packageData.Description != nil {
+		component.Description = *packageData.Description
+	}
+	return component
+}
+
+func enrichLicense(component cdx.Component, packageData *packages.Package) cdx.Component {
+	if packageData.NormalizedLicenses != nil {
+		if len(packageData.NormalizedLicenses) > 0 {
+			expression := packageData.NormalizedLicenses[0]
+			licences := cdx.LicenseChoice{Expression: expression}
+			component.Licenses = &cdx.Licenses{licences}
+		}
+	}
+	return component
+}
 
 func EnrichSBOM(bom *cdx.BOM) *cdx.BOM {
 	wg := sizedwaitgroup.New(20)
@@ -23,16 +43,8 @@ func EnrichSBOM(bom *cdx.BOM) *cdx.BOM {
 			if err == nil {
 				packageData := resp.JSON200
 				if packageData != nil {
-					if packageData.Description != nil {
-						component.Description = *packageData.Description
-					}
-					if packageData.NormalizedLicenses != nil {
-            if len(packageData.NormalizedLicenses) > 0 {
-              expression := packageData.NormalizedLicenses[0]
-              licences := cdx.LicenseChoice{Expression: expression}
-              component.Licenses = &cdx.Licenses{licences}
-            }
-					}
+					component = enrichDescription(component, packageData)
+					component = enrichLicense(component, packageData)
 				}
 			}
 			newComponents[i] = component

@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-  "github.com/snyk/parlay/internal/commands/ecosystems"
+	"github.com/snyk/parlay/internal/commands/ecosystems"
 
 	"github.com/spf13/cobra"
 )
