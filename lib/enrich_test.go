@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/snyk/parlay/ecosystems/packages"
+
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
@@ -88,6 +90,36 @@ func TestEnrichSBOMWithoutLicense(t *testing.T) {
 	httpmock.GetTotalCallCount()
 	calls := httpmock.GetCallCountInfo()
 	assert.Equal(t, len(components), calls[`GET =~^https://packages.ecosyste.ms/api/v1/registries`])
+}
+
+func TestEnrichDescription(t *testing.T) {
+	component := cdx.Component{
+		Type:    cdx.ComponentTypeLibrary,
+		Name:    "cyclonedx-go",
+		Version: "v0.3.0",
+	}
+	desc := "description"
+	pack := packages.Package{
+		Description: &desc,
+	}
+	component = enrichDescription(component, &pack)
+	assert.Equal(t, "description", component.Description)
+}
+
+func TestEnrichLicense(t *testing.T) {
+	component := cdx.Component{
+		Type:    cdx.ComponentTypeLibrary,
+		Name:    "cyclonedx-go",
+		Version: "v0.3.0",
+	}
+	pack := packages.Package{
+		NormalizedLicenses: []string{"BSD-3-Clause"},
+	}
+	component = enrichLicense(component, &pack)
+	licenses := *component.Licenses
+
+	comp := cdx.LicenseChoice(cdx.LicenseChoice{Expression: "BSD-3-Clause"})
+	assert.Equal(t, comp, licenses[0])
 }
 
 func TestEnrichBlankSBOM(t *testing.T) {
