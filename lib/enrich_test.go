@@ -127,3 +127,76 @@ func TestEnrichBlankSBOM(t *testing.T) {
 	bom = EnrichSBOM(bom)
 	assert.Nil(t, bom.Components)
 }
+
+func TestEnrichExternalReferenceWithNilURL(t *testing.T) {
+	component := cdx.Component{}
+	packageData := &packages.Package{Homepage: nil}
+
+	result := enrichExternalReference(component, packageData, packageData.Homepage, cdx.ERTypeWebsite)
+
+	assert.Equal(t, component, result)
+}
+
+func TestEnrichExternalReferenceWithNonNullURL(t *testing.T) {
+	component := cdx.Component{}
+	packageData := &packages.Package{Homepage: pointerToString("https://example.com")}
+
+	result := enrichExternalReference(component, packageData, packageData.Homepage, cdx.ERTypeWebsite)
+
+	expected := cdx.Component{
+		ExternalReferences: &[]cdx.ExternalReference{
+			{URL: "https://example.com", Type: cdx.ERTypeWebsite},
+		},
+	}
+	assert.Equal(t, expected, result)
+}
+
+func TestEnrichHomepageWithNilHomepage(t *testing.T) {
+	component := cdx.Component{}
+	packageData := &packages.Package{Homepage: nil}
+
+	result := enrichHomepage(component, packageData)
+
+	assert.Equal(t, component, result)
+}
+
+func TestEnrichHomepageWithNonNullHomepage(t *testing.T) {
+	component := cdx.Component{}
+	packageData := &packages.Package{Homepage: pointerToString("https://example.com")}
+
+	result := enrichHomepage(component, packageData)
+
+	expected := cdx.Component{
+		ExternalReferences: &[]cdx.ExternalReference{
+			{URL: "https://example.com", Type: cdx.ERTypeWebsite},
+		},
+	}
+	assert.Equal(t, expected, result)
+}
+
+func TestEnrichRegistryURLWithNilRegistryURL(t *testing.T) {
+	component := cdx.Component{}
+	packageData := &packages.Package{RegistryUrl: nil}
+
+	result := enrichRegistryURL(component, packageData)
+
+	assert.Equal(t, component, result)
+}
+
+func TestEnrichRegistryURLWithNonNullRegistryURL(t *testing.T) {
+	component := cdx.Component{}
+	packageData := &packages.Package{RegistryUrl: pointerToString("https://example.com")}
+
+	result := enrichRegistryURL(component, packageData)
+
+	expected := cdx.Component{
+		ExternalReferences: &[]cdx.ExternalReference{
+			{URL: "https://example.com", Type: cdx.ERTypeDistribution},
+		},
+	}
+	assert.Equal(t, expected, result)
+}
+
+func pointerToString(s string) *string {
+	return &s
+}

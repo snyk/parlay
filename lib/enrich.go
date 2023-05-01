@@ -26,15 +26,41 @@ func enrichLicense(component cdx.Component, packageData *packages.Package) cdx.C
 	return component
 }
 
-func EnrichSBOM(bom *cdx.BOM) *cdx.BOM {
-	wg := sizedwaitgroup.New(20)
-
-	if bom.Components == nil {
-		return bom
+func enrichExternalReference(component cdx.Component, packageData *packages.Package, url *string, refType cdx.ExternalReferenceType) cdx.Component {
+	if url == nil {
+		return component
 	}
+	ext := cdx.ExternalReference{
+		URL:  *url,
+		Type: refType,
+	}
+	if component.ExternalReferences == nil {
+		component.ExternalReferences = &[]cdx.ExternalReference{ext}
+	} else {
+		*component.ExternalReferences = append(*component.ExternalReferences, ext)
+	}
+	return component
+}
 
+func enrichHomepage(component cdx.Component, packageData *packages.Package) cdx.Component {
+	return enrichExternalReference(component, packageData, packageData.Homepage, cdx.ERTypeWebsite)
+}
+
+func enrichRegistryURL(component cdx.Component, packageData *packages.Package) cdx.Component {
+	return enrichExternalReference(component, packageData, packageData.RegistryUrl, cdx.ERTypeDistribution)
+}
+
+func enrichRepositoryURL(component cdx.Component, packageData *packages.Package) cdx.Component {
+	return enrichExternalReference(component, packageData, packageData.RepositoryUrl, cdx.ERTypeVCS)
+}
+
+func enrichDocumentationURL(component cdx.Component, packageData *packages.Package) cdx.Component {
+	return enrichExternalReference(component, packageData, packageData.DocumentationUrl, cdx.ERTypeDocumentation)
+}
+
+func enrichComponents(bom *cdx.BOM, enrichFuncs []func(cdx.Component, *packages.Package) cdx.Component) {
+	wg := sizedwaitgroup.New(20)
 	newComponents := make([]cdx.Component, len(*bom.Components))
-
 	for i, component := range *bom.Components {
 		wg.Add()
 		go func(component cdx.Component, i int) {
@@ -43,17 +69,33 @@ func EnrichSBOM(bom *cdx.BOM) *cdx.BOM {
 			if err == nil {
 				packageData := resp.JSON200
 				if packageData != nil {
-					component = enrichDescription(component, packageData)
-					component = enrichLicense(component, packageData)
+					for _, enrichFunc := range enrichFuncs {
+						component = enrichFunc(component, packageData)
+					}
 				}
 			}
 			newComponents[i] = component
 			wg.Done()
 		}(component, i)
 	}
-
 	wg.Wait()
-
 	bom.Components = &newComponents
+}
+
+func EnrichSBOM(bom *cdx.BOM) *cdx.BOM {
+	if bom.Components == nil {
+		return bom
+	}
+
+	enrichFuncs := []func(cdx.Component, *packages.Package) cdx.Component{
+		enrichDescription,
+		enrichLicense,
+		enrichHomepage,
+		enrichRegistryURL,
+		enrichRepositoryURL,
+		enrichDocumentationURL,
+	}
+
+	enrichComponents(bom, enrichFuncs)
 	return bom
 }
