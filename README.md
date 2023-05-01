@@ -14,7 +14,7 @@
 | :heavy_check_mark: | RegistryUrl | ExternalReferences type=distribution  |
 | :heavy_check_mark: | RepositoryUrl | ExternalReferences type=vcs |
 | :heavy_check_mark: | DocumentationUrl | ExternalReferences type=documentation |
-|  | RepoMetadata.topics | Properties |
+| :heavy_check_mark: | RepoMetadata.topics | Properties |
 |  | RepoMetadata.metadata.files.license | Licenses |
 |  | RepoMetadata.metadata.files.license | ExternalReferences type=license |
 |  | RepoMetadata.metadata.files.code_of_conduct | ExternalReferences type=other |

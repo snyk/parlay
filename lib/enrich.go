@@ -110,6 +110,20 @@ func enrichLocation(component cdx.Component, packageData packages.Package) cdx.C
 	return component
 }
 
+func enrichTopics(component cdx.Component, packageData packages.Package) cdx.Component {
+	if packageData.RepoMetadata != nil {
+		meta := *packageData.RepoMetadata
+
+		if topics, ok := meta["topics"].([]interface{}); ok {
+			for _, topic := range topics {
+				component = enrichProperty(component, "ecosystems:topic", topic.(string))
+			}
+		}
+		return component
+	}
+	return component
+}
+
 func enrichComponents(bom *cdx.BOM, enrichFuncs []func(cdx.Component, packages.Package) cdx.Component) {
 	wg := sizedwaitgroup.New(20)
 	newComponents := make([]cdx.Component, len(*bom.Components))
@@ -148,6 +162,7 @@ func EnrichSBOM(bom *cdx.BOM) *cdx.BOM {
 		enrichLatestReleasePublishedAt,
 		enrichRepoArchived,
 		enrichLocation,
+		enrichTopics,
 	}
 
 	enrichComponents(bom, enrichFuncs)
