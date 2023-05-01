@@ -18,9 +18,9 @@
 |  | RepoMetadata.metadata.files.license | Licenses |
 |  | RepoMetadata.metadata.files.license | ExternalReferences type=license |
 |  | RepoMetadata.metadata.files.code_of_conduct | ExternalReferences type=other |
-|  | RepoMetadata.owner_record.name | Author |
-|  | RepoMetadata.owner_record.name | Supplier name |
-|  | RepoMetadata.owner_record.website | Supplier url |
+| :heavy_check_mark: | RepoMetadata.owner_record.name | Author |
+| :heavy_check_mark: | RepoMetadata.owner_record.name | Supplier name |
+| :heavy_check_mark: | RepoMetadata.owner_record.website | Supplier url |
 | :heavy_check_mark: | RepoMetadata.owner_record.location | Properties  |
 | :heavy_check_mark: | RepoMetadata.archived | Properties |
 

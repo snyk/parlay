@@ -110,6 +110,39 @@ func enrichLocation(component cdx.Component, packageData packages.Package) cdx.C
 	return component
 }
 
+func enrichAuthor(component cdx.Component, packageData packages.Package) cdx.Component {
+	if packageData.RepoMetadata != nil {
+		meta := *packageData.RepoMetadata
+		if ownerRecord, ok := meta["owner_record"].(map[string]interface{}); ok {
+			if name, ok := ownerRecord["name"].(string); ok {
+				component.Author = name
+				return component
+			}
+		}
+	}
+	return component
+}
+
+func enrichSupplier(component cdx.Component, packageData packages.Package) cdx.Component {
+	if packageData.RepoMetadata != nil {
+		meta := *packageData.RepoMetadata
+		if ownerRecord, ok := meta["owner_record"].(map[string]interface{}); ok {
+			if name, ok := ownerRecord["name"].(string); ok {
+				supplier := cdx.OrganizationalEntity{
+					Name: name,
+				}
+				if website, ok := ownerRecord["website"].(string); ok {
+					websites := []string{website}
+					supplier.URL = &websites
+				}
+				component.Supplier = &supplier
+				return component
+			}
+		}
+	}
+	return component
+}
+
 func enrichTopics(component cdx.Component, packageData packages.Package) cdx.Component {
 	if packageData.RepoMetadata != nil {
 		meta := *packageData.RepoMetadata
@@ -163,6 +196,8 @@ func EnrichSBOM(bom *cdx.BOM) *cdx.BOM {
 		enrichRepoArchived,
 		enrichLocation,
 		enrichTopics,
+		enrichAuthor,
+		enrichSupplier,
 	}
 
 	enrichComponents(bom, enrichFuncs)
