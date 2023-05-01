@@ -3,6 +3,7 @@ package lib
 import (
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/snyk/parlay/ecosystems/packages"
 
@@ -41,20 +42,18 @@ func TestEnrichSBOM(t *testing.T) {
 
 	bom = EnrichSBOM(bom)
 
-	/*
-		components = *bom.Components
-		component := components[0]
-	  licenses := *component.Licenses
+	components = *bom.Components
+	component := components[0]
+	licenses := *component.Licenses
 
-		comp := cdx.LicenseChoice(cdx.LicenseChoice{Expression: "BSD-3-Clause"})
+	comp := cdx.LicenseChoice(cdx.LicenseChoice{Expression: "BSD-3-Clause"})
 
-		assert.Equal(t, "description", components[0].Description)
-		assert.Equal(t, comp, licenses[0])
+	assert.Equal(t, "description", components[0].Description)
+	assert.Equal(t, comp, licenses[0])
 
-		httpmock.GetTotalCallCount()
-		calls := httpmock.GetCallCountInfo()
-		assert.Equal(t, len(components), calls[`GET =~^https://packages.ecosyste.ms/api/v1/registries`])
-	*/
+	httpmock.GetTotalCallCount()
+	calls := httpmock.GetCallCountInfo()
+	assert.Equal(t, len(components), calls[`GET =~^https://packages.ecosyste.ms/api/v1/registries`])
 }
 
 func TestEnrichSBOMWithoutLicense(t *testing.T) {
@@ -201,4 +200,67 @@ func TestEnrichRegistryURLWithNonNullRegistryURL(t *testing.T) {
 
 func pointerToString(s string) *string {
 	return &s
+}
+
+func TestEnrichLatestReleasePublishedAt(t *testing.T) {
+	component := cdx.Component{}
+	packageData := packages.Package{
+		LatestReleasePublishedAt: nil,
+	}
+
+	result := enrichLatestReleasePublishedAt(component, packageData)
+	assert.Equal(t, component, result)
+
+	latestReleasePublishedAt := time.Date(2023, time.May, 1, 0, 0, 0, 0, time.UTC)
+	packageData.LatestReleasePublishedAt = &latestReleasePublishedAt
+	expectedTimestamp := latestReleasePublishedAt.UTC().Format(time.RFC3339)
+	result = enrichLatestReleasePublishedAt(component, packageData)
+
+	prop := (*result.Properties)[0]
+	assert.Equal(t, "ecosystems:latest_release_published_at", prop.Name)
+	assert.Equal(t, expectedTimestamp, prop.Value)
+}
+
+func TestEnrichLocation(t *testing.T) {
+	assert := assert.New(t)
+
+	// Test case 1: packageData.RepoMetadata is nil
+	component := cdx.Component{Name: "test"}
+	packageData := packages.Package{}
+	result := enrichLocation(component, packageData)
+	assert.Equal(component, result)
+
+	// Test case 2: packageData.RepoMetadata is not nil, but "owner_record" is missing
+	component = cdx.Component{Name: "test"}
+	packageData = packages.Package{RepoMetadata: &map[string]interface{}{
+		"not_owner_record": map[string]interface{}{},
+	}}
+	result = enrichLocation(component, packageData)
+	assert.Equal(component, result)
+
+	// Test case 3: "location" field is missing in "owner_record"
+	component = cdx.Component{Name: "test"}
+	packageData = packages.Package{RepoMetadata: &map[string]interface{}{
+		"owner_record": map[string]interface{}{
+			"not_location": "test",
+		},
+	}}
+	result = enrichLocation(component, packageData)
+	assert.Equal(component, result)
+
+	// Test case 4: "location" field is present in "owner_record"
+	component = cdx.Component{Name: "test"}
+	packageData = packages.Package{RepoMetadata: &map[string]interface{}{
+		"owner_record": map[string]interface{}{
+			"location": "test_location",
+		},
+	}}
+	expectedComponent := cdx.Component{
+		Name: "test",
+		Properties: &[]cdx.Property{
+			{Name: "ecosystems:owner_location", Value: "test_location"},
+		},
+	}
+	result = enrichLocation(component, packageData)
+	assert.Equal(expectedComponent, result)
 }

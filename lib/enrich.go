@@ -90,12 +90,24 @@ func enrichLatestReleasePublishedAt(component cdx.Component, packageData package
 }
 
 func enrichRepoArchived(component cdx.Component, packageData packages.Package) cdx.Component {
-  if packageData.RepoMetadata != nil {
-    if archived, ok := (*packageData.RepoMetadata)["archived"].(bool); ok && archived {
-      return enrichProperty(component, "ecosystems:repository_archived", "true")
-    }
-  }
-  return component
+	if packageData.RepoMetadata != nil {
+		if archived, ok := (*packageData.RepoMetadata)["archived"].(bool); ok && archived {
+			return enrichProperty(component, "ecosystems:repository_archived", "true")
+		}
+	}
+	return component
+}
+
+func enrichLocation(component cdx.Component, packageData packages.Package) cdx.Component {
+	if packageData.RepoMetadata != nil {
+		meta := *packageData.RepoMetadata
+		if ownerRecord, ok := meta["owner_record"].(map[string]interface{}); ok {
+			if location, ok := ownerRecord["location"].(string); ok {
+				return enrichProperty(component, "ecosystems:owner_location", location)
+			}
+		}
+	}
+	return component
 }
 
 func enrichComponents(bom *cdx.BOM, enrichFuncs []func(cdx.Component, packages.Package) cdx.Component) {
@@ -135,6 +147,7 @@ func EnrichSBOM(bom *cdx.BOM) *cdx.BOM {
 		enrichFirstReleasePublishedAt,
 		enrichLatestReleasePublishedAt,
 		enrichRepoArchived,
+		enrichLocation,
 	}
 
 	enrichComponents(bom, enrichFuncs)
