@@ -2,31 +2,83 @@
 
 [![CI](https://github.com/snyk/parlay/actions/workflows/ci.yml/badge.svg)](https://github.com/snyk/parlay/actions/workflows/ci.yml)
 
-## Enrich SBOMs
+## Enriching SBOMs
 
-This will take a CycloneDX document and add descriptions to the component taken from [ecosyste.ms](https://ecosyste.ms).
+`parlay` will take a CycloneDX document and enrich it with information taken from [ecosyste.ms](https://ecosyste.ms). This currently includes:
+
+| Implemented | Ecosyste.ms  | CycloneDX  |
+|:-:|---|---|
+| :heavy_check_mark: | Homepage  | ExternalReferences type=website |
+| :heavy_check_mark: | FirstReleasePublishedAt  | Properties  |
+| :heavy_check_mark: | LatestReleasePublishedAt  | Properties  |
+| :heavy_check_mark: | RegistryUrl | ExternalReferences type=distribution  |
+| :heavy_check_mark: | RepositoryUrl | ExternalReferences type=vcs |
+| :heavy_check_mark: | DocumentationUrl | ExternalReferences type=documentation |
+|  | RepoMetadata.topics | Properties |
+|  | RepoMetadata.metadata.files.license | Licenses |
+|  | RepoMetadata.metadata.files.license | ExternalReferences type=license |
+|  | RepoMetadata.metadata.files.code_of_conduct | ExternalReferences type=other |
+|  | RepoMetadata.owner_record.name | Author |
+|  | RepoMetadata.owner_record.name | Supplier name |
+|  | RepoMetadata.owner_record.website | Supplier url |
+| :heavy_check_mark: | RepoMetadata.owner_record.location | Properties  |
+| :heavy_check_mark: | RepoMetadata.archived | Properties |
+
+
+## Usage
 
 ```
 $ cat testing/sbom.cyclonedx.json
 ...
-{"bom-ref":"68-subtext@6.0.12","type":"library","name":"subtext","version":"6.0.12","purl":"pkg:npm/subtext@6.0.12"}
+{
+	"bom-ref": "68-subtext@6.0.12",
+	"type": "library",
+	"name": "subtext",
+	"version": "6.0.12",
+	"purl": "pkg:npm/subtext@6.0.12"
+}
 ...
-$ cat testing/sbom.cyclonedx.json | parlay enrich -
+$ cat testing/sbom.cyclonedx.json | parlay enrich - | jq
 ...
-{"bom-ref":"68-subtext@6.0.12","type":"library","name":"subtext","version":"6.0.12","description":"Tiny millisecond conversion utility","purl":"pkg:npm/subtext@6.0.12"}
+{
+	"bom-ref": "68-subtext@6.0.12",
+	"type": "library",
+	"name": "subtext",
+	"version": "6.0.12",
+	"description": "HTTP payload parsing",
+	"licenses": [
+		{
+			"expression": "BSD-3-Clause"
+		}
+	],
+	"purl": "pkg:npm/subtext@6.0.12",
+	"externalReferences": [
+		{
+			"url": "https://github.com/hapijs/subtext",
+			"type": "website"
+		},
+		{
+			"url": "https://www.npmjs.com/package/subtext",
+			"type": "distribution"
+		},
+		{
+			"url": "https://github.com/hapijs/subtext",
+			"type": "vcs"
+		}
+	],
+	"properties": [
+		{
+			"name": "ecosystems:first_release_published_at",
+			"value": "2014-09-29T01:56:03Z"
+		},
+		{
+			"name": "ecosystems:latest_release_published_at",
+			"value": "2019-01-31T19:36:58Z"
+		}
+	]
+}
 ...
 ```
-
-This isn't _that_ useful. But demonstrates the concept of enrichment nicely.
-
-## TODO
-
-Not a comprehensive list, but a few things that need work if we want to share more widely.
-
-* Nice output formatting
-* Map ecosyste.ms data to CycloneDX schema
-* Enrichment using other backends, eg. ClearlyDefined or deps.dev
-* UI for `enrich` command
 
 ## Ecosyste.ms utilities
 
