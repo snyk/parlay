@@ -43,6 +43,13 @@ $ cat testing/sbom.cyclonedx.json | parlay enrich - | jq
 {
 	"bom-ref": "68-subtext@6.0.12",
 	"type": "library",
+	"supplier": {
+		"name": "hapi.js",
+		"url": [
+			"https://hapi.dev"
+		]
+	},
+	"author": "hapi.js",
 	"name": "subtext",
 	"version": "6.0.12",
 	"description": "HTTP payload parsing",
