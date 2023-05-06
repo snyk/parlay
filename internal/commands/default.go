@@ -1,29 +1,26 @@
 package commands
 
 import (
-	"log"
-	"os"
-
 	"github.com/snyk/parlay/internal/commands/ecosystems"
+	"github.com/snyk/parlay/internal/commands/snyk"
 
 	"github.com/spf13/cobra"
 )
 
 func NewDefaultCommand() *cobra.Command {
 	cmd := cobra.Command{
-		Use:          "parlay",
-		Short:        "",
-		Long:         ``,
-		SilenceUsage: true,
+		Use:                   "parlay",
+		Short:                 "",
+		Long:                  ``,
+		SilenceUsage:          true,
+		DisableFlagsInUseLine: true,
 		Run: func(cmd *cobra.Command, args []string) {
 			_ = cmd.Help()
 		},
 	}
 
-	logger := log.New(os.Stdout, "", log.LstdFlags)
-
-	cmd.AddCommand(NewEnrichCommand(logger))
 	cmd.AddCommand(ecosystems.NewEcosystemsRootCommand())
+	cmd.AddCommand(snyk.NewSnykRootCommand())
 
 	return &cmd
 }

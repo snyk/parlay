@@ -1,4 +1,4 @@
-package commands
+package ecosystems
 
 import (
 	"bufio"

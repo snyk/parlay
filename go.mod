@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/CycloneDX/cyclonedx-go v0.7.1
 	github.com/deepmap/oapi-codegen v1.12.4
+	github.com/google/uuid v1.3.0
 	github.com/jarcoal/httpmock v1.3.0
 	github.com/package-url/packageurl-go v0.1.0
 	github.com/remeh/sizedwaitgroup v1.0.0
@@ -15,7 +16,6 @@ require (
 require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/google/uuid v1.3.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect

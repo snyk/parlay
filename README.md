@@ -38,7 +38,7 @@ $ cat testing/sbom.cyclonedx.json
 	"purl": "pkg:npm/subtext@6.0.12"
 }
 ...
-$ cat testing/sbom.cyclonedx.json | parlay enrich - | jq
+$ cat testing/sbom.cyclonedx.json | parlay e enrich - | jq
 ...
 {
 	"bom-ref": "68-subtext@6.0.12",
