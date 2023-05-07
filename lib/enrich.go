@@ -290,6 +290,20 @@ func EnrichSBOMWithSnyk(bom *cdx.BOM) *cdx.BOM {
 						}
 					}
 				}
+				if issue.Attributes.Slots.References != nil {
+					for _, ref := range *issue.Attributes.Slots.References {
+						ad := cdx.Advisory{
+							Title: *ref.Title,
+							URL:   *ref.Url,
+						}
+						if vuln.Advisories == nil {
+							ads := []cdx.Advisory{ad}
+							vuln.Advisories = &ads
+						} else {
+							*vuln.Advisories = append(*vuln.Advisories, ad)
+						}
+					}
+				}
 
 				vulns = append(vulns, vuln)
 			}
