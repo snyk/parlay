@@ -14,17 +14,12 @@ const experimentalVersion = "2023-04-28~experimental"
 
 type selfDocument struct {
 	Data struct {
-		Attributes struct {
-			AvatarURL         string `json:"avatar_url,omitempty"`
-			DefaultOrgContext string `json:"default_org_context,omitempty"`
-			Name              string `json:"name,omitempty"`
-			Username          string `json:"username,omitempty"`
-		} `json:"attributes,omitempty"`
-		ID   string `json:"id,omitempty"`
-		Type string `json:"type,omitempty"`
+		Attributes users.User `json:"attributes,omitempty"`
+		ID         string     `json:"id,omitempty"`
+		Type       string     `json:"type,omitempty"`
 	}
-	Jsonapi interface{} `json:"jsonapi,omitempty"`
-	Links   interface{} `json:"links,omitempty"`
+	Jsonapi users.JsonApi `json:"jsonapi,omitempty"`
+	Links   users.Links   `json:"links,omitempty"`
 }
 
 func getSnykOrg(auth *securityprovider.SecurityProviderApiKey) (*uuid.UUID, error) {
@@ -44,10 +39,7 @@ func getSnykOrg(auth *securityprovider.SecurityProviderApiKey) (*uuid.UUID, erro
 		return nil, err
 	}
 
-	orgId := userInfo.Data.Attributes.DefaultOrgContext
-	org, err := uuid.Parse(orgId)
-	if err != nil {
-		return nil, err
-	}
-	return &org, nil
+	org := userInfo.Data.Attributes.DefaultOrgContext
+
+	return org, nil
 }

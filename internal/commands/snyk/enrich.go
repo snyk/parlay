@@ -1,4 +1,4 @@
-package ecosystems
+package snyk
 
 import (
 	"bufio"
@@ -17,7 +17,7 @@ import (
 func NewEnrichCommand(logger *log.Logger) *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "enrich <sbom>",
-		Short: "Enrich an SBOM with ecosyste.ms data",
+		Short: "Enrich an SBOM with Snyk data",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var err error
@@ -37,7 +37,7 @@ func NewEnrichCommand(logger *log.Logger) *cobra.Command {
 				return fmt.Errorf("%w", err)
 			}
 
-			bom = lib.EnrichSBOMWithEcosystems(bom)
+			bom = lib.EnrichSBOMWithSnyk(bom)
 			err = cdx.NewBOMEncoder(os.Stdout, cdx.BOMFileFormatJSON).Encode(bom)
 			if err != nil {
 				return fmt.Errorf("%w", err)
