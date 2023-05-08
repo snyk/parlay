@@ -1,0 +1,68 @@
+before:
+  hooks:
+  - go mod download
+
+builds:
+- main: ./main.go
+  env:
+  - CGO_ENABLED=0
+  goos:
+  - windows
+  - linux
+  - darwin
+  goarch:
+  - amd64
+  - arm64
+  - ppc64le
+  ldflags:
+  - "-s"
+  - "-w"
+ # - "-X github.com/snyk/parlay/internal/commands.version={{.Version}}"
+
+archives:
+- replacements:
+    darwin: Darwin
+    linux: Linux
+    windows: Windows
+    386: i386
+    amd64: x86_64
+  format: tar.gz
+  format_overrides:
+  - goos: windows
+    format: zip
+  files:
+#      - LICENSE
+      - README.md
+
+checksum:
+  name_template: 'checksums.txt'
+
+changelog:
+  use: github
+  groups:
+  - title: New Features
+    regexp: '^feat(ure)?:'
+    order: 0
+  - title: Bug Fixes
+    regexp: '^(bug|fix):'
+    order: 1
+  - title: Other Changes
+    order: 999
+  sort: asc
+  filters:
+    exclude:
+    - '^docs:'
+    - '^test:'
+    - '^misc:'
+    - '^typo:'
+    - '(?i) typo( |\.|\r?\n)'
+
+# Publishes the deb and rpm files to the GitHub releases page.
+nfpms:
+  - bindir: /usr/bin
+    description: "Test your configuration using Open Policy Agent"
+    formats:
+      - deb
+      - rpm
+    homepage: https://github.com/snyk/parlay
+    maintainer: garethr <gareth.rushgrove@snyk.io>
