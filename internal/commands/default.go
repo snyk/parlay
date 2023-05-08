@@ -14,8 +14,7 @@ import (
 func NewDefaultCommand() *cobra.Command {
 	cmd := cobra.Command{
 		Use:                   "parlay",
-		Short:                 "",
-		Long:                  ``,
+		Short:                 "Enrich an SBOM with context from third party services",
 		SilenceUsage:          true,
 		DisableFlagsInUseLine: true,
 		Run: func(cmd *cobra.Command, args []string) {

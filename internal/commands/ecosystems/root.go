@@ -8,8 +8,7 @@ import (
 func NewEcosystemsRootCommand(logger zerolog.Logger) *cobra.Command {
 	cmd := cobra.Command{
 		Use:                   "ecosystems",
-		Short:                 "",
-		Long:                  ``,
+		Short:                 "Commands for using parlay with ecosystem.ms",
 		Aliases:               []string{"e"},
 		DisableFlagsInUseLine: true,
 		SilenceUsage:          true,

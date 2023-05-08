@@ -8,8 +8,7 @@ import (
 func NewSnykRootCommand(logger zerolog.Logger) *cobra.Command {
 	cmd := cobra.Command{
 		Use:                   "snyk",
-		Short:                 "",
-		Long:                  ``,
+		Short:                 "Commands for using parlay with Snyk",
 		Aliases:               []string{"s"},
 		DisableFlagsInUseLine: true,
 		SilenceUsage:          true,

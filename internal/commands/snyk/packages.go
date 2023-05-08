@@ -12,7 +12,7 @@ import (
 
 func NewPackageCommand(logger zerolog.Logger) *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "package <purl> ",
+		Use:   "package <purl>",
 		Short: "Return package vulnerabilities from Snyk",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
