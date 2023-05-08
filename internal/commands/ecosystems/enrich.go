@@ -5,16 +5,16 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
 	"os"
 
 	"github.com/snyk/parlay/lib"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 )
 
-func NewEnrichCommand(logger *log.Logger) *cobra.Command {
+func NewEnrichCommand(logger zerolog.Logger) *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "enrich <sbom>",
 		Short: "Enrich an SBOM with ecosyste.ms data",

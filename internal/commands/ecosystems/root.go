@@ -1,13 +1,11 @@
 package ecosystems
 
 import (
-	"log"
-	"os"
-
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 )
 
-func NewEcosystemsRootCommand() *cobra.Command {
+func NewEcosystemsRootCommand(logger zerolog.Logger) *cobra.Command {
 	cmd := cobra.Command{
 		Use:                   "ecosystems",
 		Short:                 "",
@@ -19,10 +17,9 @@ func NewEcosystemsRootCommand() *cobra.Command {
 			_ = cmd.Help()
 		},
 	}
-	logger := log.New(os.Stdout, "", log.LstdFlags)
 
-	cmd.AddCommand(NewPackageCommand())
-	cmd.AddCommand(NewRepoCommand())
+	cmd.AddCommand(NewPackageCommand(logger))
+	cmd.AddCommand(NewRepoCommand(logger))
 	cmd.AddCommand(NewEnrichCommand(logger))
 
 	return &cmd

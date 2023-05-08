@@ -2,14 +2,14 @@ package ecosystems
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/snyk/parlay/lib"
 
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 )
 
-func NewRepoCommand() *cobra.Command {
+func NewRepoCommand(logger zerolog.Logger) *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "repo <host> <repo>",
 		Short: "Return repo info from ecosyste.ms",
@@ -17,7 +17,7 @@ func NewRepoCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			resp, err := lib.GetRepoData(args[0])
 			if err != nil {
-				log.Fatal(err)
+				logger.Fatal().Err(err)
 			}
 			fmt.Print(string(resp.Body))
 		},

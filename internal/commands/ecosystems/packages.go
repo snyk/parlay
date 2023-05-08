@@ -2,15 +2,15 @@ package ecosystems
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/snyk/parlay/lib"
 
 	"github.com/package-url/packageurl-go"
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 )
 
-func NewPackageCommand() *cobra.Command {
+func NewPackageCommand(logger zerolog.Logger) *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "package <purl> ",
 		Short: "Return package info from ecosyste.ms",
@@ -18,11 +18,11 @@ func NewPackageCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			purl, err := packageurl.FromString(args[0])
 			if err != nil {
-				log.Fatal(err)
+				logger.Fatal().Err(err)
 			}
 			resp, err := lib.GetPackageData(purl)
 			if err != nil {
-				log.Fatal(err)
+				logger.Fatal().Err(err)
 			}
 			fmt.Print(string(resp.Body))
 		},
