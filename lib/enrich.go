@@ -3,6 +3,7 @@ package lib
 import (
 	"encoding/json"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/snyk/parlay/ecosystems/packages"
@@ -213,6 +214,7 @@ func EnrichSBOMWithSnyk(bom *cdx.BOM) *cdx.BOM {
 	}
 
 	wg := sizedwaitgroup.New(20)
+	var mutex = &sync.Mutex{}
 	vulnerabilities := make(map[cdx.Component][]issues.CommonIssueModelVTwo)
 	for i, component := range *bom.Components {
 		wg.Add()
@@ -225,7 +227,9 @@ func EnrichSBOMWithSnyk(bom *cdx.BOM) *cdx.BOM {
 				var packageDoc issues.IssuesWithPurlsResponse
 				if err := json.Unmarshal(packageData, &packageDoc); err == nil {
 					if packageDoc.Data != nil {
+						mutex.Lock()
 						vulnerabilities[component] = *packageDoc.Data
+						mutex.Unlock()
 					}
 				}
 			}
