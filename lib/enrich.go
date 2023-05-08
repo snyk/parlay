@@ -305,10 +305,48 @@ func EnrichSBOMWithSnyk(bom *cdx.BOM) *cdx.BOM {
 					}
 				}
 
+				if issue.Attributes.Severities != nil {
+					for _, sev := range *issue.Attributes.Severities {
+						source := cdx.Source{
+							Name: "Snyk",
+							URL:  "https://security.snyk.io",
+						}
+						score := float64(*sev.Score)
+						rating := cdx.VulnerabilityRating{
+							Source:   &source,
+							Score:    &score,
+							Severity: levelToCdxSeverity(sev.Level),
+							Method:   "CVSSv31",
+							Vector:   *sev.Vector,
+						}
+						if vuln.Ratings == nil {
+							ratings := []cdx.VulnerabilityRating{rating}
+							vuln.Ratings = &ratings
+						} else {
+							*vuln.Ratings = append(*vuln.Ratings, rating)
+						}
+					}
+				}
 				vulns = append(vulns, vuln)
 			}
 		}
 	}
 	bom.Vulnerabilities = &vulns
 	return bom
+}
+
+func levelToCdxSeverity(level *string) (severity cdx.Severity) {
+	switch *level {
+	case "critical":
+		severity = cdx.SeverityCritical
+	case "high":
+		severity = cdx.SeverityHigh
+	case "medium":
+		severity = cdx.SeverityMedium
+	case "low":
+		severity = cdx.SeverityLow
+	default:
+		severity = cdx.SeverityUnknown
+	}
+	return
 }
