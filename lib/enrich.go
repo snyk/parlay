@@ -239,57 +239,55 @@ func EnrichSBOMWithSnyk(bom *cdx.BOM) *cdx.BOM {
 	wg.Wait()
 	var vulns []cdx.Vulnerability
 	for k, v := range vulnerabilities {
-		if v != nil {
-			for _, issue := range v {
-				vuln := cdx.Vulnerability{
-					BOMRef: k.BOMRef,
-				}
-				if issue.Id != nil {
-					vuln.ID = *issue.Id
-				}
-				if issue.Attributes.Title != nil {
-					vuln.Description = *issue.Attributes.Title
-				}
-				if issue.Attributes.Description != nil {
-					vuln.Detail = *issue.Attributes.Description
-				}
-				if issue.Attributes.CreatedAt != nil {
-					created := *issue.Attributes.CreatedAt
-					vuln.Created = created.UTC().Format(time.RFC3339)
-				}
-				if issue.Attributes.UpdatedAt != nil {
-					updated := *issue.Attributes.UpdatedAt
-					vuln.Updated = updated.UTC().Format(time.RFC3339)
-				}
-				if issue.Attributes.Problems != nil {
-					problems := *issue.Attributes.Problems
-					for _, problem := range problems {
-						switch problem.Source {
-						case "CWE":
-							id := problem.Id[4:]
-							cwe, err := strconv.Atoi(id)
-							if err == nil {
-								if vuln.CWEs == nil {
-									cwes := []int{cwe}
-									vuln.CWEs = &cwes
-								} else {
-									*vuln.CWEs = append(*vuln.CWEs, cwe)
-								}
-							}
-						case "CVE", "GHAS", "RHSA":
-							s := cdx.Source{
-								Name: problem.Source,
-							}
-							ref := cdx.VulnerabilityReference{
-								ID:     problem.Id,
-								Source: &s,
-							}
-							if vuln.References == nil {
-								refs := []cdx.VulnerabilityReference{ref}
-								vuln.References = &refs
+		for _, issue := range v {
+			vuln := cdx.Vulnerability{
+				BOMRef: k.BOMRef,
+			}
+			if issue.Id != nil {
+				vuln.ID = *issue.Id
+			}
+			if issue.Attributes.Title != nil {
+				vuln.Description = *issue.Attributes.Title
+			}
+			if issue.Attributes.Description != nil {
+				vuln.Detail = *issue.Attributes.Description
+			}
+			if issue.Attributes.CreatedAt != nil {
+				created := *issue.Attributes.CreatedAt
+				vuln.Created = created.UTC().Format(time.RFC3339)
+			}
+			if issue.Attributes.UpdatedAt != nil {
+				updated := *issue.Attributes.UpdatedAt
+				vuln.Updated = updated.UTC().Format(time.RFC3339)
+			}
+			if issue.Attributes.Problems != nil {
+				problems := *issue.Attributes.Problems
+				for _, problem := range problems {
+					switch problem.Source {
+					case "CWE":
+						id := problem.Id[4:]
+						cwe, err := strconv.Atoi(id)
+						if err == nil {
+							if vuln.CWEs == nil {
+								cwes := []int{cwe}
+								vuln.CWEs = &cwes
 							} else {
-								*vuln.References = append(*vuln.References, ref)
+								*vuln.CWEs = append(*vuln.CWEs, cwe)
 							}
+						}
+					case "CVE", "GHAS", "RHSA":
+						s := cdx.Source{
+							Name: problem.Source,
+						}
+						ref := cdx.VulnerabilityReference{
+							ID:     problem.Id,
+							Source: &s,
+						}
+						if vuln.References == nil {
+							refs := []cdx.VulnerabilityReference{ref}
+							vuln.References = &refs
+						} else {
+							*vuln.References = append(*vuln.References, ref)
 						}
 					}
 				}

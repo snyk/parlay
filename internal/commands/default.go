@@ -31,7 +31,7 @@ func NewDefaultCommand() *cobra.Command {
 	cmd.CompletionOptions.HiddenDefaultCmd = true
 
 	cmd.PersistentFlags().Bool("debug", false, "")
-	viper.BindPFlag("debug", cmd.PersistentFlags().Lookup("debug"))
+	viper.BindPFlag("debug", cmd.PersistentFlags().Lookup("debug")) //nolint:errcheck
 
 	output := zerolog.ConsoleWriter{Out: os.Stderr}
 	logger := zerolog.New(output).With().Timestamp().Logger()
