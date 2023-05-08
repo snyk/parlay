@@ -18,6 +18,7 @@ func NewDefaultCommand() *cobra.Command {
 			_ = cmd.Help()
 		},
 	}
+  cmd.CompletionOptions.HiddenDefaultCmd = true
 
 	cmd.AddCommand(ecosystems.NewEcosystemsRootCommand())
 	cmd.AddCommand(snyk.NewSnykRootCommand())

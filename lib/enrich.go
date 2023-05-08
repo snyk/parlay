@@ -223,11 +223,10 @@ func EnrichSBOMWithSnyk(bom *cdx.BOM) *cdx.BOM {
 			if err == nil {
 				packageData := resp.Body
 				var packageDoc issues.IssuesWithPurlsResponse
-				if err := json.Unmarshal(packageData, &packageDoc); err != nil {
-					panic(err)
-				}
-				if packageDoc.Data != nil {
-					vulnerabilities[component] = *packageDoc.Data
+				if err := json.Unmarshal(packageData, &packageDoc); err == nil {
+					if packageDoc.Data != nil {
+						vulnerabilities[component] = *packageDoc.Data
+					}
 				}
 			}
 			wg.Done()

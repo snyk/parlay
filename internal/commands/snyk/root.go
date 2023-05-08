@@ -9,10 +9,12 @@ import (
 
 func NewSnykRootCommand() *cobra.Command {
 	cmd := cobra.Command{
-		Use:          "snyk",
-		Short:        "",
-		Long:         ``,
-		SilenceUsage: true,
+		Use:                   "snyk",
+		Short:                 "",
+		Long:                  ``,
+		Aliases:               []string{"s"},
+		DisableFlagsInUseLine: true,
+		SilenceUsage:          true,
 		Run: func(cmd *cobra.Command, args []string) {
 			_ = cmd.Help()
 		},
