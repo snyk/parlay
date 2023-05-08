@@ -4,28 +4,16 @@
 
 ## Enriching SBOMs
 
-`parlay` will take a CycloneDX document and enrich it with information taken from [ecosyste.ms](https://ecosyste.ms). This currently includes:
+`parlay` will take a CycloneDX document and enrich it with information taken from external services. At present this includes:
 
-| Implemented | Ecosyste.ms  | CycloneDX  |
-|:-:|---|---|
-| :heavy_check_mark: | Homepage  | ExternalReferences type=website |
-| :heavy_check_mark: | FirstReleasePublishedAt  | Properties  |
-| :heavy_check_mark: | LatestReleasePublishedAt  | Properties  |
-| :heavy_check_mark: | RegistryUrl | ExternalReferences type=distribution  |
-| :heavy_check_mark: | RepositoryUrl | ExternalReferences type=vcs |
-| :heavy_check_mark: | DocumentationUrl | ExternalReferences type=documentation |
-| :heavy_check_mark: | RepoMetadata.topics | Properties |
-|  | RepoMetadata.metadata.files.license | Licenses |
-|  | RepoMetadata.metadata.files.license | ExternalReferences type=license |
-|  | RepoMetadata.metadata.files.code_of_conduct | ExternalReferences type=other |
-| :heavy_check_mark: | RepoMetadata.owner_record.name | Author |
-| :heavy_check_mark: | RepoMetadata.owner_record.name | Supplier name |
-| :heavy_check_mark: | RepoMetadata.owner_record.website | Supplier url |
-| :heavy_check_mark: | RepoMetadata.owner_record.location | Properties  |
-| :heavy_check_mark: | RepoMetadata.archived | Properties |
+* [ecosyste.ms](https://ecosyste.ms)
+* [Snyk](https://snyk.io)
 
+By enrich, we mean add additional information. In many cases SBOMs have a minimum of information, often just the name of version of a given package. By enriching that with additional information we can make better decisions about the packages we're using.
 
-## Usage
+## A quick example
+
+Let's take a simple SBOM of a Javascript application. Using `parlay` we enrich it using data from [ecosyste.ms](https://ecosyste.ms), adding information about the package license, external links, the maintainer and more.
 
 ```
 $ cat testing/sbom.cyclonedx.json
@@ -87,18 +75,36 @@ $ cat testing/sbom.cyclonedx.json | parlay e enrich - | jq
 ...
 ```
 
-## Ecosyste.ms utilities
+## Usage
 
-_Note these commands will probably be pulled out into a separate toool, but documenting them for the moment as they make experimenting easier._
-
-Return information on a specific package:
+Return raw JSON information about a specific package from ecosyste.ms:
 
 ```
 parlay ecosystems package pkg:npm/snyk
 ```
 
-Return information on a specific repo:
+Return raw JSON information about a specific repository from ecosyste.ms:
 
 ```
 parlay ecosystems repo https://github.com/open-policy-agent/conftest
 ```
+
+Return raw JSON information about vulnerabilities in a specific package from Snyk:
+
+```
+parlay snyk package pkg:npm/sqliter@1.0.1
+```
+
+Enrich an SBOM with vulnerability information from Snyk
+
+```
+parlay snyk enrich testing/sbom.cyclonedx.json
+```
+
+Note that `parlay` is a fan of stdin and stdout. You can pipe SBOMs from other tools into `parlay`, and pipe between the separate `enrich` commands too. 
+
+Run `parlay --help` for full instructions.
+
+Note the Snyk commands require you to be a Snyk customer, and require passing a valid Snyk API token in the `SNYK_TOKEN` environment variable.
+
+
