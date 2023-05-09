@@ -171,9 +171,11 @@ func enrichComponentsWithEcosystems(bom *cdx.BOM, enrichFuncs []func(cdx.Compone
 			resp, err := GetPackageData(purl)
 			if err == nil {
 				packageData := resp.JSON200
-				for _, enrichFunc := range enrichFuncs {
-					component = enrichFunc(component, *packageData)
-				}
+        if packageData != nil {
+          for _, enrichFunc := range enrichFuncs {
+            component = enrichFunc(component, *packageData)
+          }
+        }
 			}
 			newComponents[i] = component
 			wg.Done()
