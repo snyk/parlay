@@ -3,7 +3,6 @@ package snyk
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io"
 	"os"
 
@@ -19,7 +18,7 @@ func NewEnrichCommand(logger zerolog.Logger) *cobra.Command {
 		Use:   "enrich <sbom>",
 		Short: "Enrich an SBOM with Snyk data",
 		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Run: func(cmd *cobra.Command, args []string) {
 			var err error
 			var b []byte
 			if args[0] == "-" {
@@ -28,22 +27,20 @@ func NewEnrichCommand(logger zerolog.Logger) *cobra.Command {
 				b, err = os.ReadFile(args[0])
 			}
 			if err != nil {
-				return fmt.Errorf("%w", err)
+				logger.Fatal().Err(err).Msg("Problem reading file")
 			}
 
 			bom := new(cdx.BOM)
 			decoder := cdx.NewBOMDecoder(bytes.NewReader(b), cdx.BOMFileFormatJSON)
 			if err = decoder.Decode(bom); err != nil {
-				return fmt.Errorf("%w", err)
+				logger.Fatal().Err(err).Msg("Problem decoding SBOM")
 			}
 
 			bom = lib.EnrichSBOMWithSnyk(bom)
 			err = cdx.NewBOMEncoder(os.Stdout, cdx.BOMFileFormatJSON).Encode(bom)
 			if err != nil {
-				return fmt.Errorf("%w", err)
+				logger.Fatal().Err(err).Msg("Problem encoding SBOM")
 			}
-
-			return nil
 		},
 	}
 	return &cmd

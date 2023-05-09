@@ -17,7 +17,7 @@ func NewRepoCommand(logger zerolog.Logger) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			resp, err := lib.GetRepoData(args[0])
 			if err != nil {
-				logger.Fatal().Err(err)
+				logger.Fatal().Err(err).Msg("An error occured")
 			}
 			fmt.Print(string(resp.Body))
 		},

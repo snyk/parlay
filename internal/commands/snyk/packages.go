@@ -16,14 +16,14 @@ func NewPackageCommand(logger zerolog.Logger) *cobra.Command {
 		Short: "Return package vulnerabilities from Snyk",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			logger.Debug().Str("purl", args[0]).Msg("Looking up package vulnerabilities from Snyk")
 			purl, err := packageurl.FromString(args[0])
 			if err != nil {
-				logger.Fatal().Err(err)
+				logger.Fatal().Err(err).Msg("Not a valid purl")
 			}
+			logger.Debug().Str("purl", args[0]).Msg("Looking up package vulnerabilities from Snyk")
 			resp, err := lib.GetPackageVulnerabilities(purl)
 			if err != nil {
-				logger.Fatal().Err(err)
+				logger.Fatal().Err(err).Msg("An error occured")
 			}
 			fmt.Print(string(resp.Body))
 		},
