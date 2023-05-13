@@ -1,4 +1,4 @@
-package lib
+package ecosystems
 
 import (
 	"net/http"
@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestEnrichSBOMWithEcosystems(t *testing.T) {
+func TestEnrichSBOM(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 
@@ -40,7 +40,7 @@ func TestEnrichSBOMWithEcosystems(t *testing.T) {
 
 	bom.Components = &components
 
-	bom = EnrichSBOMWithEcosystems(bom)
+	bom = EnrichSBOM(bom)
 
 	components = *bom.Components
 	component := components[0]
@@ -82,7 +82,7 @@ func TestEnrichSBOMWithoutLicense(t *testing.T) {
 
 	bom.Components = &components
 
-	bom = EnrichSBOMWithEcosystems(bom)
+	bom = EnrichSBOM(bom)
 
 	components = *bom.Components
 
@@ -125,7 +125,7 @@ func TestEnrichLicense(t *testing.T) {
 
 func TestEnrichBlankSBOM(t *testing.T) {
 	bom := new(cdx.BOM)
-	bom = EnrichSBOMWithEcosystems(bom)
+	bom = EnrichSBOM(bom)
 	assert.Nil(t, bom.Components)
 }
 

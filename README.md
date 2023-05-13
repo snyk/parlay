@@ -107,4 +107,10 @@ Run `parlay --help` for full instructions.
 
 Note the Snyk commands require you to be a Snyk customer, and require passing a valid Snyk API token in the `SNYK_TOKEN` environment variable.
 
+## Supported package types
+
+The various services used to enrich the SBOM data have data for a subset of packages types:
+
+
+
 

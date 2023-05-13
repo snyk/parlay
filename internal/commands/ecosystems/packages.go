@@ -3,7 +3,7 @@ package ecosystems
 import (
 	"fmt"
 
-	"github.com/snyk/parlay/lib"
+	"github.com/snyk/parlay/lib/ecosystems"
 
 	"github.com/package-url/packageurl-go"
 	"github.com/rs/zerolog"
@@ -20,7 +20,7 @@ func NewPackageCommand(logger zerolog.Logger) *cobra.Command {
 			if err != nil {
 				logger.Fatal().Err(err)
 			}
-			resp, err := lib.GetPackageData(purl)
+			resp, err := ecosystems.GetPackageData(purl)
 			if err != nil {
 				logger.Fatal().Err(err)
 			}

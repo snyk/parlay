@@ -3,7 +3,7 @@ package snyk
 import (
 	"fmt"
 
-	"github.com/snyk/parlay/lib"
+	"github.com/snyk/parlay/lib/snyk"
 
 	"github.com/package-url/packageurl-go"
 	"github.com/rs/zerolog"
@@ -21,7 +21,7 @@ func NewPackageCommand(logger zerolog.Logger) *cobra.Command {
 				logger.Fatal().Err(err).Msg("Not a valid purl")
 			}
 			logger.Debug().Str("purl", args[0]).Msg("Looking up package vulnerabilities from Snyk")
-			resp, err := lib.GetPackageVulnerabilities(purl)
+			resp, err := snyk.GetPackageVulnerabilities(purl)
 			if err != nil {
 				logger.Fatal().Err(err).Msg("An error occured")
 			}

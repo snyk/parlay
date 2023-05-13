@@ -3,7 +3,7 @@ package ecosystems
 import (
 	"fmt"
 
-	"github.com/snyk/parlay/lib"
+	"github.com/snyk/parlay/lib/ecosystems"
 
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
@@ -15,7 +15,7 @@ func NewRepoCommand(logger zerolog.Logger) *cobra.Command {
 		Short: "Return repo info from ecosyste.ms",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			resp, err := lib.GetRepoData(args[0])
+			resp, err := ecosystems.GetRepoData(args[0])
 			if err != nil {
 				logger.Fatal().Err(err).Msg("An error occured")
 			}

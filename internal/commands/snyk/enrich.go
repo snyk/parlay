@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/snyk/parlay/lib"
+	"github.com/snyk/parlay/lib/snyk"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/rs/zerolog"
@@ -36,7 +36,7 @@ func NewEnrichCommand(logger zerolog.Logger) *cobra.Command {
 				logger.Fatal().Err(err).Msg("Problem decoding SBOM")
 			}
 
-			bom = lib.EnrichSBOMWithSnyk(bom)
+			bom = snyk.EnrichSBOM(bom)
 			err = cdx.NewBOMEncoder(os.Stdout, cdx.BOMFileFormatJSON).Encode(bom)
 			if err != nil {
 				logger.Fatal().Err(err).Msg("Problem encoding SBOM")
