@@ -15,11 +15,7 @@ const experimentalVersion = "2023-04-28~experimental"
 type selfDocument struct {
 	Data struct {
 		Attributes users.User `json:"attributes,omitempty"`
-		ID         string     `json:"id,omitempty"`
-		Type       string     `json:"type,omitempty"`
 	}
-	Jsonapi users.JsonApi `json:"jsonapi,omitempty"`
-	Links   users.Links   `json:"links,omitempty"`
 }
 
 func getSnykOrg(auth *securityprovider.SecurityProviderApiKey) (*uuid.UUID, error) {
