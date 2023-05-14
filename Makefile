@@ -1,7 +1,7 @@
 build:
 	@go build -v
 
-test:
+test: lint
 	@go test -cover -v ./...
 
 acceptance: build
