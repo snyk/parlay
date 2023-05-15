@@ -117,20 +117,22 @@ func EnrichSBOM(bom *cdx.BOM) *cdx.BOM {
 							Name: "Snyk",
 							URL:  "https://security.snyk.io",
 						}
-						score := float64(*sev.Score)
-						rating := cdx.VulnerabilityRating{
-							Source:   &source,
-							Score:    &score,
-							Severity: levelToCdxSeverity(sev.Level),
-							Method:   "CVSSv31",
-							Vector:   *sev.Vector,
-						}
-						if vuln.Ratings == nil {
-							ratings := []cdx.VulnerabilityRating{rating}
-							vuln.Ratings = &ratings
-						} else {
-							*vuln.Ratings = append(*vuln.Ratings, rating)
-						}
+            if sev.Score != nil {
+              score := float64(*sev.Score)
+              rating := cdx.VulnerabilityRating{
+                Source:   &source,
+                Score:    &score,
+                Severity: levelToCdxSeverity(sev.Level),
+                Method:   "CVSSv31",
+                Vector:   *sev.Vector,
+              }
+              if vuln.Ratings == nil {
+                ratings := []cdx.VulnerabilityRating{rating}
+                vuln.Ratings = &ratings
+              } else {
+                *vuln.Ratings = append(*vuln.Ratings, rating)
+              }
+            }
 					}
 				}
 				vulns = append(vulns, vuln)
