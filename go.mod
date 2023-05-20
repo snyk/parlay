@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/CycloneDX/cyclonedx-go v0.7.1
 	github.com/deepmap/oapi-codegen v1.12.4
+	github.com/edoardottt/depsdev v0.0.3
 	github.com/google/uuid v1.3.0
 	github.com/jarcoal/httpmock v1.3.0
 	github.com/package-url/packageurl-go v0.1.0
@@ -17,6 +18,7 @@ require (
 
 require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
+	github.com/avast/retry-go v3.0.0+incompatible // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect

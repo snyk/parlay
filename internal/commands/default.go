@@ -5,6 +5,7 @@ import (
 
 	"github.com/snyk/parlay/internal/commands/ecosystems"
 	"github.com/snyk/parlay/internal/commands/snyk"
+	"github.com/snyk/parlay/internal/commands/deps"
 
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
@@ -38,6 +39,7 @@ func NewDefaultCommand() *cobra.Command {
 
 	cmd.AddCommand(ecosystems.NewEcosystemsRootCommand(logger))
 	cmd.AddCommand(snyk.NewSnykRootCommand(logger))
+	cmd.AddCommand(deps.NewDepsRootCommand(logger))
 
 	return &cmd
 }
