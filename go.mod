@@ -5,7 +5,6 @@ go 1.23
 require (
 	github.com/CycloneDX/cyclonedx-go v0.9.2
 	github.com/deepmap/oapi-codegen v1.12.4
-	github.com/edoardottt/depsdev v0.0.3
 	github.com/google/uuid v1.5.0
 	github.com/hashicorp/go-retryablehttp v0.7.7
 	github.com/jarcoal/httpmock v1.3.0
@@ -22,7 +21,6 @@ require (
 require (
 	github.com/anchore/go-struct-converter v0.0.0-20221118182256-c68fdcfa2092 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
-	github.com/avast/retry-go v3.0.0+incompatible // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect

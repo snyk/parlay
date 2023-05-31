@@ -119,14 +119,18 @@ func getRetryClient(logger *zerolog.Logger) *http.Client {
 		}
 	}
 	rc.Backoff = func(min, max time.Duration, attemptNum int, resp *http.Response) time.Duration {
-		if resp != nil {
-			if sleep, ok := parseRateLimitHeader(resp.Header.Get("X-RateLimit-Reset")); ok {
-				logger.Warn().
-					Dur("Retry-After", sleep).
-					Msg("Getting rate-limited, waiting...")
-				return sleep
-			}
+		if resp == nil {
+			// For transport/client errors, don't add delay so tests and callers fail fast
+			return 0
 		}
+
+		if sleep, ok := parseRateLimitHeader(resp.Header.Get("X-RateLimit-Reset")); ok {
+			logger.Warn().
+				Dur("Retry-After", sleep).
+				Msg("Getting rate-limited, waiting...")
+			return sleep
+		}
+
 		return retryablehttp.DefaultBackoff(min, max, attemptNum, resp)
 	}
 
