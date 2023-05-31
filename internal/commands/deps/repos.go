@@ -16,12 +16,15 @@ func NewRepoCommand(logger zerolog.Logger) *cobra.Command {
 		Short: "Return repo info from deps.dev",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			proj, err := deps.GetRepoData(args[0])
+			repo, err := deps.GetRepoData(args[0])
 			if err != nil {
-				logger.Fatal().Err(err).Msg("An error occured")
+				logger.Fatal().Err(err).Msg("Error retrieving data from deps.dev")
 			}
-      b, err := json.Marshal(proj)
-			fmt.Print(string(b))
+      repository, err := json.Marshal(repo)
+			if err != nil {
+				logger.Fatal().Err(err).Msg("Error with JSON response from deps.dev")
+			}
+			fmt.Print(string(repository))
 		},
 	}
 	return &cmd
