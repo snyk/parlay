@@ -109,8 +109,35 @@ Note the Snyk commands require you to be a Snyk customer, and require passing a 
 
 ## Supported package types
 
-The various services used to enrich the SBOM data have data for a subset of packages types:
+The various services used to enrich the SBOM data have data for a subset of purl types:
 
+### Ecosystems
 
+* `apk`
+* `cargo`
+* `cocoapods`
+* `composer`
+* `gem`
+* `golang`
+* `hex`
+* `maven`
+* `npm`
+* `nuget`
+* `pypi`
 
+### Snyk
+
+* `apk`
+* `cargo`
+* `cocoapods`
+* `composer`
+* `deb`
+* `gem`
+* `hex`
+* `maven`
+* `npm`
+* `nuget`
+* `pypi`
+* `rpm` 
+* `swift`
 
