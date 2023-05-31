@@ -32,7 +32,11 @@ import (
 	"github.com/snyk/parlay/snyk/issues"
 )
 
-const version = "2024-06-26"
+const (
+	version                   = "2024-06-26"
+	snykVulnerabilityDBWebURL = "https://security.snyk.io"
+	snykAdvisorWebURL         = "https://snyk.io/advisor"
+)
 
 func purlToSnykAdvisor(purl *packageurl.PackageURL) string {
 	return map[string]string{

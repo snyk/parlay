@@ -68,7 +68,7 @@ func enrichCDXLicense(comp *cdx.Component, pkgVersionData *packages.VersionWithD
 	}
 }
 
-func enrichExternalReference(comp *cdx.Component, ref *string, refType cdx.ExternalReferenceType) {
+func enrichCDXExternalReference(comp *cdx.Component, ref *string, refType cdx.ExternalReferenceType) {
 	if ref == nil {
 		return
 	}
@@ -86,7 +86,7 @@ func enrichExternalReference(comp *cdx.Component, ref *string, refType cdx.Exter
 	}
 }
 
-func enrichProperty(comp *cdx.Component, name string, value string) {
+func enrichCDXProperty(comp *cdx.Component, name string, value string) {
 	prop := cdx.Property{
 		Name:  name,
 		Value: value,
@@ -99,19 +99,19 @@ func enrichProperty(comp *cdx.Component, name string, value string) {
 }
 
 func enrichCDXHomepage(comp *cdx.Component, data *packages.Package) {
-	enrichExternalReference(comp, data.Homepage, cdx.ERTypeWebsite)
+	enrichCDXExternalReference(comp, data.Homepage, cdx.ERTypeWebsite)
 }
 
 func enrichCDXRegistryURL(comp *cdx.Component, data *packages.Package) {
-	enrichExternalReference(comp, data.RegistryUrl, cdx.ERTypeDistribution)
+	enrichCDXExternalReference(comp, data.RegistryUrl, cdx.ERTypeDistribution)
 }
 
 func enrichCDXRepositoryURL(comp *cdx.Component, data *packages.Package) {
-	enrichExternalReference(comp, data.RepositoryUrl, cdx.ERTypeVCS)
+	enrichCDXExternalReference(comp, data.RepositoryUrl, cdx.ERTypeVCS)
 }
 
 func enrichCDXDocumentationURL(comp *cdx.Component, data *packages.Package) {
-	enrichExternalReference(comp, data.DocumentationUrl, cdx.ERTypeDocumentation)
+	enrichCDXExternalReference(comp, data.DocumentationUrl, cdx.ERTypeDocumentation)
 }
 
 func enrichCDXFirstReleasePublishedAt(comp *cdx.Component, data *packages.Package) {
@@ -119,7 +119,7 @@ func enrichCDXFirstReleasePublishedAt(comp *cdx.Component, data *packages.Packag
 		return
 	}
 	timestamp := data.FirstReleasePublishedAt.UTC().Format(time.RFC3339)
-	enrichProperty(comp, "ecosystems:first_release_published_at", timestamp)
+	enrichCDXProperty(comp, "ecosystems:first_release_published_at", timestamp)
 }
 
 func enrichCDXLatestReleasePublishedAt(comp *cdx.Component, data *packages.Package) {
@@ -127,13 +127,13 @@ func enrichCDXLatestReleasePublishedAt(comp *cdx.Component, data *packages.Packa
 		return
 	}
 	timestamp := data.LatestReleasePublishedAt.UTC().Format(time.RFC3339)
-	enrichProperty(comp, "ecosystems:latest_release_published_at", timestamp)
+	enrichCDXProperty(comp, "ecosystems:latest_release_published_at", timestamp)
 }
 
 func enrichCDXRepoArchived(comp *cdx.Component, data *packages.Package) {
 	if data.RepoMetadata != nil {
 		if archived, ok := (*data.RepoMetadata)["archived"].(bool); ok && archived {
-			enrichProperty(comp, "ecosystems:repository_archived", "true")
+			enrichCDXProperty(comp, "ecosystems:repository_archived", "true")
 		}
 	}
 }
@@ -143,7 +143,7 @@ func enrichCDXLocation(comp *cdx.Component, data *packages.Package) {
 		meta := *data.RepoMetadata
 		if ownerRecord, ok := meta["owner_record"].(map[string]interface{}); ok {
 			if location, ok := ownerRecord["location"].(string); ok {
-				enrichProperty(comp, "ecosystems:owner_location", location)
+				enrichCDXProperty(comp, "ecosystems:owner_location", location)
 			}
 		}
 	}
@@ -188,7 +188,7 @@ func enrichCDXTopics(comp *cdx.Component, data *packages.Package) {
 		if topics, ok := meta["topics"].([]interface{}); ok {
 			for _, topic := range topics {
 				if s, ok := topic.(string); ok {
-					enrichProperty(comp, "ecosystems:topic", s)
+					enrichCDXProperty(comp, "ecosystems:topic", s)
 				}
 			}
 		}

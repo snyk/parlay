@@ -255,7 +255,7 @@ func TestEnrichExternalReferenceWithNilURL(t *testing.T) {
 	component := &cdx.Component{}
 	packageData := &packages.Package{Homepage: nil}
 
-	enrichExternalReference(component, packageData.Homepage, cdx.ERTypeWebsite)
+	enrichCDXExternalReference(component, packageData.Homepage, cdx.ERTypeWebsite)
 
 	assert.Nil(t, component.ExternalReferences)
 }
@@ -264,7 +264,7 @@ func TestEnrichExternalReferenceWithNonNullURL(t *testing.T) {
 	component := &cdx.Component{}
 	packageData := packages.Package{Homepage: pointerToString(t, "https://example.com")}
 
-	enrichExternalReference(component, packageData.Homepage, cdx.ERTypeWebsite)
+	enrichCDXExternalReference(component, packageData.Homepage, cdx.ERTypeWebsite)
 
 	expected := &[]cdx.ExternalReference{
 		{URL: "https://example.com", Type: cdx.ERTypeWebsite},

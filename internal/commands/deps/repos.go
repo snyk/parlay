@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/snyk/parlay/lib/deps"
+
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
-
-	"github.com/snyk/parlay/lib/deps"
 )
 
 func NewRepoCommand(logger *zerolog.Logger) *cobra.Command {
@@ -16,17 +16,15 @@ func NewRepoCommand(logger *zerolog.Logger) *cobra.Command {
 		Short: "Return repo info from deps.dev",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			repo, err := deps.GetRepoData(args[0])
+			proj, err := deps.GetRepoData(args[0])
 			if err != nil {
-				logger.Fatal().Err(err).Msg("Failed to retrieve data from deps.dev")
+				logger.Fatal().Err(err).Msg("An error occurred")
 			}
-
-			repository, err := json.Marshal(repo)
+			b, err := json.Marshal(proj)
 			if err != nil {
-				logger.Fatal().Err(err).Msg("Failed to parse response from deps.dev")
+				logger.Fatal().Err(err).Msg("Failed to marshal project data")
 			}
-
-			fmt.Print(string(repository))
+			fmt.Print(string(b))
 		},
 	}
 	return &cmd

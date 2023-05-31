@@ -17,13 +17,48 @@
 package deps
 
 import (
-	"github.com/edoardottt/depsdev/pkg/depsdev"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/url"
 )
 
-func GetRepoData(url string) (*depsdev.Project, error) {
-	proj, err := depsdev.GetProject(url)
+// Project represents a deps.dev project with proper field types
+type Project struct {
+	ProjectKey      ProjectKey `json:"projectKey"`
+	OpenIssuesCount int        `json:"openIssuesCount"`
+	StarsCount      int        `json:"starsCount"`
+	Scorecard       Scorecard  `json:"scorecard"`
+}
+
+type ProjectKey struct {
+	ID string `json:"id"`
+}
+
+type Scorecard struct {
+	OverallScore float64 `json:"overallScore"`
+}
+
+func GetRepoData(repoURL string) (*Project, error) {
+	// Build the API URL
+	apiURL := fmt.Sprintf("https://api.deps.dev/v3alpha/projects/%s", url.QueryEscape(repoURL))
+
+	// Make the HTTP request
+	resp, err := http.Get(apiURL)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to make request: %w", err)
 	}
-	return &proj, nil
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API request failed with status %d", resp.StatusCode)
+	}
+
+	// Parse the response
+	var project Project
+	if err := json.NewDecoder(resp.Body).Decode(&project); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return &project, nil
 }
