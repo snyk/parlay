@@ -1,8 +1,8 @@
 package deps
 
 import (
+	"encoding/json"
 	"fmt"
-  "encoding/json"
 
 	"github.com/snyk/parlay/lib/deps"
 
@@ -20,7 +20,7 @@ func NewRepoCommand(logger zerolog.Logger) *cobra.Command {
 			if err != nil {
 				logger.Fatal().Err(err).Msg("An error occured")
 			}
-      b, err := json.Marshal(proj)
+			b, err := json.Marshal(proj)
 			fmt.Print(string(b))
 		},
 	}

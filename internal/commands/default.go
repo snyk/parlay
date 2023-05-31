@@ -3,9 +3,9 @@ package commands
 import (
 	"os"
 
+	"github.com/snyk/parlay/internal/commands/deps"
 	"github.com/snyk/parlay/internal/commands/ecosystems"
 	"github.com/snyk/parlay/internal/commands/snyk"
-	"github.com/snyk/parlay/internal/commands/deps"
 
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"

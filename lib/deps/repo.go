@@ -1,7 +1,7 @@
 package deps
 
 import (
-  "github.com/edoardottt/depsdev/pkg/depsdev"
+	"github.com/edoardottt/depsdev/pkg/depsdev"
 )
 
 func GetRepoData(url string) (*depsdev.Project, error) {
