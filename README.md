@@ -9,9 +9,9 @@
 * [ecosyste.ms](https://ecosyste.ms)
 * [Snyk](https://snyk.io)
 
-By enrich, we mean add additional information. In many cases SBOMs have a minimum of information, often just the name of version of a given package. By enriching that with additional information we can make better decisions about the packages we're using.
+By enrich, we mean add additional information. You put in an SBOM, and you get a richer SBOM back. In many cases SBOMs have a minimum of information, often just the name and version of a given package. By enriching that with additional information we can make better decisions about the packages we're using.
 
-## A quick example
+## Enriching with ecosyste.ms
 
 Let's take a simple SBOM of a Javascript application. Using `parlay` we enrich it using data from [ecosyste.ms](https://ecosyste.ms), adding information about the package license, external links, the maintainer and more.
 
@@ -26,7 +26,7 @@ $ cat testing/sbom.cyclonedx.json
 	"purl": "pkg:npm/subtext@6.0.12"
 }
 ...
-$ cat testing/sbom.cyclonedx.json | parlay e enrich - | jq
+$ cat testing/sbom.cyclonedx.json | parlay ecosystems enrich - | jq
 ...
 {
 	"bom-ref": "68-subtext@6.0.12",
@@ -75,18 +75,72 @@ $ cat testing/sbom.cyclonedx.json | parlay e enrich - | jq
 ...
 ```
 
-## Usage
-
-Return raw JSON information about a specific package from ecosyste.ms:
+There are a few other utility commands for ecosyste.ms as well. The first returns raw JSON information about a specific package from ecosyste.ms:
 
 ```
 parlay ecosystems package pkg:npm/snyk
 ```
 
-Return raw JSON information about a specific repository from ecosyste.ms:
+You can also return raw JSON information about a specific repository:
 
 ```
 parlay ecosystems repo https://github.com/open-policy-agent/conftest
+```
+
+
+## Enriching with Snyk
+
+`parlay` can also enrich an SBOM with Vulnerability information from Snyk.
+
+It's important to note vulnerability data is moment-in-time information. By adding vulnerability information directly to the SBOM this makes the SBOM moment-in-time too.
+
+Note the Snyk commands require you to be a Snyk customer, and require passing a valid Snyk API token in the `SNYK_TOKEN` environment variable.
+
+```
+parlay snyk enrich testing/sbom.cyclonedx.json
+```
+
+Snyk will add a new [vulnerability](https://cyclonedx.org/docs/1.4/json/#vulnerabilities) attribute to the SBOM, for example:
+
+```
+"vulnerabilities": [
+  {
+    "bom-ref": "68-subtext@6.0.12",
+    "id": "SNYK-JS-SUBTEXT-467257",
+    "ratings": [
+      {
+        "source": {
+          "name": "Snyk",
+          "url": "https://security.snyk.io"
+        },
+        "score": 7.5,
+        "severity": "high",
+        "method": "CVSSv31",
+        "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+      }
+    ],
+    "cwes": [
+      400
+    ],
+    "description": "Denial of Service (DoS)",
+    "detail": "...",
+    "advisories": [
+      {
+        "title": "GitHub Commit",
+        "url": "https://github.com/brave-intl/subtext/commit/9557c115b1384191a0d6e4a9ea028fedf8b44ae6"
+      },
+      {
+        "title": "GitHub Issue",
+        "url": "https://github.com/hapijs/subtext/issues/72"
+      },
+      {
+        "title": "NPM Security Advisory",
+        "url": "https://www.npmjs.com/advisories/1168"
+      }
+    ],
+    "created": "2019-09-19T10:25:11Z",
+    "updated": "2020-12-14T14:41:09Z"
+  }
 ```
 
 Return raw JSON information about vulnerabilities in a specific package from Snyk:
@@ -95,17 +149,45 @@ Return raw JSON information about vulnerabilities in a specific package from Sny
 parlay snyk package pkg:npm/sqliter@1.0.1
 ```
 
-Enrich an SBOM with vulnerability information from Snyk
+## What about enriching with other data sources?
+
+There are lots of other sources of package data, and it would be great to add support for them in `parlay`. Please open issues and PRs with ideas.
+
+
+## Pipes!
+
+`parlay` is a fan of stdin and stdout. You can pipe SBOMs from other tools into `parlay`, and pipe between the separate `enrich` commands too. 
+
+Maybe you want to enrich an SBOM with both ecosyste.ms and Snyk data: 
 
 ```
-parlay snyk enrich testing/sbom.cyclonedx.json
+cat testing/sbom.cyclonedx.json | ./parlay e enrich - | ./parlay s enrich - | jq
 ```
 
-Note that `parlay` is a fan of stdin and stdout. You can pipe SBOMs from other tools into `parlay`, and pipe between the separate `enrich` commands too. 
+Maybe you want to take the output from Syft and add vulnerabilitity data?
 
-Run `parlay --help` for full instructions.
+```
+syft -o cyclonedx-json nginx | parlay s enrich - | jq
+```
 
-Note the Snyk commands require you to be a Snyk customer, and require passing a valid Snyk API token in the `SNYK_TOKEN` environment variable.
+Maybe you want to geneate an SBOM with `cdxgen`, enrich that with extra information, and test that with `bomber`:
+
+```
+cdxgen -o | parlay e enrich -  | bomber scan --provider snyk -
+```
+
+The ecosyste.ms enrichment adds license information, which Bomber then surfaces:
+
+```
+■ Ecosystems detected: gem
+■ Scanning 18 packages for vulnerabilities...
+■ Vulnerability Provider: Snyk (https://security.snyk.io)
+
+■ Files Scanned
+        - (sha256:701770b2317ea8cbd03aa398ecb6a0381c85beaf24d46c45665b53331816e360)
+
+■ Licenses Found: MIT, Apache-2.0, BSD-3-Clause, Ruby
+```
 
 ## Supported package types
 
