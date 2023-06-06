@@ -20,19 +20,20 @@ builds:
  # - "-X github.com/snyk/parlay/internal/commands.version={{.Version}}"
 
 archives:
-- replacements:
-    darwin: Darwin
-    linux: Linux
-    windows: Windows
-    386: i386
-    amd64: x86_64
-  format: tar.gz
+- format: tar.gz
+  rlcp: true
+  name_template: >-
+    {{ .ProjectName }}_
+    {{- title .Os }}_
+    {{- if eq .Arch "amd64" }}x86_64
+    {{- else if eq .Arch "386" }}i386
+    {{- else }}{{ .Arch }}{{ end }}
   format_overrides:
-  - goos: windows
-    format: zip
+    - goos: windows
+      format: zip
   files:
-#      - LICENSE
-      - README.md
+    #    - LICENSE
+    - README.md
 
 checksum:
   name_template: 'checksums.txt'
@@ -60,9 +61,26 @@ changelog:
 # Publishes the deb and rpm files to the GitHub releases page.
 nfpms:
   - bindir: /usr/bin
-    description: "Test your configuration using Open Policy Agent"
+    description: "Enrich SBOMs with Parlay"
     formats:
       - deb
       - rpm
     homepage: https://github.com/snyk/parlay
     maintainer: garethr <gareth.rushgrove@snyk.io>
+
+source:
+  rlcp: true
+  enabled: true
+
+sboms:
+  - id: cyclonedx
+    artifacts: source
+    args: ["$artifact", "--file", "$document", "--output", "cyclonedx-json"]
+    documents:
+      - "{{ .Binary }}_{{ .Version }}.cyclonedx.sbom"
+  - id: spdx
+    artifacts: source
+    args: ["$artifact", "--file", "$document", "--output", "spdx-json"]
+    documents:
+      - "{{ .Binary }}-{{ .Version }}.spdx.sbom"
+
