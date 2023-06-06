@@ -1,6 +1,7 @@
 # Parlay
 
 [![CI](https://github.com/snyk/parlay/actions/workflows/ci.yml/badge.svg)](https://github.com/snyk/parlay/actions/workflows/ci.yml)
+[![Security](https://github.com/snyk/parlay/actions/workflows/security.yml/badge.svg)](https://github.com/snyk/parlay/actions/workflows/security.yml)
 
 ## Enriching SBOMs
 
