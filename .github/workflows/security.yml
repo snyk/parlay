@@ -1,0 +1,31 @@
+name: Security
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron:  "0 0 * * 0"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.20.3
+
+    - uses: snyk/actions/setup@master
+
+		- name: Snyk Open Source 
+      run: snyk test
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+		- name: Snyk Code
+      run: snyk code test
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
