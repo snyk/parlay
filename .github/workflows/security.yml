@@ -20,12 +20,12 @@ jobs:
 
     - uses: snyk/actions/setup@master
 
-		- name: Snyk Open Source 
+    - name: Snyk Open Source 
       run: snyk test
       env:
         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
-		- name: Snyk Code
+    - name: Snyk Code
       run: snyk code test
       env:
         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
