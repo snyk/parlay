@@ -189,6 +189,17 @@ The ecosyste.ms enrichment adds license information, which Bomber then surfaces:
 ■ Licenses Found: MIT, Apache-2.0, BSD-3-Clause, Ruby
 ```
 
+
+## Installation
+
+`parlay` binaries are available from [GitHub Releases](https://github.com/snyk/parlay/releases). Just select the archive for your operating system and architecture. For instance, you could download for macOS ARM machines with the following, substituting `{version}` for the latest version number.
+
+```
+wget https://github.com/snyk/parlay/releases/download/v{version}/parlay_{version}_Darwin_arm64.tar.gz
+tar -xvf parlay_{version}_Darwin_arm64.tar.gz
+```
+
+
 ## Supported package types
 
 The various services used to enrich the SBOM data have data for a subset of purl types:
