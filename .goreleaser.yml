@@ -1,6 +1,7 @@
 before:
   hooks:
   - go mod download
+  - go-licenses save . --save_path=licenses --force
 
 builds:
 - main: ./main.go
