@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# install the go license checker tool
+tools:
+	@go install github.com/google/go-licenses@latest
+
 build:
 	@go build -v
 
