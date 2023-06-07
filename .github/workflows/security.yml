@@ -7,8 +7,15 @@ on:
   schedule:
     - cron:  "0 0 * * 0"
 
+  workflow_call:
+    secrets:
+      GITLEAKS_LICENSE:
+        required: true
+      SNYK_TOKEN:
+        required: true
+
 jobs:
-  build:
+  security:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -29,3 +36,9 @@ jobs:
       run: snyk code test
       env:
         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+		- name: Gitleaks		
+  	- uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE}}
