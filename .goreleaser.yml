@@ -1,7 +1,10 @@
 before:
   hooks:
   - go mod download
-  - go-licenses save . --save_path=licenses --force
+  - go install github.com/google/go-licenses@latest
+  - go-licenses save . --save_path=./acknowledgements --force --ignore github.com/package-url/packageurl-go
+  - tar -cvf ./acknowledgements.tar.gz -C ./acknowledgements .
+  - rm -rf ./acknowledgements
 
 builds:
 - main: ./main.go
@@ -38,6 +41,10 @@ archives:
 
 checksum:
   name_template: 'checksums.txt'
+
+release:
+  extra_files:
+    - glob: ./acknowledgements.tar.gz
 
 changelog:
   use: github
