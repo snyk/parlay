@@ -2,7 +2,7 @@ before:
   hooks:
   - go mod download
   - go install github.com/google/go-licenses@latest
-  - go-licenses save . --save_path=./acknowledgements --force --ignore github.com/package-url/packageurl-go
+  - go-licenses save . --save_path=./acknowledgements --force
   - tar -cvf ./acknowledgements.tar.gz -C ./acknowledgements .
   - rm -rf ./acknowledgements
 

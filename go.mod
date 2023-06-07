@@ -8,7 +8,7 @@ require (
 	github.com/edoardottt/depsdev v0.0.3
 	github.com/google/uuid v1.3.0
 	github.com/jarcoal/httpmock v1.3.0
-	github.com/package-url/packageurl-go v0.1.0
+	github.com/package-url/packageurl-go v0.1.1-0.20220428063043-89078438f170
 	github.com/remeh/sizedwaitgroup v1.0.0
 	github.com/rs/zerolog v1.29.1
 	github.com/spf13/cobra v1.7.0
