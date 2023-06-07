@@ -1,0 +1,4 @@
+[whitelist]
+files = [
+    "specs/snyk-experimental.jsonl",
+]
