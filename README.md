@@ -193,11 +193,11 @@ The ecosyste.ms enrichment adds license information, which Bomber then surfaces:
 
 ## Installation
 
-`parlay` binaries are available from [GitHub Releases](https://github.com/snyk/parlay/releases). Just select the archive for your operating system and architecture. For instance, you could download for macOS ARM machines with the following, substituting `{version}` for the latest version number.
+`parlay` binaries are available from [GitHub Releases](https://github.com/snyk/parlay/releases). Just select the archive for your operating system and architecture. For instance, you could download for macOS ARM machines with the following, substituting `{version}` for the latest version number, for instance `0.1.4`.
 
 ```
-wget https://github.com/snyk/parlay/releases/download/v{version}/parlay_{version}_Darwin_arm64.tar.gz
-tar -xvf parlay_{version}_Darwin_arm64.tar.gz
+wget https://github.com/snyk/parlay/releases/download/v{version}/parlay_Darwin_arm64.tar.gz
+tar -xvf parlay_Darwin_arm64.tar.gz
 ```
 
 
