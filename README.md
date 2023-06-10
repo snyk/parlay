@@ -9,6 +9,7 @@
 
 * [ecosyste.ms](https://ecosyste.ms)
 * [Snyk](https://snyk.io)
+* [OpenSSF Scorecard](https://securityscorecards.dev/)
 
 By enrich, we mean add additional information. You put in an SBOM, and you get a richer SBOM back. In many cases SBOMs have a minimum of information, often just the name and version of a given package. By enriching that with additional information we can make better decisions about the packages we're using.
 
@@ -103,7 +104,7 @@ parlay snyk enrich testing/sbom.cyclonedx.json
 
 Snyk will add a new [vulnerability](https://cyclonedx.org/docs/1.4/json/#vulnerabilities) attribute to the SBOM, for example:
 
-```
+```json
 "vulnerabilities": [
   {
     "bom-ref": "68-subtext@6.0.12",
@@ -149,6 +150,39 @@ Return raw JSON information about vulnerabilities in a specific package from Sny
 ```
 parlay snyk package pkg:npm/sqliter@1.0.1
 ```
+
+## Enriching with OpenSSF Scorecard
+
+The [OpenSSF Scorecard project](https://securityscorecards.dev/) tests various aspects of a projects security posture and provides a score. `parlay` supports added a link to this data with the `parlay scorecard enrich` command.
+
+
+You can use this like so:
+
+```
+parlay scorecard enrich testing/sbom2.cyclonedx.json
+```
+
+This will currently add an external reference to the [Scorecard API](https://api.securityscorecards.dev/) which can be used to retrieve the full scorecard.
+
+```json
+{
+  "bom-ref": "103-org.springframework:spring-webmvc@5.3.3",
+  "type": "library",
+  "name": "org.springframework:spring-webmvc",
+  "version": "5.3.3",
+  "purl": "pkg:maven/org.springframework/spring-webmvc@5.3.3",
+  "externalReferences": [
+    {
+      "url": "https://api.securityscorecards.dev/projects/github.com/spring-projects/spring-framework",
+      "comment": "OpenSSF Scorecard",
+      "type": "other"
+    }
+  ]
+},
+```
+
+We're currently looking at the best way of encoding some of the scorecard data in the SBOM itself as well.
+
 
 ## What about enriching with other data sources?
 
@@ -235,3 +269,18 @@ The various services used to enrich the SBOM data have data for a subset of purl
 * `rpm` 
 * `swift`
 
+### OpenSSF Scorecard
+
+* `apk`
+* `cargo`
+* `cocoapods`
+* `composer`
+* `gem`
+* `golang`
+* `hex`
+* `maven`
+* `npm`
+* `nuget`
+* `pypi`
+
+Note that Scorecard data is available only for a subset of projects from supported Git repositories. See the [Scorecard project](https://github.com/ossf/scorecard) for more information.
