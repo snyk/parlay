@@ -51,7 +51,7 @@ func GetVersion(logger zerolog.Logger) *cobra.Command {
 			// Get the latest tag name
 			if len(tags) > 0 {
 				latestTag := tags[0].Name
-				fmt.Sprintf("The current version of the parlay is : %s ", string(latestTag))
+				fmt.Printf("The current version of the parlay is : %s ", string(latestTag))
 			} else {
 				fmt.Println("No tags found for the repository.")
 			}
