@@ -13,6 +13,11 @@ import (
 	"github.com/snyk/parlay/internal/commands/snyk"
 )
 
+// These values are set at build time
+var (
+	version = ""
+)
+
 func NewDefaultCommand() *cobra.Command {
 	output := zerolog.ConsoleWriter{Out: os.Stderr}
 	logger := zerolog.New(output).With().Timestamp().Logger()
@@ -21,6 +26,7 @@ func NewDefaultCommand() *cobra.Command {
 		Use:                   "parlay",
 		Short:                 "Enrich an SBOM with context from third party services",
 		SilenceUsage:          true,
+		Version:               GetVersion(),
 		DisableFlagsInUseLine: true,
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := cmd.Help(); err != nil {
@@ -40,10 +46,16 @@ func NewDefaultCommand() *cobra.Command {
 	cmd.PersistentFlags().Bool("debug", false, "")
 	viper.BindPFlag("debug", cmd.PersistentFlags().Lookup("debug")) //nolint:errcheck
 
+	cmd.SetVersionTemplate(`{{.Version}}`)
+
 	cmd.AddCommand(ecosystems.NewEcosystemsRootCommand(logger))
 	cmd.AddCommand(snyk.NewSnykRootCommand(logger))
 	cmd.AddCommand(deps.NewDepsRootCommand(logger))
 	cmd.AddCommand(scorecard.NewRootCommand(logger))
 
 	return &cmd
+}
+
+func GetVersion() string {
+	return version
 }
