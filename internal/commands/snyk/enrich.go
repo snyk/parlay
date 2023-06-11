@@ -1,11 +1,10 @@
 package snyk
 
 import (
-	"bufio"
 	"bytes"
-	"io"
 	"os"
 
+	"github.com/snyk/parlay/internal/utils"
 	"github.com/snyk/parlay/lib/snyk"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
@@ -19,15 +18,9 @@ func NewEnrichCommand(logger zerolog.Logger) *cobra.Command {
 		Short: "Enrich an SBOM with Snyk data",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			var err error
-			var b []byte
-			if args[0] == "-" {
-				b, err = io.ReadAll(bufio.NewReader(os.Stdin))
-			} else {
-				b, err = os.ReadFile(args[0])
-			}
+			b, err := utils.GetUserInput(args[0], os.Stdin)
 			if err != nil {
-				logger.Fatal().Err(err).Msg("Problem reading file")
+				logger.Fatal().Err(err).Msg("Problem reading input")
 			}
 
 			bom := new(cdx.BOM)
