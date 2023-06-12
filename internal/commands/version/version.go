@@ -1,10 +1,9 @@
 package version
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
+	"os/exec"
+	"strings"
 
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
@@ -18,46 +17,26 @@ func GetVersion(logger zerolog.Logger) *cobra.Command {
 		DisableFlagsInUseLine: true,
 		SilenceUsage:          true,
 		Run: func(cmd *cobra.Command, args []string) {
-
-			type Tag struct {
-				Name string `json:"name"`
-			}
-
-			repoURL := "https://api.github.com/repos/snyk/parlay/tags"
-
-			// Send GET request to the GitHub API
-			response, err := http.Get(repoURL)
+			tag, err := getCurrentTag()
 			if err != nil {
-				fmt.Printf("Error sending request: %s\n", err.Error())
-				return
-			}
-			defer response.Body.Close()
-
-			// Read the response body
-			body, err := ioutil.ReadAll(response.Body)
-			if err != nil {
-				fmt.Printf("Error reading response: %s\n", err.Error())
-				return
+				fmt.Println(err)
 			}
 
-			// Parse the JSON response
-			var tags []Tag
-			err = json.Unmarshal(body, &tags)
-			if err != nil {
-				fmt.Printf("Error parsing JSON: %s\n", err.Error())
-				return
-			}
-
-			// Get the latest tag name
-			if len(tags) > 0 {
-				latestTag := tags[0].Name
-				fmt.Printf("The current version of the parlay is : %s ", string(latestTag))
-			} else {
-				fmt.Println("No tags found for the repository.")
-			}
-
+			fmt.Println("Current version of the application :", tag)
 		},
 	}
 
 	return &cmd
+}
+
+// git tag --points-at HEAD
+func getCurrentTag() (string, error) {
+	cmd := exec.Command("git", "describe", "--tags", "--abbrev=0")
+	output, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+
+	tag := strings.TrimSpace(string(output))
+	return tag, nil
 }
