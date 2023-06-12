@@ -1,7 +1,6 @@
 package ecosystems
 
 import (
-	"bytes"
 	"os"
 
 	"github.com/snyk/parlay/internal/utils"
@@ -23,16 +22,16 @@ func NewEnrichCommand(logger zerolog.Logger) *cobra.Command {
 				logger.Fatal().Err(err).Msg("Problem reading input")
 			}
 
-			bom := new(cdx.BOM)
-			decoder := cdx.NewBOMDecoder(bytes.NewReader(b), cdx.BOMFileFormatJSON)
-			if err = decoder.Decode(bom); err != nil {
-				logger.Fatal().Err(err).Msg("Input needs to be a valid CycloneDX SBOM")
-			}
+			maybeBOM, serialize := utils.IdentifySBOM(b)
 
-			bom = ecosystems.EnrichSBOM(bom)
-			err = cdx.NewBOMEncoder(os.Stdout, cdx.BOMFileFormatJSON).Encode(bom)
-			if err != nil {
-				logger.Fatal().Err(err).Msg("Failed to envode new SBOM")
+			switch bom := maybeBOM.(type) {
+			case *cdx.BOM:
+				bom = ecosystems.EnrichSBOM(bom)
+				if err := serialize(bom, os.Stdout); err != nil {
+					logger.Fatal().Err(err).Msg("Failed to write to Stdout")
+				}
+			default:
+				logger.Fatal().Err(err).Msg("Input needs to be a valid CycloneDX SBOM")
 			}
 		},
 	}
