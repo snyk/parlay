@@ -17,14 +17,32 @@
 package ecosystems
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/snyk/parlay/ecosystems/packages"
+	"github.com/snyk/parlay/internal/utils"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/package-url/packageurl-go"
 	"github.com/remeh/sizedwaitgroup"
 )
+
+var enrichFuncs = []func(cdx.Component, packages.Package) cdx.Component{
+	enrichDescription,
+	enrichLicense,
+	enrichHomepage,
+	enrichRegistryURL,
+	enrichRepositoryURL,
+	enrichDocumentationURL,
+	enrichFirstReleasePublishedAt,
+	enrichLatestReleasePublishedAt,
+	enrichRepoArchived,
+	enrichLocation,
+	enrichTopics,
+	enrichAuthor,
+	enrichSupplier,
+}
 
 func enrichDescription(component cdx.Component, packageData packages.Package) cdx.Component {
 	if packageData.Description != nil {
@@ -197,27 +215,20 @@ func enrichComponentsWithEcosystems(bom *cdx.BOM, enrichFuncs []func(cdx.Compone
 	bom.Components = &newComponents
 }
 
-func EnrichSBOM(bom *cdx.BOM) *cdx.BOM {
+func enrichCDXDoc(bom *cdx.BOM) {
 	if bom.Components == nil {
-		return bom
-	}
-
-	enrichFuncs := []func(cdx.Component, packages.Package) cdx.Component{
-		enrichDescription,
-		enrichLicense,
-		enrichHomepage,
-		enrichRegistryURL,
-		enrichRepositoryURL,
-		enrichDocumentationURL,
-		enrichFirstReleasePublishedAt,
-		enrichLatestReleasePublishedAt,
-		enrichRepoArchived,
-		enrichLocation,
-		enrichTopics,
-		enrichAuthor,
-		enrichSupplier,
+		return
 	}
 
 	enrichComponentsWithEcosystems(bom, enrichFuncs)
-	return bom
+}
+
+func EnrichSBOM(doc *utils.SBOMDocument) error {
+	switch bom := doc.BOM.(type) {
+	case *cdx.BOM:
+		enrichCDXDoc(bom)
+	default:
+		return fmt.Errorf("cannot enrich BOM of type %T", bom)
+	}
+	return nil
 }

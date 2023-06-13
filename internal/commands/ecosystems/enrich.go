@@ -1,18 +1,19 @@
 package ecosystems
 
 import (
-	"bytes"
 	"os"
 
+	"github.com/snyk/parlay/internal/flags"
 	"github.com/snyk/parlay/internal/utils"
 	"github.com/snyk/parlay/lib/ecosystems"
 
-	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 )
 
 func NewEnrichCommand(logger zerolog.Logger) *cobra.Command {
+	var format *flags.SBOMFormat
+
 	cmd := cobra.Command{
 		Use:   "enrich <sbom>",
 		Short: "Enrich an SBOM with ecosyste.ms data",
@@ -23,18 +24,25 @@ func NewEnrichCommand(logger zerolog.Logger) *cobra.Command {
 				logger.Fatal().Err(err).Msg("Problem reading input")
 			}
 
-			bom := new(cdx.BOM)
-			decoder := cdx.NewBOMDecoder(bytes.NewReader(b), cdx.BOMFileFormatJSON)
-			if err = decoder.Decode(bom); err != nil {
-				logger.Fatal().Err(err).Msg("Input needs to be a valid CycloneDX SBOM")
+			bom, err := utils.UnmarshalSBOM(b, format)
+			if err != nil {
+				logger.Fatal().Err(err).Msg("Failed to decode SBOM input")
 			}
 
-			bom = ecosystems.EnrichSBOM(bom)
-			err = cdx.NewBOMEncoder(os.Stdout, cdx.BOMFileFormatJSON).Encode(bom)
-			if err != nil {
-				logger.Fatal().Err(err).Msg("Failed to envode new SBOM")
+			if err := ecosystems.EnrichSBOM(bom); err != nil {
+				logger.Fatal().Err(err).Msg("Failed to enrich SBOM")
+			}
+
+			if err := bom.Encode(os.Stdout); err != nil {
+				logger.Fatal().Err(err).Msg("Failed to encode new SBOM")
 			}
 		},
 	}
+
+	format, err := flags.AddFormatFlag(&cmd)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to set up enrich command")
+	}
+
 	return &cmd
 }
