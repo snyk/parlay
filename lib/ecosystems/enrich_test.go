@@ -22,10 +22,12 @@ import (
 	"time"
 
 	"github.com/snyk/parlay/ecosystems/packages"
+	"github.com/snyk/parlay/lib/sbom"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestEnrichSBOM(t *testing.T) {
@@ -42,30 +44,32 @@ func TestEnrichSBOM(t *testing.T) {
 			})
 		})
 
-	bom := new(cdx.BOM)
-
-	components := []cdx.Component{
-		{
-			BOMRef:     "pkg:golang/github.com/CycloneDX/cyclonedx-go@v0.3.0",
-			Type:       cdx.ComponentTypeLibrary,
-			Name:       "cyclonedx-go",
-			Version:    "v0.3.0",
-			PackageURL: "pkg:golang/github.com/CycloneDX/cyclonedx-go@v0.3.0",
+	doc := sbom.SBOMDocument{
+		BOM: &cdx.BOM{
+			Components: &[]cdx.Component{
+				{
+					BOMRef:     "pkg:golang/github.com/CycloneDX/cyclonedx-go@v0.3.0",
+					Type:       cdx.ComponentTypeLibrary,
+					Name:       "cyclonedx-go",
+					Version:    "v0.3.0",
+					PackageURL: "pkg:golang/github.com/CycloneDX/cyclonedx-go@v0.3.0",
+				},
+			},
 		},
 	}
 
-	bom.Components = &components
+	err := EnrichSBOM(&doc)
+	require.NoError(t, err)
 
-	bom = EnrichSBOM(bom)
+	bom, ok := doc.BOM.(*cdx.BOM)
+	require.True(t, ok)
 
-	components = *bom.Components
+	components := *bom.Components
 	component := components[0]
 	licenses := *component.Licenses
 
-	comp := cdx.LicenseChoice(cdx.LicenseChoice{Expression: "BSD-3-Clause"})
-
 	assert.Equal(t, "description", components[0].Description)
-	assert.Equal(t, comp, licenses[0])
+	assert.Equal(t, cdx.LicenseChoice(cdx.LicenseChoice{Expression: "BSD-3-Clause"}), licenses[0])
 
 	httpmock.GetTotalCallCount()
 	calls := httpmock.GetCallCountInfo()
@@ -76,31 +80,37 @@ func TestEnrichSBOMWithoutLicense(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 
-	httpmock.RegisterResponder("GET", `=~^https://packages.ecosyste.ms/api/v1/registries`,
+	httpmock.RegisterResponder(
+		"GET", `=~^https://packages.ecosyste.ms/api/v1/registries`,
 		func(req *http.Request) (*http.Response, error) {
 			return httpmock.NewJsonResponse(200, map[string]interface{}{
 				"description":         "description",
 				"normalized_licenses": []string{},
 			})
-		})
+		},
+	)
 
-	bom := new(cdx.BOM)
-
-	components := []cdx.Component{
-		{
-			BOMRef:     "pkg:golang/github.com/CycloneDX/cyclonedx-go@v0.3.0",
-			Type:       cdx.ComponentTypeLibrary,
-			Name:       "cyclonedx-go",
-			Version:    "v0.3.0",
-			PackageURL: "pkg:golang/github.com/CycloneDX/cyclonedx-go@v0.3.0",
+	doc := sbom.SBOMDocument{
+		BOM: &cdx.BOM{
+			Components: &[]cdx.Component{
+				{
+					BOMRef:     "pkg:golang/github.com/CycloneDX/cyclonedx-go@v0.3.0",
+					Type:       cdx.ComponentTypeLibrary,
+					Name:       "cyclonedx-go",
+					Version:    "v0.3.0",
+					PackageURL: "pkg:golang/github.com/CycloneDX/cyclonedx-go@v0.3.0",
+				},
+			},
 		},
 	}
 
-	bom.Components = &components
+	err := EnrichSBOM(&doc)
+	require.NoError(t, err)
 
-	bom = EnrichSBOM(bom)
+	bom, ok := doc.BOM.(*cdx.BOM)
+	require.True(t, ok)
 
-	components = *bom.Components
+	components := *bom.Components
 
 	assert.Equal(t, "description", components[0].Description)
 
@@ -140,8 +150,11 @@ func TestEnrichLicense(t *testing.T) {
 }
 
 func TestEnrichBlankSBOM(t *testing.T) {
-	bom := new(cdx.BOM)
-	bom = EnrichSBOM(bom)
+	doc := sbom.SBOMDocument{BOM: new(cdx.BOM)}
+	err := EnrichSBOM(&doc)
+	require.NoError(t, err)
+	bom, ok := doc.BOM.(*cdx.BOM)
+	require.True(t, ok)
 	assert.Nil(t, bom.Components)
 }
 

@@ -6,13 +6,14 @@ import (
 	"github.com/snyk/parlay/internal/flags"
 	"github.com/snyk/parlay/internal/utils"
 	"github.com/snyk/parlay/lib/ecosystems"
+	"github.com/snyk/parlay/lib/sbom"
 
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 )
 
 func NewEnrichCommand(logger zerolog.Logger) *cobra.Command {
-	var format *flags.SBOMFormat
+	var format *flags.FormatFlagVal
 
 	cmd := cobra.Command{
 		Use:   "enrich <sbom>",
@@ -24,7 +25,7 @@ func NewEnrichCommand(logger zerolog.Logger) *cobra.Command {
 				logger.Fatal().Err(err).Msg("Problem reading input")
 			}
 
-			bom, err := utils.UnmarshalSBOM(b, format)
+			bom, err := sbom.UnmarshalSBOM(b, flags.FlagToSBOMFormat(format))
 			if err != nil {
 				logger.Fatal().Err(err).Msg("Failed to decode SBOM input")
 			}

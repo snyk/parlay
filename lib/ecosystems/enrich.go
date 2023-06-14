@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/snyk/parlay/ecosystems/packages"
-	"github.com/snyk/parlay/internal/utils"
+	"github.com/snyk/parlay/lib/sbom"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/package-url/packageurl-go"
@@ -223,7 +223,7 @@ func enrichCDXDoc(bom *cdx.BOM) {
 	enrichComponentsWithEcosystems(bom, enrichFuncs)
 }
 
-func EnrichSBOM(doc *utils.SBOMDocument) error {
+func EnrichSBOM(doc *sbom.SBOMDocument) error {
 	switch bom := doc.BOM.(type) {
 	case *cdx.BOM:
 		enrichCDXDoc(bom)

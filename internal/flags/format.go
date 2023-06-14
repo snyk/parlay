@@ -4,26 +4,33 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/snyk/parlay/lib/sbom"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
-type SBOMFormat string
+type FormatFlagVal string
 
 const (
-	SBOMFormatCycloneDX1_4JSON = SBOMFormat("cyclonedx+json")
-	SBOMFormatCycloneDX1_4XML  = SBOMFormat("cyclonedx+xml")
+	SBOMFormatCycloneDX1_4JSON = FormatFlagVal("cyclonedx+json")
+	SBOMFormatCycloneDX1_4XML  = FormatFlagVal("cyclonedx+xml")
 )
 
-func (f *SBOMFormat) String() string {
+var flagToSBOMFormat = map[FormatFlagVal]sbom.SBOMFormat{
+	SBOMFormatCycloneDX1_4JSON: sbom.SBOMFormatCycloneDX1_4JSON,
+	SBOMFormatCycloneDX1_4XML:  sbom.SBOMFormatCycloneDX1_4XML,
+}
+
+func (f *FormatFlagVal) String() string {
 	return string(*f)
 }
 
-func (f *SBOMFormat) Set(v string) error {
+func (f *FormatFlagVal) Set(v string) error {
 	switch v {
 	case string(SBOMFormatCycloneDX1_4JSON), string(SBOMFormatCycloneDX1_4XML):
-		*f = SBOMFormat(v)
+		*f = FormatFlagVal(v)
 		return nil
 	default:
 		return fmt.Errorf("must be one of %s", strings.Join([]string{
@@ -33,14 +40,14 @@ func (f *SBOMFormat) Set(v string) error {
 	}
 }
 
-func (f *SBOMFormat) Type() string {
+func (f *FormatFlagVal) Type() string {
 	return "<sbom-format>"
 }
 
-var _ pflag.Value = (*SBOMFormat)(nil)
+var _ pflag.Value = (*FormatFlagVal)(nil)
 
-func AddFormatFlag(cmd *cobra.Command) (*SBOMFormat, error) {
-	var format SBOMFormat
+func AddFormatFlag(cmd *cobra.Command) (*FormatFlagVal, error) {
+	var format FormatFlagVal
 
 	cmd.Flags().Var(&format, "format", "Specify the given SBOM format.")
 
@@ -53,4 +60,9 @@ func AddFormatFlag(cmd *cobra.Command) (*SBOMFormat, error) {
 	}
 
 	return &format, nil
+}
+
+func FlagToSBOMFormat(f *FormatFlagVal) *sbom.SBOMFormat {
+	format := flagToSBOMFormat[*f]
+	return &format
 }

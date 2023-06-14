@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"os"
 
-  "github.com/snyk/parlay/internal/utils"
+	"github.com/snyk/parlay/internal/utils"
 	"github.com/snyk/parlay/lib/scorecard"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
