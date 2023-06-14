@@ -28,6 +28,8 @@ func UnmarshalSBOM(b []byte, f *SBOMFormat) (*SBOMDocument, error) {
 		return decodeCDX_JSON(b)
 	case SBOMFormatCycloneDX1_4XML:
 		return decodeCDX_XML(b)
+	case SBOMFormatSPDX2_3JSON:
+		return decodeSPDX2_3JSON(b)
 	default:
 		return nil, errors.New("unsupported format given")
 	}

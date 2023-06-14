@@ -22,6 +22,7 @@ import (
 
 	"github.com/snyk/parlay/ecosystems/packages"
 	"github.com/snyk/parlay/lib/sbom"
+	"github.com/spdx/tools-golang/spdx/v2/v2_3"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/package-url/packageurl-go"
@@ -227,6 +228,8 @@ func EnrichSBOM(doc *sbom.SBOMDocument) error {
 	switch bom := doc.BOM.(type) {
 	case *cdx.BOM:
 		enrichCDXDoc(bom)
+	case *v2_3.Document:
+		enrichSPDXDoc(bom)
 	default:
 		return fmt.Errorf("cannot enrich BOM of type %T", bom)
 	}

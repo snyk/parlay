@@ -16,11 +16,14 @@ type FormatFlagVal string
 const (
 	SBOMFormatCycloneDX1_4JSON = FormatFlagVal("cyclonedx+json")
 	SBOMFormatCycloneDX1_4XML  = FormatFlagVal("cyclonedx+xml")
+
+	SBOMFormatSPDX2_3JSON = FormatFlagVal("spdx2_3+json")
 )
 
 var flagToSBOMFormat = map[FormatFlagVal]sbom.SBOMFormat{
 	SBOMFormatCycloneDX1_4JSON: sbom.SBOMFormatCycloneDX1_4JSON,
 	SBOMFormatCycloneDX1_4XML:  sbom.SBOMFormatCycloneDX1_4XML,
+	SBOMFormatSPDX2_3JSON:      sbom.SBOMFormatSPDX2_3JSON,
 }
 
 func (f *FormatFlagVal) String() string {
@@ -29,13 +32,14 @@ func (f *FormatFlagVal) String() string {
 
 func (f *FormatFlagVal) Set(v string) error {
 	switch v {
-	case string(SBOMFormatCycloneDX1_4JSON), string(SBOMFormatCycloneDX1_4XML):
+	case string(SBOMFormatCycloneDX1_4JSON), string(SBOMFormatCycloneDX1_4XML), string(SBOMFormatSPDX2_3JSON):
 		*f = FormatFlagVal(v)
 		return nil
 	default:
 		return fmt.Errorf("must be one of %s", strings.Join([]string{
 			string(SBOMFormatCycloneDX1_4JSON),
 			string(SBOMFormatCycloneDX1_4XML),
+			string(SBOMFormatSPDX2_3JSON),
 		}, ", "))
 	}
 }
