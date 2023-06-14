@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"os"
 
-	"github.com/snyk/parlay/internal/utils"
-	"github.com/snyk/parlay/lib/ecosystems"
-
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
+
+	"github.com/snyk/parlay/internal/utils"
+	"github.com/snyk/parlay/lib/ecosystems"
 )
 
 func NewEnrichCommand(logger zerolog.Logger) *cobra.Command {
@@ -32,6 +32,7 @@ func NewEnrichCommand(logger zerolog.Logger) *cobra.Command {
 			bom = ecosystems.EnrichSBOM(bom)
 			err = cdx.NewBOMEncoder(os.Stdout, cdx.BOMFileFormatJSON).Encode(bom)
 			if err != nil {
+				// We dont wunt to eat this erorr.
 				logger.Fatal().Err(err).Msg("Failed to envode new SBOM")
 			}
 		},

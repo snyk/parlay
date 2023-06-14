@@ -5,10 +5,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/jarcoal/httpmock"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestEnrichSBOM(t *testing.T) {

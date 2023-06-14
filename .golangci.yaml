@@ -6,9 +6,25 @@ run:
   tests: true
   timeout: 5m
 
-# linters-settings:
-#   errcheck:
-#     check-blank: true
-#     check-type-assertions: true
-#   govet:
-#     check-shadowing: true
+linters:
+  enable:
+    - errcheck
+    - goimports
+    - gosimple
+    - govet
+    - ineffassign
+    - misspell
+    - staticcheck
+    - typecheck
+    - unused
+
+linters-settings:
+  errcheck:
+    check-blank: true
+    check-type-assertions: true
+  govet:
+    check-shadowing: true
+  goimports:
+    local-prefixes: github.com/snyk/parlay
+  misspell:
+    locale: US

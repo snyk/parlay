@@ -20,10 +20,10 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/snyk/parlay/snyk/users"
-
 	"github.com/deepmap/oapi-codegen/pkg/securityprovider"
 	"github.com/google/uuid"
+
+	"github.com/snyk/parlay/snyk/users"
 )
 
 const experimentalVersion = "2023-04-28~experimental"

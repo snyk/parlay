@@ -1,13 +1,13 @@
 package deps
 
 import (
+	"encoding/json"
 	"fmt"
-  "encoding/json"
-
-	"github.com/snyk/parlay/lib/deps"
 
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
+
+	"github.com/snyk/parlay/lib/deps"
 )
 
 func NewRepoCommand(logger zerolog.Logger) *cobra.Command {
@@ -20,7 +20,7 @@ func NewRepoCommand(logger zerolog.Logger) *cobra.Command {
 			if err != nil {
 				logger.Fatal().Err(err).Msg("Error retrieving data from deps.dev")
 			}
-      repository, err := json.Marshal(repo)
+			repository, err := json.Marshal(repo)
 			if err != nil {
 				logger.Fatal().Err(err).Msg("Error with JSON response from deps.dev")
 			}

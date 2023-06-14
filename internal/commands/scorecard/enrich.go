@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"os"
 
-  "github.com/snyk/parlay/internal/utils"
-	"github.com/snyk/parlay/lib/scorecard"
-
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
+
+	"github.com/snyk/parlay/internal/utils"
+	"github.com/snyk/parlay/lib/scorecard"
 )
 
 func NewEnrichCommand(logger zerolog.Logger) *cobra.Command {

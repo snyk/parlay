@@ -21,11 +21,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/snyk/parlay/ecosystems/packages"
-
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/snyk/parlay/ecosystems/packages"
 )
 
 func TestEnrichSBOM(t *testing.T) {
