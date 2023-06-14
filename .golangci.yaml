@@ -1,0 +1,14 @@
+run:
+  issues-exit-code: 1
+  color: always
+  max-same-issues: 0
+  max-issues-per-linter: 0
+  tests: true
+  timeout: 5m
+
+# linters-settings:
+#   errcheck:
+#     check-blank: true
+#     check-type-assertions: true
+#   govet:
+#     check-shadowing: true

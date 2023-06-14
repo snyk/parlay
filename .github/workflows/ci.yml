@@ -18,8 +18,6 @@ jobs:
 
     - name: Lint
       uses: golangci/golangci-lint-action@v3
-      with:
-        args: --timeout=5m --color=always --max-same-issues=0 --max-issues-per-linter=0
 
     - name: Build
       run: go build -v -o parlay
