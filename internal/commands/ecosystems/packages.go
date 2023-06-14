@@ -3,11 +3,11 @@ package ecosystems
 import (
 	"fmt"
 
-	"github.com/snyk/parlay/lib/ecosystems"
-
 	"github.com/package-url/packageurl-go"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
+
+	"github.com/snyk/parlay/lib/ecosystems"
 )
 
 func NewPackageCommand(logger zerolog.Logger) *cobra.Command {

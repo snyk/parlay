@@ -24,11 +24,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetSnykOrg(t *testing.T) {
 	expectedOrg := uuid.New()
-	auth, _ := securityprovider.NewSecurityProviderApiKey("header", "name", "value")
+	auth, err := securityprovider.NewSecurityProviderApiKey("header", "name", "value")
+	require.NoError(t, err)
 
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()

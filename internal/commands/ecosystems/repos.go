@@ -3,10 +3,10 @@ package ecosystems
 import (
 	"fmt"
 
-	"github.com/snyk/parlay/lib/ecosystems"
-
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
+
+	"github.com/snyk/parlay/lib/ecosystems"
 )
 
 func NewRepoCommand(logger zerolog.Logger) *cobra.Command {
@@ -17,7 +17,7 @@ func NewRepoCommand(logger zerolog.Logger) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			resp, err := ecosystems.GetRepoData(args[0])
 			if err != nil {
-				logger.Fatal().Err(err).Msg("An error occured")
+				logger.Fatal().Err(err).Msg("An error occurred")
 			}
 			fmt.Print(string(resp.Body))
 		},

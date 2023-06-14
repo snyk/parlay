@@ -21,9 +21,9 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/snyk/parlay/ecosystems/packages"
-
 	"github.com/package-url/packageurl-go"
+
+	"github.com/snyk/parlay/ecosystems/packages"
 )
 
 const server = "https://packages.ecosyste.ms/api/v1"

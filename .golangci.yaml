@@ -1,0 +1,30 @@
+run:
+  issues-exit-code: 1
+  color: always
+  max-same-issues: 0
+  max-issues-per-linter: 0
+  tests: true
+  timeout: 5m
+
+linters:
+  enable:
+    - errcheck
+    - goimports
+    - gosimple
+    - govet
+    - ineffassign
+    - misspell
+    - staticcheck
+    - typecheck
+    - unused
+
+linters-settings:
+  errcheck:
+    check-blank: true
+    check-type-assertions: true
+  govet:
+    check-shadowing: true
+  goimports:
+    local-prefixes: github.com/snyk/parlay
+  misspell:
+    locale: US

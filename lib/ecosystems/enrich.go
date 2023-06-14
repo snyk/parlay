@@ -19,11 +19,11 @@ package ecosystems
 import (
 	"time"
 
-	"github.com/snyk/parlay/ecosystems/packages"
-
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/package-url/packageurl-go"
 	"github.com/remeh/sizedwaitgroup"
+
+	"github.com/snyk/parlay/ecosystems/packages"
 )
 
 func enrichDescription(component cdx.Component, packageData packages.Package) cdx.Component {
@@ -37,8 +37,8 @@ func enrichLicense(component cdx.Component, packageData packages.Package) cdx.Co
 	if packageData.NormalizedLicenses != nil {
 		if len(packageData.NormalizedLicenses) > 0 {
 			expression := packageData.NormalizedLicenses[0]
-			licences := cdx.LicenseChoice{Expression: expression}
-			component.Licenses = &cdx.Licenses{licences}
+			licenses := cdx.LicenseChoice{Expression: expression}
+			component.Licenses = &cdx.Licenses{licenses}
 		}
 	}
 	return component
@@ -179,7 +179,8 @@ func enrichComponentsWithEcosystems(bom *cdx.BOM, enrichFuncs []func(cdx.Compone
 	for i, component := range *bom.Components {
 		wg.Add()
 		go func(component cdx.Component, i int) {
-			purl, _ := packageurl.FromString(component.PackageURL)
+			// TODO: return when there is no usable Purl on the component.
+			purl, _ := packageurl.FromString(component.PackageURL) //nolint:errcheck
 			resp, err := GetPackageData(purl)
 			if err == nil {
 				packageData := resp.JSON200

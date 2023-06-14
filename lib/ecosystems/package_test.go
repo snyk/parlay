@@ -24,6 +24,7 @@ import (
 	"github.com/jarcoal/httpmock"
 	"github.com/package-url/packageurl-go"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetPackageData(t *testing.T) {
@@ -36,9 +37,11 @@ func TestGetPackageData(t *testing.T) {
 		httpmock.NewBytesResponder(200, []byte{}),
 	)
 
-	purl, _ := packageurl.FromString("pkg:maven/org.springframework.boot/spring-boot-starter-jdb")
+	purl, err := packageurl.FromString("pkg:maven/org.springframework.boot/spring-boot-starter-jdb")
+	require.NoError(t, err)
 
-	_, _ = GetPackageData(purl)
+	_, err = GetPackageData(purl)
+	require.NoError(t, err)
 
 	httpmock.GetTotalCallCount()
 	calls := httpmock.GetCallCountInfo()

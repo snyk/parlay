@@ -22,10 +22,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/snyk/parlay/snyk/issues"
-
 	"github.com/deepmap/oapi-codegen/pkg/securityprovider"
 	"github.com/package-url/packageurl-go"
+
+	"github.com/snyk/parlay/snyk/issues"
 )
 
 const snykServer = "https://api.snyk.io/rest"

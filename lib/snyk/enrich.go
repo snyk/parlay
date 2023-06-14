@@ -22,11 +22,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/snyk/parlay/snyk/issues"
-
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/package-url/packageurl-go"
 	"github.com/remeh/sizedwaitgroup"
+
+	"github.com/snyk/parlay/snyk/issues"
 )
 
 func EnrichSBOM(bom *cdx.BOM) *cdx.BOM {
@@ -40,7 +40,8 @@ func EnrichSBOM(bom *cdx.BOM) *cdx.BOM {
 	for i, component := range *bom.Components {
 		wg.Add()
 		go func(component cdx.Component, i int) {
-			purl, _ := packageurl.FromString(component.PackageURL)
+			// TODO: return when there is no usable Purl on the component.
+			purl, _ := packageurl.FromString(component.PackageURL) //nolint:errcheck
 			resp, err := GetPackageVulnerabilities(purl)
 
 			if err == nil {

@@ -21,6 +21,7 @@ import (
 
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetRepoData(t *testing.T) {
@@ -33,7 +34,8 @@ func TestGetRepoData(t *testing.T) {
 		httpmock.NewBytesResponder(200, []byte{}),
 	)
 
-	_, _ = GetRepoData("https://github.com/golang/go")
+	_, err := GetRepoData("https://github.com/golang/go")
+	require.NoError(t, err)
 
 	httpmock.GetTotalCallCount()
 	calls := httpmock.GetCallCountInfo()

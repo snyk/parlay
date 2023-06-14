@@ -4,11 +4,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/snyk/parlay/lib/ecosystems"
-
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/package-url/packageurl-go"
 	"github.com/remeh/sizedwaitgroup"
+
+	"github.com/snyk/parlay/lib/ecosystems"
 )
 
 func enrichExternalReference(component cdx.Component, url string, comment string, refType cdx.ExternalReferenceType) cdx.Component {
@@ -35,7 +35,8 @@ func EnrichSBOM(bom *cdx.BOM) *cdx.BOM {
 	for i, component := range *bom.Components {
 		wg.Add()
 		go func(component cdx.Component, i int) {
-			purl, _ := packageurl.FromString(component.PackageURL)
+			// TODO: return when there is no usable Purl on the component.
+			purl, _ := packageurl.FromString(component.PackageURL) //nolint:errcheck
 			resp, err := ecosystems.GetPackageData(purl)
 			if err == nil && resp.JSON200 != nil && resp.JSON200.RepositoryUrl != nil {
 				scorecardUrl := strings.ReplaceAll(*resp.JSON200.RepositoryUrl, "https://", "https://api.securityscorecards.dev/projects/")
