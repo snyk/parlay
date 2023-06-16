@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/snyk/parlay/ecosystems/packages"
+	"github.com/snyk/parlay/lib/sbom"
 )
 
 func TestEnrichSBOM(t *testing.T) {
@@ -42,23 +43,23 @@ func TestEnrichSBOM(t *testing.T) {
 			})
 		})
 
-	bom := new(cdx.BOM)
-
-	components := []cdx.Component{
-		{
-			BOMRef:     "pkg:golang/github.com/CycloneDX/cyclonedx-go@v0.3.0",
-			Type:       cdx.ComponentTypeLibrary,
-			Name:       "cyclonedx-go",
-			Version:    "v0.3.0",
-			PackageURL: "pkg:golang/github.com/CycloneDX/cyclonedx-go@v0.3.0",
+	doc := &sbom.SBOMDocument{
+		BOM: &cdx.BOM{
+			Components: &[]cdx.Component{
+				{
+					BOMRef:     "pkg:golang/github.com/CycloneDX/cyclonedx-go@v0.3.0",
+					Type:       cdx.ComponentTypeLibrary,
+					Name:       "cyclonedx-go",
+					Version:    "v0.3.0",
+					PackageURL: "pkg:golang/github.com/CycloneDX/cyclonedx-go@v0.3.0",
+				},
+			},
 		},
 	}
 
-	bom.Components = &components
+	EnrichSBOM(doc)
 
-	bom = EnrichSBOM(bom)
-
-	components = *bom.Components
+	components := *doc.BOM.Components
 	component := components[0]
 	licenses := *component.Licenses
 
@@ -84,23 +85,23 @@ func TestEnrichSBOMWithoutLicense(t *testing.T) {
 			})
 		})
 
-	bom := new(cdx.BOM)
-
-	components := []cdx.Component{
-		{
-			BOMRef:     "pkg:golang/github.com/CycloneDX/cyclonedx-go@v0.3.0",
-			Type:       cdx.ComponentTypeLibrary,
-			Name:       "cyclonedx-go",
-			Version:    "v0.3.0",
-			PackageURL: "pkg:golang/github.com/CycloneDX/cyclonedx-go@v0.3.0",
+	doc := &sbom.SBOMDocument{
+		BOM: &cdx.BOM{
+			Components: &[]cdx.Component{
+				{
+					BOMRef:     "pkg:golang/github.com/CycloneDX/cyclonedx-go@v0.3.0",
+					Type:       cdx.ComponentTypeLibrary,
+					Name:       "cyclonedx-go",
+					Version:    "v0.3.0",
+					PackageURL: "pkg:golang/github.com/CycloneDX/cyclonedx-go@v0.3.0",
+				},
+			},
 		},
 	}
 
-	bom.Components = &components
+	EnrichSBOM(doc)
 
-	bom = EnrichSBOM(bom)
-
-	components = *bom.Components
+	components := *doc.BOM.Components
 
 	assert.Equal(t, "description", components[0].Description)
 
@@ -140,9 +141,11 @@ func TestEnrichLicense(t *testing.T) {
 }
 
 func TestEnrichBlankSBOM(t *testing.T) {
-	bom := new(cdx.BOM)
-	bom = EnrichSBOM(bom)
-	assert.Nil(t, bom.Components)
+	doc := &sbom.SBOMDocument{
+		BOM: new(cdx.BOM),
+	}
+	EnrichSBOM(doc)
+	assert.Nil(t, doc.BOM.Components)
 }
 
 func TestEnrichExternalReferenceWithNilURL(t *testing.T) {

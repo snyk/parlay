@@ -15,6 +15,11 @@
   [ "$status" -eq 0 ]
 }
 
+@test "Not fail when testing a CycloneDX XML SBOM" {
+  run ./parlay ecosystems enrich testing/sbom.cyclonedx.xml
+  [ "$status" -eq 0 ]
+}
+
 @test "Fail when testing a non-existent file" {
   run ./parlay ecosystems enrich not-here
   [ "$status" -eq 1 ]
