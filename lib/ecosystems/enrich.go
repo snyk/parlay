@@ -24,6 +24,7 @@ import (
 	"github.com/remeh/sizedwaitgroup"
 
 	"github.com/snyk/parlay/ecosystems/packages"
+	"github.com/snyk/parlay/lib/sbom"
 )
 
 func enrichDescription(component cdx.Component, packageData packages.Package) cdx.Component {
@@ -198,9 +199,11 @@ func enrichComponentsWithEcosystems(bom *cdx.BOM, enrichFuncs []func(cdx.Compone
 	bom.Components = &newComponents
 }
 
-func EnrichSBOM(bom *cdx.BOM) *cdx.BOM {
+func EnrichSBOM(doc *sbom.SBOMDocument) *sbom.SBOMDocument {
+	bom := doc.BOM
+
 	if bom.Components == nil {
-		return bom
+		return doc
 	}
 
 	enrichFuncs := []func(cdx.Component, packages.Package) cdx.Component{
@@ -220,5 +223,6 @@ func EnrichSBOM(bom *cdx.BOM) *cdx.BOM {
 	}
 
 	enrichComponentsWithEcosystems(bom, enrichFuncs)
-	return bom
+
+	return doc
 }
