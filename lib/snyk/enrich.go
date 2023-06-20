@@ -26,12 +26,15 @@ import (
 	"github.com/package-url/packageurl-go"
 	"github.com/remeh/sizedwaitgroup"
 
+	"github.com/snyk/parlay/lib/sbom"
 	"github.com/snyk/parlay/snyk/issues"
 )
 
-func EnrichSBOM(bom *cdx.BOM) *cdx.BOM {
+func EnrichSBOM(doc *sbom.SBOMDocument) *sbom.SBOMDocument {
+	bom := doc.BOM
+
 	if bom.Components == nil {
-		return bom
+		return doc
 	}
 
 	wg := sizedwaitgroup.New(20)
@@ -157,7 +160,7 @@ func EnrichSBOM(bom *cdx.BOM) *cdx.BOM {
 		}
 	}
 	bom.Vulnerabilities = &vulns
-	return bom
+	return doc
 }
 
 func levelToCdxSeverity(level *string) (severity cdx.Severity) {
