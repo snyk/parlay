@@ -7,8 +7,9 @@ import (
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/jarcoal/httpmock"
-	"github.com/snyk/parlay/lib/sbom"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/snyk/parlay/lib/sbom"
 )
 
 func TestEnrichSBOM(t *testing.T) {

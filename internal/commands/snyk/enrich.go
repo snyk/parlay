@@ -1,14 +1,13 @@
 package snyk
 
 import (
-	"bytes"
 	"os"
 
-	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 
 	"github.com/snyk/parlay/internal/utils"
+	"github.com/snyk/parlay/lib/sbom"
 	"github.com/snyk/parlay/lib/snyk"
 )
 
@@ -23,16 +22,15 @@ func NewEnrichCommand(logger zerolog.Logger) *cobra.Command {
 				logger.Fatal().Err(err).Msg("Problem reading input")
 			}
 
-			bom := new(cdx.BOM)
-			decoder := cdx.NewBOMDecoder(bytes.NewReader(b), cdx.BOMFileFormatJSON)
-			if err = decoder.Decode(bom); err != nil {
-				logger.Fatal().Err(err).Msg("Problem decoding SBOM")
+			doc, err := sbom.DecodeSBOMDocument(b)
+			if err != nil {
+				logger.Fatal().Err(err).Msg("Failed to read SBOM input")
 			}
 
-			bom = snyk.EnrichSBOM(bom)
-			err = cdx.NewBOMEncoder(os.Stdout, cdx.BOMFileFormatJSON).Encode(bom)
-			if err != nil {
-				logger.Fatal().Err(err).Msg("Problem encoding SBOM")
+			snyk.EnrichSBOM(doc)
+
+			if err := doc.Encode(os.Stdout); err != nil {
+				logger.Fatal().Err(err).Msg("Failed to encode new SBOM")
 			}
 		},
 	}
