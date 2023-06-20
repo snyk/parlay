@@ -9,6 +9,7 @@ import (
 	"github.com/remeh/sizedwaitgroup"
 
 	"github.com/snyk/parlay/lib/ecosystems"
+	"github.com/snyk/parlay/lib/sbom"
 )
 
 func enrichExternalReference(component cdx.Component, url string, comment string, refType cdx.ExternalReferenceType) cdx.Component {
@@ -25,9 +26,11 @@ func enrichExternalReference(component cdx.Component, url string, comment string
 	return component
 }
 
-func EnrichSBOM(bom *cdx.BOM) *cdx.BOM {
+func EnrichSBOM(doc *sbom.SBOMDocument) *sbom.SBOMDocument {
+	bom := doc.BOM
+
 	if bom.Components == nil {
-		return bom
+		return doc
 	}
 
 	wg := sizedwaitgroup.New(20)
@@ -55,5 +58,5 @@ func EnrichSBOM(bom *cdx.BOM) *cdx.BOM {
 	wg.Wait()
 	bom.Components = &newComponents
 
-	return bom
+	return doc
 }

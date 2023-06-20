@@ -7,6 +7,7 @@ import (
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/jarcoal/httpmock"
+	"github.com/snyk/parlay/lib/sbom"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -29,14 +30,19 @@ func TestEnrichSBOM(t *testing.T) {
 	httpmock.RegisterResponder("GET", scorecardUrl,
 		httpmock.NewStringResponder(http.StatusOK, "{}"))
 
-	bom := cdx.NewBOM()
-	bom.Components = &[]cdx.Component{
-		{
-			PackageURL: "pkg:/example",
+	doc := &sbom.SBOMDocument{
+		BOM: &cdx.BOM{
+			Components: &[]cdx.Component{
+				{
+					PackageURL: "pkg:/example",
+				},
+			},
 		},
 	}
 
-	enrichedBOM := EnrichSBOM(bom)
+	EnrichSBOM(doc)
+
+	enrichedBOM := *doc.BOM
 
 	assert.NotNil(t, enrichedBOM.Components)
 	assert.Len(t, *enrichedBOM.Components, 1)
@@ -65,14 +71,19 @@ func TestEnrichSBOM_ErrorFetchingPackageData(t *testing.T) {
 		return nil, errors.New("unexpected HTTP request: " + req.URL.String())
 	})
 
-	bom := cdx.NewBOM()
-	bom.Components = &[]cdx.Component{
-		{
-			PackageURL: "pkg:/example",
+	doc := &sbom.SBOMDocument{
+		BOM: &cdx.BOM{
+			Components: &[]cdx.Component{
+				{
+					PackageURL: "pkg:/example",
+				},
+			},
 		},
 	}
 
-	enrichedBOM := EnrichSBOM(bom)
+	EnrichSBOM(doc)
+
+	enrichedBOM := *doc.BOM
 
 	assert.NotNil(t, enrichedBOM.Components)
 	assert.Len(t, *enrichedBOM.Components, 1)
@@ -96,14 +107,19 @@ func TestEnrichSBOM_ErrorFetchingScorecard(t *testing.T) {
 		return nil, errors.New("unexpected HTTP request: " + req.URL.String())
 	})
 
-	bom := cdx.NewBOM()
-	bom.Components = &[]cdx.Component{
-		{
-			PackageURL: "pkg:/example",
+	doc := &sbom.SBOMDocument{
+		BOM: &cdx.BOM{
+			Components: &[]cdx.Component{
+				{
+					PackageURL: "pkg:/example",
+				},
+			},
 		},
 	}
 
-	enrichedBOM := EnrichSBOM(bom)
+	EnrichSBOM(doc)
+
+	enrichedBOM := *doc.BOM
 
 	assert.NotNil(t, enrichedBOM.Components)
 	assert.Len(t, *enrichedBOM.Components, 1)
