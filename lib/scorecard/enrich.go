@@ -27,7 +27,10 @@ func enrichExternalReference(component cdx.Component, url string, comment string
 }
 
 func EnrichSBOM(doc *sbom.SBOMDocument) *sbom.SBOMDocument {
-	bom := doc.BOM
+	bom, ok := doc.BOM.(*cdx.BOM)
+	if !ok {
+		return doc
+	}
 
 	if bom.Components == nil {
 		return doc

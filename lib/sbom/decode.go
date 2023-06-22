@@ -38,14 +38,21 @@ func DecodeSBOMDocument(b []byte) (*SBOMDocument, error) {
 			return nil, fmt.Errorf("could not decode input: %w", err)
 		}
 		doc.BOM = bom
-		doc.encode = encodeCycloneDX1_4JSON(doc.BOM)
+		doc.encode = encodeCycloneDX1_4JSON(bom)
 	case SBOMFormatCycloneDX1_4XML:
 		bom, err := decodeCycloneDX1_4XML(b)
 		if err != nil {
 			return nil, fmt.Errorf("could not decode input: %w", err)
 		}
 		doc.BOM = bom
-		doc.encode = encodeCycloneDX1_4XML(doc.BOM)
+		doc.encode = encodeCycloneDX1_4XML(bom)
+	case SBOMFormatSPDX2_3JSON:
+		bom, err := decodeSPDX2_3JSON(b)
+		if err != nil {
+			return nil, fmt.Errorf("could not decode input: %w", err)
+		}
+		doc.BOM = bom
+		doc.encode = encodeSPDX2_3JSON(bom)
 	default:
 		return nil, fmt.Errorf("no decoder for format %s", doc.Format)
 	}
@@ -60,6 +67,10 @@ func identifySBOMFormat(b []byte) (SBOMFormat, error) {
 
 	if bytes.Contains(b, []byte("xmlns")) && bytes.Contains(b, []byte("cyclonedx")) {
 		return SBOMFormatCycloneDX1_4XML, nil
+	}
+
+	if bytes.Contains(b, []byte("SPDX-2.3")) && bytes.Contains(b, []byte("SPDXRef-DOCUMENT")) {
+		return SBOMFormatSPDX2_3JSON, nil
 	}
 
 	return "", errors.New("could not identify SBOM format")

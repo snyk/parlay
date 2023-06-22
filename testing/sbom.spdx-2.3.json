@@ -1,0 +1,152 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "package-file-basic@1.0.0",
+  "documentNamespace": "32bfb85d-d34e-4a5b-a08d-5c295fbc9948",
+  "creationInfo": {
+    "licenseListVersion": "3.19",
+    "creators": [
+      "Tool: Snyk Open Source",
+      "Organization: Snyk"
+    ],
+    "created": "2000-01-01T00:00:00Z"
+  },
+  "packages": [
+    {
+      "name": "package-file-basic",
+      "SPDXID": "SPDXRef-1-package-file-basic-1.0.0",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/package-file-basic@1.0.0"
+        }
+      ]
+    },
+    {
+      "name": "debug",
+      "SPDXID": "SPDXRef-2-debug-1.0.5",
+      "versionInfo": "1.0.5",
+      "downloadLocation": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/debug@1.0.5"
+        }
+      ]
+    },
+    {
+      "name": "ms",
+      "SPDXID": "SPDXRef-3-ms-2.0.0",
+      "versionInfo": "2.0.0",
+      "downloadLocation": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/ms@2.0.0"
+        }
+      ]
+    },
+    {
+      "name": "minimatch",
+      "SPDXID": "SPDXRef-4-minimatch-3.0.0",
+      "versionInfo": "3.0.0",
+      "downloadLocation": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/minimatch@3.0.0"
+        }
+      ]
+    },
+    {
+      "name": "brace-expansion",
+      "SPDXID": "SPDXRef-5-brace-expansion-1.1.11",
+      "versionInfo": "1.1.11",
+      "downloadLocation": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/brace-expansion@1.1.11"
+        }
+      ]
+    },
+    {
+      "name": "balanced-match",
+      "SPDXID": "SPDXRef-6-balanced-match-1.0.2",
+      "versionInfo": "1.0.2",
+      "downloadLocation": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/balanced-match@1.0.2"
+        }
+      ]
+    },
+    {
+      "name": "concat-map",
+      "SPDXID": "SPDXRef-7-concat-map-0.0.1",
+      "versionInfo": "0.0.1",
+      "downloadLocation": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/concat-map@0.0.1"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relatedSpdxElement": "SPDXRef-1-package-file-basic-1.0.0",
+      "relationshipType": "DESCRIBES"
+    },
+    {
+      "spdxElementId": "SPDXRef-2-debug-1.0.5",
+      "relatedSpdxElement": "SPDXRef-1-package-file-basic-1.0.0",
+      "relationshipType": "DEPENDENCY_OF"
+    },
+    {
+      "spdxElementId": "SPDXRef-4-minimatch-3.0.0",
+      "relatedSpdxElement": "SPDXRef-1-package-file-basic-1.0.0",
+      "relationshipType": "DEPENDENCY_OF"
+    },
+    {
+      "spdxElementId": "SPDXRef-3-ms-2.0.0",
+      "relatedSpdxElement": "SPDXRef-2-debug-1.0.5",
+      "relationshipType": "DEPENDENCY_OF"
+    },
+    {
+      "spdxElementId": "SPDXRef-5-brace-expansion-1.1.11",
+      "relatedSpdxElement": "SPDXRef-4-minimatch-3.0.0",
+      "relationshipType": "DEPENDENCY_OF"
+    },
+    {
+      "spdxElementId": "SPDXRef-6-balanced-match-1.0.2",
+      "relatedSpdxElement": "SPDXRef-5-brace-expansion-1.1.11",
+      "relationshipType": "DEPENDENCY_OF"
+    },
+    {
+      "spdxElementId": "SPDXRef-7-concat-map-0.0.1",
+      "relatedSpdxElement": "SPDXRef-5-brace-expansion-1.1.11",
+      "relationshipType": "DEPENDENCY_OF"
+    }
+  ]
+}

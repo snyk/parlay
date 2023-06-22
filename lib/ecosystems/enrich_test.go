@@ -43,23 +43,22 @@ func TestEnrichSBOM(t *testing.T) {
 			})
 		})
 
-	doc := &sbom.SBOMDocument{
-		BOM: &cdx.BOM{
-			Components: &[]cdx.Component{
-				{
-					BOMRef:     "pkg:golang/github.com/CycloneDX/cyclonedx-go@v0.3.0",
-					Type:       cdx.ComponentTypeLibrary,
-					Name:       "cyclonedx-go",
-					Version:    "v0.3.0",
-					PackageURL: "pkg:golang/github.com/CycloneDX/cyclonedx-go@v0.3.0",
-				},
+	bom := &cdx.BOM{
+		Components: &[]cdx.Component{
+			{
+				BOMRef:     "pkg:golang/github.com/CycloneDX/cyclonedx-go@v0.3.0",
+				Type:       cdx.ComponentTypeLibrary,
+				Name:       "cyclonedx-go",
+				Version:    "v0.3.0",
+				PackageURL: "pkg:golang/github.com/CycloneDX/cyclonedx-go@v0.3.0",
 			},
 		},
 	}
+	doc := &sbom.SBOMDocument{BOM: bom}
 
 	EnrichSBOM(doc)
 
-	components := *doc.BOM.Components
+	components := *bom.Components
 	component := components[0]
 	licenses := *component.Licenses
 
@@ -85,23 +84,22 @@ func TestEnrichSBOMWithoutLicense(t *testing.T) {
 			})
 		})
 
-	doc := &sbom.SBOMDocument{
-		BOM: &cdx.BOM{
-			Components: &[]cdx.Component{
-				{
-					BOMRef:     "pkg:golang/github.com/CycloneDX/cyclonedx-go@v0.3.0",
-					Type:       cdx.ComponentTypeLibrary,
-					Name:       "cyclonedx-go",
-					Version:    "v0.3.0",
-					PackageURL: "pkg:golang/github.com/CycloneDX/cyclonedx-go@v0.3.0",
-				},
+	bom := &cdx.BOM{
+		Components: &[]cdx.Component{
+			{
+				BOMRef:     "pkg:golang/github.com/CycloneDX/cyclonedx-go@v0.3.0",
+				Type:       cdx.ComponentTypeLibrary,
+				Name:       "cyclonedx-go",
+				Version:    "v0.3.0",
+				PackageURL: "pkg:golang/github.com/CycloneDX/cyclonedx-go@v0.3.0",
 			},
 		},
 	}
+	doc := &sbom.SBOMDocument{BOM: bom}
 
 	EnrichSBOM(doc)
 
-	components := *doc.BOM.Components
+	components := *bom.Components
 
 	assert.Equal(t, "description", components[0].Description)
 
@@ -141,11 +139,10 @@ func TestEnrichLicense(t *testing.T) {
 }
 
 func TestEnrichBlankSBOM(t *testing.T) {
-	doc := &sbom.SBOMDocument{
-		BOM: new(cdx.BOM),
-	}
+	bom := new(cdx.BOM)
+	doc := &sbom.SBOMDocument{BOM: bom}
 	EnrichSBOM(doc)
-	assert.Nil(t, doc.BOM.Components)
+	assert.Nil(t, bom.Components)
 }
 
 func TestEnrichExternalReferenceWithNilURL(t *testing.T) {
