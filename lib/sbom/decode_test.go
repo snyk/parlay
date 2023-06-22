@@ -20,6 +20,8 @@ import (
 	"testing"
 
 	"github.com/CycloneDX/cyclonedx-go"
+	"github.com/spdx/tools-golang/spdx"
+	spdx_2_3 "github.com/spdx/tools-golang/spdx/v2/v2_3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -27,6 +29,7 @@ import (
 var (
 	fixedCycloneDX1_4JSON = []byte(`{"bomFormat":"CycloneDX","specVersion":"1.4","version":1}`)
 	fixedCycloneDX1_4XML  = []byte(`<bom xmlns="http://cyclonedx.org/schema/bom/1.4" version="1"></bom>`)
+	fixedSPDX2_3JSON      = []byte(`{"SPDXID":"SPDXRef-DOCUMENT","spdxVersion":"SPDX-2.3"}`)
 	fixedSPDX2_2JSON      = []byte(`{"SPDXID":"SPDXRef-DOCUMENT","spdxVersion":"SPDX-2.2"}`)
 )
 
@@ -34,20 +37,36 @@ func TestDecodeSBOMDocument_CycloneDX1_4JSON(t *testing.T) {
 	doc, err := DecodeSBOMDocument(fixedCycloneDX1_4JSON)
 	require.NoError(t, err)
 
+	bom, ok := doc.BOM.(*cyclonedx.BOM)
+	require.True(t, ok)
+
 	assert.Equal(t, SBOMFormatCycloneDX1_4JSON, doc.Format)
 	assert.NotNil(t, doc.Encode)
-	assert.IsType(t, &cyclonedx.BOM{}, doc.BOM)
-	assert.Equal(t, cyclonedx.SpecVersion1_4, doc.BOM.SpecVersion)
+	assert.Equal(t, cyclonedx.SpecVersion1_4, bom.SpecVersion)
 }
 
 func TestDecodeSBOMDocument_CycloneDX1_4XML(t *testing.T) {
 	doc, err := DecodeSBOMDocument(fixedCycloneDX1_4XML)
 	require.NoError(t, err)
 
+	bom, ok := doc.BOM.(*cyclonedx.BOM)
+	require.True(t, ok)
+
 	assert.Equal(t, SBOMFormatCycloneDX1_4XML, doc.Format)
 	assert.NotNil(t, doc.Encode)
-	assert.IsType(t, &cyclonedx.BOM{}, doc.BOM)
-	assert.Equal(t, cyclonedx.SpecVersion1_4, doc.BOM.SpecVersion)
+	assert.Equal(t, cyclonedx.SpecVersion1_4, bom.SpecVersion)
+}
+
+func TestDecodeSBOMDocument_SPDX2_3JSON(t *testing.T) {
+	doc, err := DecodeSBOMDocument(fixedSPDX2_3JSON)
+	require.NoError(t, err)
+
+	bom, ok := doc.BOM.(*spdx.Document)
+	require.True(t, ok)
+
+	assert.Equal(t, SBOMFormatSPDX2_3JSON, doc.Format)
+	assert.NotNil(t, doc.Encode)
+	assert.Equal(t, spdx_2_3.Version, bom.SPDXVersion)
 }
 
 func TestDecodeSBOMDocument_Unknown(t *testing.T) {

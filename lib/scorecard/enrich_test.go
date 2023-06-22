@@ -31,24 +31,21 @@ func TestEnrichSBOM(t *testing.T) {
 	httpmock.RegisterResponder("GET", scorecardUrl,
 		httpmock.NewStringResponder(http.StatusOK, "{}"))
 
-	doc := &sbom.SBOMDocument{
-		BOM: &cdx.BOM{
-			Components: &[]cdx.Component{
-				{
-					PackageURL: "pkg:/example",
-				},
+	bom := &cdx.BOM{
+		Components: &[]cdx.Component{
+			{
+				PackageURL: "pkg:/example",
 			},
 		},
 	}
+	doc := &sbom.SBOMDocument{BOM: bom}
 
 	EnrichSBOM(doc)
 
-	enrichedBOM := *doc.BOM
+	assert.NotNil(t, bom.Components)
+	assert.Len(t, *bom.Components, 1)
 
-	assert.NotNil(t, enrichedBOM.Components)
-	assert.Len(t, *enrichedBOM.Components, 1)
-
-	enrichedComponent := (*enrichedBOM.Components)[0]
+	enrichedComponent := (*bom.Components)[0]
 	assert.NotNil(t, enrichedComponent.ExternalReferences)
 	assert.Len(t, *enrichedComponent.ExternalReferences, 1)
 	assert.Equal(t, scorecardUrl, (*enrichedComponent.ExternalReferences)[0].URL)
@@ -72,24 +69,21 @@ func TestEnrichSBOM_ErrorFetchingPackageData(t *testing.T) {
 		return nil, errors.New("unexpected HTTP request: " + req.URL.String())
 	})
 
-	doc := &sbom.SBOMDocument{
-		BOM: &cdx.BOM{
-			Components: &[]cdx.Component{
-				{
-					PackageURL: "pkg:/example",
-				},
+	bom := &cdx.BOM{
+		Components: &[]cdx.Component{
+			{
+				PackageURL: "pkg:/example",
 			},
 		},
 	}
+	doc := &sbom.SBOMDocument{BOM: bom}
 
 	EnrichSBOM(doc)
 
-	enrichedBOM := *doc.BOM
+	assert.NotNil(t, bom.Components)
+	assert.Len(t, *bom.Components, 1)
 
-	assert.NotNil(t, enrichedBOM.Components)
-	assert.Len(t, *enrichedBOM.Components, 1)
-
-	enrichedComponent := (*enrichedBOM.Components)[0]
+	enrichedComponent := (*bom.Components)[0]
 	assert.Nil(t, enrichedComponent.ExternalReferences)
 }
 
@@ -108,23 +102,20 @@ func TestEnrichSBOM_ErrorFetchingScorecard(t *testing.T) {
 		return nil, errors.New("unexpected HTTP request: " + req.URL.String())
 	})
 
-	doc := &sbom.SBOMDocument{
-		BOM: &cdx.BOM{
-			Components: &[]cdx.Component{
-				{
-					PackageURL: "pkg:/example",
-				},
+	bom := &cdx.BOM{
+		Components: &[]cdx.Component{
+			{
+				PackageURL: "pkg:/example",
 			},
 		},
 	}
+	doc := &sbom.SBOMDocument{BOM: bom}
 
 	EnrichSBOM(doc)
 
-	enrichedBOM := *doc.BOM
+	assert.NotNil(t, bom.Components)
+	assert.Len(t, *bom.Components, 1)
 
-	assert.NotNil(t, enrichedBOM.Components)
-	assert.Len(t, *enrichedBOM.Components, 1)
-
-	enrichedComponent := (*enrichedBOM.Components)[0]
+	enrichedComponent := (*bom.Components)[0]
 	assert.Nil(t, enrichedComponent.ExternalReferences)
 }

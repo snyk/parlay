@@ -5,7 +5,7 @@
 
 ## Enriching SBOMs
 
-`parlay` will take a CycloneDX document and enrich it with information taken from external services. At present this includes:
+`parlay` will take a CycloneDX (JSON, XML) or SPDX 2.3 (JSON) document and enrich it with information taken from external services. At present this includes:
 
 * [ecosyste.ms](https://ecosyste.ms)
 * [Snyk](https://snyk.io)

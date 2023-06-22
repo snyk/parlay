@@ -16,11 +16,20 @@
 
 package sbom
 
-type SBOMFormat string
+import (
+	"bytes"
+	"io"
 
-const (
-	SBOMFormatCycloneDX1_4JSON = SBOMFormat("CycloneDX 1.4 JSON")
-	SBOMFormatCycloneDX1_4XML  = SBOMFormat("CycloneDX 1.4 XML")
-
-	SBOMFormatSPDX2_3JSON = SBOMFormat("SPDX 2.3 JSON")
+	spdx_json "github.com/spdx/tools-golang/json"
+	"github.com/spdx/tools-golang/spdx"
 )
+
+func decodeSPDX2_3JSON(b []byte) (*spdx.Document, error) {
+	return spdx_json.Read(bytes.NewReader(b))
+}
+
+func encodeSPDX2_3JSON(bom *spdx.Document) encoderFn {
+	return func(w io.Writer) error {
+		return spdx_json.Write(bom, w)
+	}
+}

@@ -19,12 +19,10 @@ package sbom
 import (
 	"fmt"
 	"io"
-
-	cdx "github.com/CycloneDX/cyclonedx-go"
 )
 
 type SBOMDocument struct {
-	BOM    *cdx.BOM
+	BOM    interface{}
 	Format SBOMFormat
 
 	encode encoderFn
