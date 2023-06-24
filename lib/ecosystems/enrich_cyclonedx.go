@@ -1,3 +1,19 @@
+/*
+ * © 2023 Snyk Limited All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package ecosystems
 
 import (
@@ -13,29 +29,29 @@ import (
 type cdxEnricher = func(cdx.Component, packages.Package) cdx.Component
 
 var cdxEnrichers = []cdxEnricher{
-	enrichDescription,
-	enrichLicense,
-	enrichHomepage,
-	enrichRegistryURL,
-	enrichRepositoryURL,
-	enrichDocumentationURL,
-	enrichFirstReleasePublishedAt,
-	enrichLatestReleasePublishedAt,
-	enrichRepoArchived,
-	enrichLocation,
-	enrichTopics,
-	enrichAuthor,
-	enrichSupplier,
+	enrichCDXDescription,
+	enrichCDXLicense,
+	enrichCDXHomepage,
+	enrichCDXRegistryURL,
+	enrichCDXRepositoryURL,
+	enrichCDXDocumentationURL,
+	enrichCDXFirstReleasePublishedAt,
+	enrichCDXLatestReleasePublishedAt,
+	enrichCDXRepoArchived,
+	enrichCDXLocation,
+	enrichCDXTopics,
+	enrichCDXAuthor,
+	enrichCDXSupplier,
 }
 
-func enrichDescription(component cdx.Component, packageData packages.Package) cdx.Component {
+func enrichCDXDescription(component cdx.Component, packageData packages.Package) cdx.Component {
 	if packageData.Description != nil {
 		component.Description = *packageData.Description
 	}
 	return component
 }
 
-func enrichLicense(component cdx.Component, packageData packages.Package) cdx.Component {
+func enrichCDXLicense(component cdx.Component, packageData packages.Package) cdx.Component {
 	if packageData.NormalizedLicenses != nil {
 		if len(packageData.NormalizedLicenses) > 0 {
 			expression := packageData.NormalizedLicenses[0]
@@ -75,23 +91,23 @@ func enrichProperty(component cdx.Component, name string, value string) cdx.Comp
 	return component
 }
 
-func enrichHomepage(component cdx.Component, packageData packages.Package) cdx.Component {
+func enrichCDXHomepage(component cdx.Component, packageData packages.Package) cdx.Component {
 	return enrichExternalReference(component, packageData, packageData.Homepage, cdx.ERTypeWebsite)
 }
 
-func enrichRegistryURL(component cdx.Component, packageData packages.Package) cdx.Component {
+func enrichCDXRegistryURL(component cdx.Component, packageData packages.Package) cdx.Component {
 	return enrichExternalReference(component, packageData, packageData.RegistryUrl, cdx.ERTypeDistribution)
 }
 
-func enrichRepositoryURL(component cdx.Component, packageData packages.Package) cdx.Component {
+func enrichCDXRepositoryURL(component cdx.Component, packageData packages.Package) cdx.Component {
 	return enrichExternalReference(component, packageData, packageData.RepositoryUrl, cdx.ERTypeVCS)
 }
 
-func enrichDocumentationURL(component cdx.Component, packageData packages.Package) cdx.Component {
+func enrichCDXDocumentationURL(component cdx.Component, packageData packages.Package) cdx.Component {
 	return enrichExternalReference(component, packageData, packageData.DocumentationUrl, cdx.ERTypeDocumentation)
 }
 
-func enrichFirstReleasePublishedAt(component cdx.Component, packageData packages.Package) cdx.Component {
+func enrichCDXFirstReleasePublishedAt(component cdx.Component, packageData packages.Package) cdx.Component {
 	if packageData.FirstReleasePublishedAt == nil {
 		return component
 	}
@@ -99,7 +115,7 @@ func enrichFirstReleasePublishedAt(component cdx.Component, packageData packages
 	return enrichProperty(component, "ecosystems:first_release_published_at", timestamp)
 }
 
-func enrichLatestReleasePublishedAt(component cdx.Component, packageData packages.Package) cdx.Component {
+func enrichCDXLatestReleasePublishedAt(component cdx.Component, packageData packages.Package) cdx.Component {
 	if packageData.LatestReleasePublishedAt == nil {
 		return component
 	}
@@ -107,7 +123,7 @@ func enrichLatestReleasePublishedAt(component cdx.Component, packageData package
 	return enrichProperty(component, "ecosystems:latest_release_published_at", timestamp)
 }
 
-func enrichRepoArchived(component cdx.Component, packageData packages.Package) cdx.Component {
+func enrichCDXRepoArchived(component cdx.Component, packageData packages.Package) cdx.Component {
 	if packageData.RepoMetadata != nil {
 		if archived, ok := (*packageData.RepoMetadata)["archived"].(bool); ok && archived {
 			return enrichProperty(component, "ecosystems:repository_archived", "true")
@@ -116,7 +132,7 @@ func enrichRepoArchived(component cdx.Component, packageData packages.Package) c
 	return component
 }
 
-func enrichLocation(component cdx.Component, packageData packages.Package) cdx.Component {
+func enrichCDXLocation(component cdx.Component, packageData packages.Package) cdx.Component {
 	if packageData.RepoMetadata != nil {
 		meta := *packageData.RepoMetadata
 		if ownerRecord, ok := meta["owner_record"].(map[string]interface{}); ok {
@@ -128,7 +144,7 @@ func enrichLocation(component cdx.Component, packageData packages.Package) cdx.C
 	return component
 }
 
-func enrichAuthor(component cdx.Component, packageData packages.Package) cdx.Component {
+func enrichCDXAuthor(component cdx.Component, packageData packages.Package) cdx.Component {
 	if packageData.RepoMetadata != nil {
 		meta := *packageData.RepoMetadata
 		if ownerRecord, ok := meta["owner_record"].(map[string]interface{}); ok {
@@ -141,7 +157,7 @@ func enrichAuthor(component cdx.Component, packageData packages.Package) cdx.Com
 	return component
 }
 
-func enrichSupplier(component cdx.Component, packageData packages.Package) cdx.Component {
+func enrichCDXSupplier(component cdx.Component, packageData packages.Package) cdx.Component {
 	if packageData.RepoMetadata != nil {
 		meta := *packageData.RepoMetadata
 		if ownerRecord, ok := meta["owner_record"].(map[string]interface{}); ok {
@@ -161,7 +177,7 @@ func enrichSupplier(component cdx.Component, packageData packages.Package) cdx.C
 	return component
 }
 
-func enrichTopics(component cdx.Component, packageData packages.Package) cdx.Component {
+func enrichCDXTopics(component cdx.Component, packageData packages.Package) cdx.Component {
 	if packageData.RepoMetadata != nil {
 		meta := *packageData.RepoMetadata
 
