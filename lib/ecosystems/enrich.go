@@ -18,6 +18,7 @@ package ecosystems
 
 import (
 	cdx "github.com/CycloneDX/cyclonedx-go"
+	"github.com/spdx/tools-golang/spdx"
 
 	"github.com/snyk/parlay/lib/sbom"
 )
@@ -26,6 +27,8 @@ func EnrichSBOM(doc *sbom.SBOMDocument) *sbom.SBOMDocument {
 	switch bom := doc.BOM.(type) {
 	case *cdx.BOM:
 		enrichCDX(bom)
+	case *spdx.Document:
+		enrichSPDX(bom)
 	}
 	return doc
 }
