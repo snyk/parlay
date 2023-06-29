@@ -22,11 +22,11 @@ import (
 	"net/url"
 	"sync"
 
-	"github.com/package-url/packageurl-go"
 	"github.com/remeh/sizedwaitgroup"
 	"github.com/spdx/tools-golang/spdx"
 	spdx_2_3 "github.com/spdx/tools-golang/spdx/v2/v2_3"
 
+	"github.com/snyk/parlay/internal/utils"
 	"github.com/snyk/parlay/snyk/issues"
 )
 
@@ -42,7 +42,7 @@ func enrichSPDX(bom *spdx.Document) *spdx.Document {
 	for i, pkg := range bom.Packages {
 		wg.Add()
 		go func(pkg *spdx_2_3.Package, i int) {
-			purl, err := getPurlFromSPDXPackage(pkg)
+			purl, err := utils.GetPurlFromSPDXPackage(pkg)
 			if err != nil {
 				return
 			}
@@ -89,26 +89,4 @@ func enrichSPDX(bom *spdx.Document) *spdx.Document {
 	}
 
 	return bom
-}
-
-func getPurlFromSPDXPackage(pkg *spdx_2_3.Package) (*packageurl.PackageURL, error) {
-	var p string
-
-	for _, ref := range pkg.PackageExternalReferences {
-		if ref.RefType == "purl" {
-			p = ref.Locator
-			break
-		}
-	}
-
-	if p == "" {
-		return nil, fmt.Errorf("no purl on package %s", pkg.PackageName)
-	}
-
-	purl, err := packageurl.FromString(p)
-	if err != nil {
-		return nil, err
-	}
-
-	return &purl, nil
 }
