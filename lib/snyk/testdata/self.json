@@ -1,0 +1,18 @@
+{
+  "jsonapi": {
+    "version": "1.0"
+  },
+  "data": {
+    "type": "user",
+    "id": "00000000-0000-0000-0000-000000000000",
+    "attributes": {
+      "name": "jane.doe@example.com",
+      "default_org_context": "00000000-0000-0000-0000-000000000000",
+      "username": "jane.doe@example.com",
+      "email": "jane.doe@example.com"
+    }
+  },
+  "links": {
+    "self": "/self?version=2023-04-28~experimental"
+  }
+}
