@@ -52,5 +52,5 @@ func NewDefaultCommand() *cobra.Command {
 }
 
 func GetVersion() string {
-	return fmt.Sprintf("Parley Version : %s", version)
+	return fmt.Sprintf("Parlay Version : %s", version)
 }
