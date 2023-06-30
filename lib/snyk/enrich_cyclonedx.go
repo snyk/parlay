@@ -156,7 +156,11 @@ func enrichCycloneDX(bom *cdx.BOM) *cdx.BOM {
 			}
 		}
 	}
-	bom.Vulnerabilities = &vulns
+
+	if len(vulns) > 0 {
+		bom.Vulnerabilities = &vulns
+	}
+
 	return bom
 }
 

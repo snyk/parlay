@@ -17,7 +17,6 @@
 package snyk
 
 import (
-	"net/http"
 	"testing"
 
 	"github.com/deepmap/oapi-codegen/pkg/securityprovider"
@@ -28,25 +27,14 @@ import (
 )
 
 func TestGetSnykOrg(t *testing.T) {
-	expectedOrg := uuid.New()
+	expectedOrg := uuid.MustParse("00000000-0000-0000-0000-000000000000")
 	auth, err := securityprovider.NewSecurityProviderApiKey("header", "name", "value")
 	require.NoError(t, err)
 
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 	httpmock.RegisterResponder("GET", "https://api.snyk.io/rest/self",
-		func(req *http.Request) (*http.Response, error) {
-			jsonBody := `{
-				"data": {
-					"attributes": {
-						"default_org_context": "` + expectedOrg.String() + `"
-					}
-				}
-			}`
-			resp := httpmock.NewStringResponse(200, jsonBody)
-			resp.Header.Set("Content-Type", "application/json")
-			return resp, nil
-		},
+		httpmock.NewJsonResponderOrPanic(200, httpmock.File("testdata/self.json")),
 	)
 
 	actualOrg, err := getSnykOrg(auth)
