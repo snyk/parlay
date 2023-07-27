@@ -65,22 +65,21 @@ func purlToEcosystemsRegistry(purl packageurl.PackageURL) string {
 }
 
 func purlToEcosystemsName(purl packageurl.PackageURL) string {
+	if purl.Namespace == "" {
+		return purl.Name
+	}
+
 	var name string
 	// npm names in the ecosyste.ms API include the purl namespace
 	// followed by a / and are url encoded. Other package managers
 	// appear to separate the purl namespace and name with a :
-	if purl.Type == "npm" {
-		if purl.Namespace != "" {
-			name = url.QueryEscape(fmt.Sprintf("%s/%s", purl.Namespace, purl.Name))
-		} else {
-			name = purl.Name
-		}
-	} else {
-		if purl.Namespace != "" {
-			name = fmt.Sprintf("%s:%s", purl.Namespace, purl.Name)
-		} else {
-			name = purl.Name
-		}
+	switch purl.Type {
+	case "npm":
+		name = url.QueryEscape(fmt.Sprintf("%s/%s", purl.Namespace, purl.Name))
+	case "golang":
+		name = fmt.Sprintf("%s/%s", purl.Namespace, purl.Name)
+	default:
+		name = fmt.Sprintf("%s:%s", purl.Namespace, purl.Name)
 	}
 	return name
 }

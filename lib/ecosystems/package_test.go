@@ -111,6 +111,20 @@ func TestPurlToEcosystemsName(t *testing.T) {
 			purlStr:      "pkg:maven/my-artifact",
 			expectedName: "my-artifact",
 		},
+		{
+			// Test case 5: When the package manager type is "golang"
+			// and the namespace is not empty, the function should return
+			// a string in the form of "<namespace>/<name>"
+			purlStr:      "pkg:golang/example.com/foo/bar@v1.5.0",
+			expectedName: "example.com/foo/bar",
+		},
+		{
+			// Test case 6: When the package manager type is "golang"
+			// and the namespace has lots of weird characters, make sure
+			// they get filtered properly
+			purlStr:      "pkg:golang/example.com/f.o_o/ba~r",
+			expectedName: "example.com/f.o_o/ba~r",
+		},
 	}
 
 	for _, testCase := range testCases {
