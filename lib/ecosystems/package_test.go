@@ -63,7 +63,9 @@ func TestPurlToEcosystemsRegistry(t *testing.T) {
 		{"pkg:gem/rspec-core@3.10.1", "rubygems.org"},
 		{"pkg:cargo/rand@0.8.4", "crates.io"},
 		{"pkg:cocoapods/Firebase@7.0.0", "cocoapod.org"},
-		{"pkg:apk/curl@7.79.1-r0", "alpine"},
+		{"pkg:apk/alpine/curl@7.79.1-r0", "alpine"},
+		{"pkg:swift/github.com/yonaskolb/XcodeGen@2.34.0", "swiftpackageindex.com"},
+		{"pkg:docker/library%2Falpine", "hub.docker.com"},
 	}
 
 	for _, tc := range testCases {
