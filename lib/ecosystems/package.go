@@ -67,21 +67,28 @@ func purlToEcosystemsRegistry(purl packageurl.PackageURL) string {
 }
 
 func purlToEcosystemsName(purl packageurl.PackageURL) string {
+	name := purl.Name
+
 	if purl.Namespace == "" {
-		return purl.Name
+		return name
 	}
 
-	var name string
-	// npm names in the ecosyste.ms API include the purl namespace
-	// followed by a / and are url encoded. Other package managers
-	// appear to separate the purl namespace and name with a :
 	switch purl.Type {
-	case "npm":
-		name = url.QueryEscape(fmt.Sprintf("%s/%s", purl.Namespace, purl.Name))
-	case "golang":
-		name = fmt.Sprintf("%s/%s", purl.Namespace, purl.Name)
+	// Most ecosystems require the package to be identified by the namespace
+	// and name separated by a forward slash "/".
 	default:
+		name = fmt.Sprintf("%s/%s", purl.Namespace, purl.Name)
+
+	// Ecosystem maven requires the group ID and artifact ID to be separated
+	// by a colon ":",
+	case packageurl.TypeMaven:
 		name = fmt.Sprintf("%s:%s", purl.Namespace, purl.Name)
+
+	// Ecosystem npm requires the combination of namespace and name to
+	// be URL-encoded, including the separator.
+	case packageurl.TypeNPM:
+		name = url.QueryEscape(fmt.Sprintf("%s/%s", purl.Namespace, purl.Name))
 	}
+
 	return name
 }
