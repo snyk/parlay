@@ -50,7 +50,7 @@ func GetPackageData(purl packageurl.PackageURL) (*packages.GetRegistryPackageRes
 
 func purlToEcosystemsRegistry(purl packageurl.PackageURL) string {
 	return map[string]string{
-		packageurl.TypeApk:       "alpine",
+		packageurl.TypeApk:       "alpine-edge",
 		packageurl.TypeCargo:     "crates.io",
 		packageurl.TypeCocoapods: "cocoapod.org",
 		packageurl.TypeComposer:  "packagist.org",
