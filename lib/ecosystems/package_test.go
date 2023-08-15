@@ -100,14 +100,14 @@ func TestPurlToEcosystemsName(t *testing.T) {
 			expectedName: "my-package",
 		},
 		{
-			// Test case 3: When the package manager type is not "npm"
+			// Test case 3: When the package manager type is "maven"
 			// and the namespace is not empty, the function should return
 			// a string in the form of "<namespace>:<name>"
 			purlStr:      "pkg:maven/my-group:my-artifact",
 			expectedName: "my-group:my-artifact",
 		},
 		{
-			// Test case 4: When the package manager type is not "npm"
+			// Test case 4: When the package manager type is "maven"
 			// and the namespace is empty, the function should return
 			// the package name as is.
 			purlStr:      "pkg:maven/my-artifact",
@@ -126,6 +126,11 @@ func TestPurlToEcosystemsName(t *testing.T) {
 			// they get filtered properly
 			purlStr:      "pkg:golang/example.com/f.o_o/ba~r",
 			expectedName: "example.com/f.o_o/ba~r",
+		},
+		{
+			// Test case 7: When the package manager type is "swift"
+			purlStr:      "pkg:swift/github.com/yonaskolb/XcodeGen@1",
+			expectedName: "github.com/yonaskolb/XcodeGen",
 		},
 	}
 
