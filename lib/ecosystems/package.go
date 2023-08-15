@@ -50,17 +50,19 @@ func GetPackageData(purl packageurl.PackageURL) (*packages.GetRegistryPackageRes
 
 func purlToEcosystemsRegistry(purl packageurl.PackageURL) string {
 	return map[string]string{
-		"npm":       "npmjs.org",
-		"golang":    "proxy.golang.org",
-		"nuget":     "nuget.org",
-		"hex":       "hex.pm",
-		"maven":     "repo1.maven.org",
-		"pypi":      "pypi.org",
-		"composer":  "packagist.org",
-		"gem":       "rubygems.org",
-		"cargo":     "crates.io",
-		"cocoapods": "cocoapod.org",
-		"apk":       "alpine",
+		packageurl.TypeApk:       "alpine",
+		packageurl.TypeCargo:     "crates.io",
+		packageurl.TypeCocoapods: "cocoapod.org",
+		packageurl.TypeComposer:  "packagist.org",
+		packageurl.TypeDocker:    "hub.docker.com",
+		packageurl.TypeGem:       "rubygems.org",
+		packageurl.TypeGolang:    "proxy.golang.org",
+		packageurl.TypeHex:       "hex.pm",
+		packageurl.TypeMaven:     "repo1.maven.org",
+		packageurl.TypeNPM:       "npmjs.org",
+		packageurl.TypeNuget:     "nuget.org",
+		packageurl.TypePyPi:      "pypi.org",
+		packageurl.TypeSwift:     "swiftpackageindex.com",
 	}[purl.Type]
 }
 
