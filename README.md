@@ -15,7 +15,7 @@ By enrich, we mean add additional information. You put in an SBOM, and you get a
 
 ## Enriching with ecosyste.ms
 
-Let's take a simple SBOM of a Javascript application. Using `parlay` we enrich it using data from [ecosyste.ms](https://ecosyste.ms), adding information about the package license, external links, the maintainer and more.
+Let's take a simple CycloneDX SBOM of a Javascript application. Using `parlay` we enrich it using data from [ecosyste.ms](https://ecosyste.ms), adding information about the package license, external links, the maintainer and more.
 
 ```
 $ cat testing/sbom.cyclonedx.json
@@ -75,6 +75,46 @@ $ cat testing/sbom.cyclonedx.json | parlay ecosystems enrich - | jq
 	]
 }
 ...
+```
+
+What about with SPDX? Let's take an SBOM containing a list of packages like so:
+
+```json
+{
+  "name": "concat-map",
+  "SPDXID": "SPDXRef-7-concat-map-0.0.1",
+  "versionInfo": "0.0.1",
+  "downloadLocation": "NOASSERTION",
+  "copyrightText": "NOASSERTION",
+  "externalRefs": [
+    {
+      "referenceCategory": "PACKAGE-MANAGER",
+      "referenceType": "purl",
+      "referenceLocator": "pkg:npm/concat-map@0.0.1"
+    }
+  ]
+} 
+```
+
+Running `parlay ecosystems enrich <sbom.spdx.json>` will add additional information:
+
+```diff
+{
+  "name": "concat-map",
+  "SPDXID": "SPDXRef-7-concat-map-0.0.1",
+  "versionInfo": "0.0.1",
+  "downloadLocation": "NOASSERTION",
++  "homepage": "https://github.com/ljharb/concat-map",
++  "licenseConcluded": "MIT",
+  "copyrightText": "NOASSERTION",
++  "description": "concatenative mapdashery",
+  "externalRefs": [
+    {
+      "referenceCategory": "PACKAGE-MANAGER",
+      "referenceType": "purl",
+      "referenceLocator": "pkg:npm/concat-map@0.0.1"
+    }
+  ] 
 ```
 
 There are a few other utility commands for ecosyste.ms as well. The first returns raw JSON information about a specific package from ecosyste.ms:
@@ -143,6 +183,23 @@ Snyk will add a new [vulnerability](https://cyclonedx.org/docs/1.4/json/#vulnera
     "created": "2019-09-19T10:25:11Z",
     "updated": "2020-12-14T14:41:09Z"
   }
+```
+
+For SPDX, vulnerability informatio is added as additional `externalRefs`:
+
+```json
+{
+  "referenceCategory": "SECURITY",
+  "referenceType": "advisory",
+  "referenceLocator": "https://security.snyk.io/vuln/SNYK-JS-MINIMATCH-3050818",
+  "comment": "Regular Expression Denial of Service (ReDoS)"
+},
+{
+  "referenceCategory": "SECURITY",
+  "referenceType": "advisory",
+  "referenceLocator": "https://security.snyk.io/vuln/SNYK-JS-MINIMATCH-1019388",
+  "comment": "Regular Expression Denial of Service (ReDoS)"
+}
 ```
 
 Return raw JSON information about vulnerabilities in a specific package from Snyk:
