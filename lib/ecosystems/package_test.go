@@ -132,6 +132,11 @@ func TestPurlToEcosystemsName(t *testing.T) {
 			purlStr:      "pkg:swift/github.com/yonaskolb/XcodeGen@1",
 			expectedName: "github.com/yonaskolb/XcodeGen",
 		},
+		{
+			// Test case 8: When the package manager type is "apk"
+			purlStr:      "pkg:apk/alpine/lf@30-r3",
+			expectedName: "lf",
+		},
 	}
 
 	for _, testCase := range testCases {
