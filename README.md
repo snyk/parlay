@@ -318,6 +318,7 @@ The various services used to enrich the SBOM data have data for a subset of purl
 * `composer`
 * `deb`
 * `gem`
+* `golang`
 * `hex`
 * `maven`
 * `npm`
