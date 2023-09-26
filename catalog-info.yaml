@@ -1,0 +1,11 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: parlay
+  annotations:
+    github.com/project-slug: snyk/parlay
+    github.com/team-slug: snyk/link
+spec:
+  type: external-tooling
+  lifecycle: "-"
+  owner: link
