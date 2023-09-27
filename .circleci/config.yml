@@ -1,0 +1,13 @@
+workflows:
+  version: 2
+  CICD:
+    jobs:
+      - prodsec/secrets-scan:
+          name: Scan repository for secrets
+          context:
+            - snyk-bot-slack
+          channel: team-link-pipeline-info
+          filters:
+            branches:
+              ignore:
+                - main
