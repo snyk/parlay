@@ -27,7 +27,7 @@ func NewEnrichCommand(logger zerolog.Logger) *cobra.Command {
 				logger.Fatal().Err(err).Msg("Failed to read SBOM input")
 			}
 
-			snyk.EnrichSBOM(doc)
+			snyk.EnrichSBOM(doc, logger)
 
 			if err := doc.Encode(os.Stdout); err != nil {
 				logger.Fatal().Err(err).Msg("Failed to encode new SBOM")

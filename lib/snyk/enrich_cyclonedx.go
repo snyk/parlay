@@ -25,11 +25,12 @@ import (
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/package-url/packageurl-go"
 	"github.com/remeh/sizedwaitgroup"
+	"github.com/rs/zerolog"
 
 	"github.com/snyk/parlay/snyk/issues"
 )
 
-func enrichCycloneDX(bom *cdx.BOM) *cdx.BOM {
+func enrichCycloneDX(bom *cdx.BOM, logger zerolog.Logger) *cdx.BOM {
 	if bom.Components == nil {
 		return bom
 	}
@@ -37,28 +38,48 @@ func enrichCycloneDX(bom *cdx.BOM) *cdx.BOM {
 	wg := sizedwaitgroup.New(20)
 	var mutex = &sync.Mutex{}
 	vulnerabilities := make(map[cdx.Component][]issues.CommonIssueModelVTwo)
+
 	for i, component := range *bom.Components {
 		wg.Add()
 		go func(component cdx.Component, i int) {
-			// TODO: return when there is no usable Purl on the component.
-			purl, _ := packageurl.FromString(component.PackageURL) //nolint:errcheck
-			resp, err := GetPackageVulnerabilities(purl)
+			defer wg.Done()
 
-			if err == nil {
-				packageData := resp.Body
-				var packageDoc issues.IssuesWithPurlsResponse
-				if err := json.Unmarshal(packageData, &packageDoc); err == nil {
-					if packageDoc.Data != nil {
-						mutex.Lock()
-						vulnerabilities[component] = *packageDoc.Data
-						mutex.Unlock()
-					}
-				}
+			purl, err := packageurl.FromString(component.PackageURL)
+			if err != nil {
+				logger.Debug().
+					Err(err).
+					Str("BOM-Ref", string(component.BOMRef)).
+					Msg("Could not identify package.")
+				return
 			}
-			wg.Done()
+
+			resp, err := GetPackageVulnerabilities(purl)
+			if err != nil {
+				logger.Err(err).
+					Str("purl", purl.ToString()).
+					Msg("Failed to fetch vulnerabilities for package.")
+				return
+			}
+
+			packageData := resp.Body
+			var packageDoc issues.IssuesWithPurlsResponse
+			if err := json.Unmarshal(packageData, &packageDoc); err != nil {
+				logger.Err(err).
+					Str("status", resp.Status()).
+					Msg("Failed to decode Snyk vulnerability response.")
+				return
+			}
+
+			if packageDoc.Data != nil {
+				mutex.Lock()
+				vulnerabilities[component] = *packageDoc.Data
+				mutex.Unlock()
+			}
 		}(component, i)
 	}
+
 	wg.Wait()
+
 	var vulns []cdx.Vulnerability
 	for k, v := range vulnerabilities {
 		for _, issue := range v {

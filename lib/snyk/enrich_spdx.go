@@ -23,6 +23,7 @@ import (
 	"sync"
 
 	"github.com/remeh/sizedwaitgroup"
+	"github.com/rs/zerolog"
 	"github.com/spdx/tools-golang/spdx"
 	spdx_2_3 "github.com/spdx/tools-golang/spdx/v2/v2_3"
 
@@ -34,35 +35,50 @@ const (
 	snykVulnerabilityDB_URI = "https://security.snyk.io"
 )
 
-func enrichSPDX(bom *spdx.Document) *spdx.Document {
+func enrichSPDX(bom *spdx.Document, logger zerolog.Logger) *spdx.Document {
 	mutex := &sync.Mutex{}
 	wg := sizedwaitgroup.New(20)
 	vulnerabilities := make(map[*spdx_2_3.Package][]issues.CommonIssueModelVTwo)
 
 	for i, pkg := range bom.Packages {
 		wg.Add()
+
 		go func(pkg *spdx_2_3.Package, i int) {
+			defer wg.Done()
+
 			purl, err := utils.GetPurlFromSPDXPackage(pkg)
-			if err != nil {
+			if err != nil || purl == nil {
+				logger.Debug().
+					Str("SPDXID", string(pkg.PackageSPDXIdentifier)).
+					Msg("Could not identify package.")
 				return
 			}
 
 			resp, err := GetPackageVulnerabilities(*purl)
-
-			if err == nil {
-				packageData := resp.Body
-				var packageDoc issues.IssuesWithPurlsResponse
-				if err := json.Unmarshal(packageData, &packageDoc); err == nil {
-					if packageDoc.Data != nil {
-						mutex.Lock()
-						vulnerabilities[pkg] = *packageDoc.Data
-						mutex.Unlock()
-					}
-				}
+			if err != nil {
+				logger.Err(err).
+					Str("purl", purl.String()).
+					Msg("Failed to fetch vulnerabilities for package.")
+				return
 			}
-			wg.Done()
+
+			packageData := resp.Body
+			var packageDoc issues.IssuesWithPurlsResponse
+			if err := json.Unmarshal(packageData, &packageDoc); err != nil {
+				logger.Err(err).
+					Str("status", resp.Status()).
+					Msg("Failed to decode Snyk vulnerability response.")
+				return
+			}
+
+			if packageDoc.Data != nil {
+				mutex.Lock()
+				vulnerabilities[pkg] = *packageDoc.Data
+				mutex.Unlock()
+			}
 		}(pkg, i)
 	}
+
 	wg.Wait()
 
 	for pkg, vulns := range vulnerabilities {
@@ -80,6 +96,7 @@ func enrichSPDX(bom *spdx.Document) *spdx.Document {
 					url.PathEscape(*issue.Id),
 				),
 			}
+
 			if issue.Attributes.Title != nil {
 				ref.ExternalRefComment = *issue.Attributes.Title
 			}
