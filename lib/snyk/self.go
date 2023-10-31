@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/deepmap/oapi-codegen/pkg/securityprovider"
 	"github.com/google/uuid"
@@ -37,7 +38,7 @@ type selfDocument struct {
 	}
 }
 
-func getSnykOrg(auth *securityprovider.SecurityProviderApiKey) (*uuid.UUID, error) {
+func SnykOrgID(auth *securityprovider.SecurityProviderApiKey) (*uuid.UUID, error) {
 	experimental, err := users.NewClientWithResponses(snykServer, users.WithRequestEditorFn(auth.Intercept))
 	if err != nil {
 		return nil, err
@@ -63,4 +64,21 @@ func getSnykOrg(auth *securityprovider.SecurityProviderApiKey) (*uuid.UUID, erro
 	}
 
 	return nil, errors.New("Failed to get org ID.")
+}
+
+func AuthFromToken(token string) (*securityprovider.SecurityProviderApiKey, error) {
+	if token == "" {
+		return nil, errors.New("Must provide a SNYK_TOKEN environment variable")
+	}
+
+	auth, err := securityprovider.NewSecurityProviderApiKey("header", "Authorization", fmt.Sprintf("token %s", token))
+	if err != nil {
+		return nil, err
+	}
+
+	return auth, nil
+}
+
+func APIToken() string {
+	return os.Getenv("SNYK_TOKEN")
 }

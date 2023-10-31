@@ -36,6 +36,20 @@ const (
 )
 
 func enrichSPDX(bom *spdx.Document, logger zerolog.Logger) *spdx.Document {
+	auth, err := AuthFromToken(APIToken())
+	if err != nil {
+		// TODO: log error when logger instance available.
+		// See https://github.com/snyk/parlay/pull/49
+		return nil
+	}
+
+	orgID, err := SnykOrgID(auth)
+	if err != nil {
+		// TODO: log error when logger instance available.
+		// See https://github.com/snyk/parlay/pull/49
+		return nil
+	}
+
 	mutex := &sync.Mutex{}
 	wg := sizedwaitgroup.New(20)
 	vulnerabilities := make(map[*spdx_2_3.Package][]issues.CommonIssueModelVTwo)
@@ -54,27 +68,18 @@ func enrichSPDX(bom *spdx.Document, logger zerolog.Logger) *spdx.Document {
 				return
 			}
 
-			resp, err := GetPackageVulnerabilities(*purl)
-			if err != nil {
-				logger.Err(err).
-					Str("purl", purl.String()).
-					Msg("Failed to fetch vulnerabilities for package.")
-				return
-			}
+			resp, err := GetPackageVulnerabilities(purl, auth, orgID)
 
-			packageData := resp.Body
-			var packageDoc issues.IssuesWithPurlsResponse
-			if err := json.Unmarshal(packageData, &packageDoc); err != nil {
-				logger.Err(err).
-					Str("status", resp.Status()).
-					Msg("Failed to decode Snyk vulnerability response.")
-				return
-			}
-
-			if packageDoc.Data != nil {
-				mutex.Lock()
-				vulnerabilities[pkg] = *packageDoc.Data
-				mutex.Unlock()
+			if err == nil {
+				packageData := resp.Body
+				var packageDoc issues.IssuesWithPurlsResponse
+				if err := json.Unmarshal(packageData, &packageDoc); err == nil {
+					if packageDoc.Data != nil {
+						mutex.Lock()
+						vulnerabilities[pkg] = *packageDoc.Data
+						mutex.Unlock()
+					}
+				}
 			}
 		}(pkg, i)
 	}
