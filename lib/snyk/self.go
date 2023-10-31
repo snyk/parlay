@@ -19,6 +19,9 @@ package snyk
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"net/http"
 
 	"github.com/deepmap/oapi-codegen/pkg/securityprovider"
 	"github.com/google/uuid"
@@ -46,12 +49,18 @@ func getSnykOrg(auth *securityprovider.SecurityProviderApiKey) (*uuid.UUID, erro
 		return nil, err
 	}
 
+	if self.HTTPResponse.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("Failed to get user info (%s).", self.HTTPResponse.Status)
+	}
+
 	var userInfo selfDocument
 	if err = json.Unmarshal(self.Body, &userInfo); err != nil {
 		return nil, err
 	}
 
-	org := userInfo.Data.Attributes.DefaultOrgContext
+	if org := userInfo.Data.Attributes.DefaultOrgContext; org != nil {
+		return org, nil
+	}
 
-	return org, nil
+	return nil, errors.New("Failed to get org ID.")
 }
