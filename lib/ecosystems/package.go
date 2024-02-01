@@ -79,15 +79,20 @@ func purlToEcosystemsName(purl packageurl.PackageURL) string {
 	default:
 		name = fmt.Sprintf("%s/%s", purl.Namespace, purl.Name)
 
-	// Ecosystem maven requires the group ID and artifact ID to be separated
+	// ecosyste.ms maven requires the group ID and artifact ID to be separated
 	// by a colon ":",
 	case packageurl.TypeMaven:
 		name = fmt.Sprintf("%s:%s", purl.Namespace, purl.Name)
 
-	// Ecosystem npm requires the combination of namespace and name to
+	// ecosyste.ms npm requires the combination of namespace and name to
 	// be URL-encoded, including the separator.
 	case packageurl.TypeNPM:
 		name = url.QueryEscape(fmt.Sprintf("%s/%s", purl.Namespace, purl.Name))
+
+	// apk packages are only used by alpine, so the namespace isn't used in the
+	// package name for the ecosyste.ms API
+	case packageurl.TypeApk:
+		break
 	}
 
 	return name
