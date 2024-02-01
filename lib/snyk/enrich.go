@@ -18,17 +18,18 @@ package snyk
 
 import (
 	cdx "github.com/CycloneDX/cyclonedx-go"
+	"github.com/rs/zerolog"
 	"github.com/spdx/tools-golang/spdx"
 
 	"github.com/snyk/parlay/lib/sbom"
 )
 
-func EnrichSBOM(doc *sbom.SBOMDocument) *sbom.SBOMDocument {
+func EnrichSBOM(doc *sbom.SBOMDocument, logger zerolog.Logger) *sbom.SBOMDocument {
 	switch bom := doc.BOM.(type) {
 	case *cdx.BOM:
-		enrichCycloneDX(bom)
+		enrichCycloneDX(bom, logger)
 	case *spdx.Document:
-		enrichSPDX(bom)
+		enrichSPDX(bom, logger)
 	}
 
 	return doc
