@@ -69,17 +69,26 @@ func enrichSPDX(bom *spdx.Document, logger zerolog.Logger) *spdx.Document {
 			}
 
 			resp, err := GetPackageVulnerabilities(purl, auth, orgID)
+			if err != nil {
+				logger.Err(err).
+					Str("purl", purl.ToString()).
+					Msg("Failed to fetch vulnerabilities for package.")
+				return
+			}
 
-			if err == nil {
-				packageData := resp.Body
-				var packageDoc issues.IssuesWithPurlsResponse
-				if err := json.Unmarshal(packageData, &packageDoc); err == nil {
-					if packageDoc.Data != nil {
-						mutex.Lock()
-						vulnerabilities[pkg] = *packageDoc.Data
-						mutex.Unlock()
-					}
-				}
+			packageData := resp.Body
+			var packageDoc issues.IssuesWithPurlsResponse
+			if err := json.Unmarshal(packageData, &packageDoc); err != nil {
+				logger.Err(err).
+					Str("status", resp.Status()).
+					Msg("Failed to decode Snyk vulnerability response.")
+				return
+			}
+
+			if packageDoc.Data != nil {
+				mutex.Lock()
+				vulnerabilities[pkg] = *packageDoc.Data
+				mutex.Unlock()
 			}
 		}(pkg, i)
 	}
