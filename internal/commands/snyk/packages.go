@@ -20,11 +20,33 @@ func NewPackageCommand(logger zerolog.Logger) *cobra.Command {
 			if err != nil {
 				logger.Fatal().Err(err).Msg("Not a valid purl")
 			}
-			logger.Debug().Str("purl", args[0]).Msg("Looking up package vulnerabilities from Snyk")
-			resp, err := snyk.GetPackageVulnerabilities(purl)
+
+			logger.
+				Debug().
+				Str("purl", args[0]).
+				Msg("Looking up package vulnerabilities from Snyk")
+
+			auth, err := snyk.AuthFromToken(snyk.APIToken())
+			if err != nil {
+				logger.
+					Fatal().
+					Err(err).
+					Msg("Failed to get API credentials.")
+			}
+
+			orgID, err := snyk.SnykOrgID(auth)
+			if err != nil {
+				logger.
+					Fatal().
+					Err(err).
+					Msg("Failed to look up user info.")
+			}
+
+			resp, err := snyk.GetPackageVulnerabilities(&purl, auth, orgID)
 			if err != nil {
 				logger.Fatal().Err(err).Msg("An error occurred")
 			}
+
 			fmt.Print(string(resp.Body))
 		},
 	}

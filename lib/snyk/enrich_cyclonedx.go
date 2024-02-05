@@ -35,6 +35,20 @@ func enrichCycloneDX(bom *cdx.BOM, logger zerolog.Logger) *cdx.BOM {
 		return bom
 	}
 
+	auth, err := AuthFromToken(APIToken())
+	if err != nil {
+		// TODO: log error when logger instance available.
+		// See https://github.com/snyk/parlay/pull/49
+		return nil
+	}
+
+	orgID, err := SnykOrgID(auth)
+	if err != nil {
+		// TODO: log error when logger instance available.
+		// See https://github.com/snyk/parlay/pull/49
+		return nil
+	}
+
 	wg := sizedwaitgroup.New(20)
 	var mutex = &sync.Mutex{}
 	vulnerabilities := make(map[cdx.Component][]issues.CommonIssueModelVTwo)
@@ -53,7 +67,7 @@ func enrichCycloneDX(bom *cdx.BOM, logger zerolog.Logger) *cdx.BOM {
 				return
 			}
 
-			resp, err := GetPackageVulnerabilities(purl)
+			resp, err := GetPackageVulnerabilities(&purl, auth, orgID)
 			if err != nil {
 				logger.Err(err).
 					Str("purl", purl.ToString()).

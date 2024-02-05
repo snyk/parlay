@@ -17,6 +17,7 @@
 package snyk
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/deepmap/oapi-codegen/pkg/securityprovider"
@@ -26,7 +27,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetSnykOrg(t *testing.T) {
+func TestGetSnykOrg_Success(t *testing.T) {
 	expectedOrg := uuid.MustParse("00000000-0000-0000-0000-000000000000")
 	auth, err := securityprovider.NewSecurityProviderApiKey("header", "name", "value")
 	require.NoError(t, err)
@@ -34,10 +35,25 @@ func TestGetSnykOrg(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 	httpmock.RegisterResponder("GET", "https://api.snyk.io/rest/self",
-		httpmock.NewJsonResponderOrPanic(200, httpmock.File("testdata/self.json")),
+		httpmock.NewJsonResponderOrPanic(http.StatusOK, httpmock.File("testdata/self.json")),
 	)
 
-	actualOrg, err := getSnykOrg(auth)
+	actualOrg, err := SnykOrgID(auth)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedOrg, *actualOrg)
+}
+
+func TestGetSnykOrg_Unauthorized(t *testing.T) {
+	auth, err := securityprovider.NewSecurityProviderApiKey("header", "name", "value")
+	require.NoError(t, err)
+
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+	httpmock.RegisterResponder("GET", "https://api.snyk.io/rest/self",
+		httpmock.NewJsonResponderOrPanic(http.StatusUnauthorized, []byte(`{"msg":"unauthorized"}`)),
+	)
+
+	actualOrg, err := SnykOrgID(auth)
+	assert.ErrorContains(t, err, "Failed to get user info (401)")
+	assert.Nil(t, actualOrg)
 }
