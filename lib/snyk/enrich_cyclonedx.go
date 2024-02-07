@@ -37,15 +37,13 @@ func enrichCycloneDX(bom *cdx.BOM, logger zerolog.Logger) *cdx.BOM {
 
 	auth, err := AuthFromToken(APIToken())
 	if err != nil {
-		// TODO: log error when logger instance available.
-		// See https://github.com/snyk/parlay/pull/49
+		logger.Fatal().Err(err).Msg("Failed to authenticate.")
 		return nil
 	}
 
 	orgID, err := SnykOrgID(auth)
 	if err != nil {
-		// TODO: log error when logger instance available.
-		// See https://github.com/snyk/parlay/pull/49
+		logger.Error().Err(err).Msg("Failed to infer preferred org.")
 		return nil
 	}
 
