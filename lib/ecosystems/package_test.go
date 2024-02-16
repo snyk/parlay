@@ -18,7 +18,6 @@ package ecosystems
 
 import (
 	"fmt"
-	"net/url"
 	"testing"
 
 	"github.com/jarcoal/httpmock"
@@ -89,8 +88,8 @@ func TestPurlToEcosystemsName(t *testing.T) {
 			// Test case 1: When the package manager type is "npm"
 			// and the namespace is not empty, the function should return
 			// a url encoded string in the form of "<namespace>/<name>"
-			purlStr:      "pkg:npm/my-namespace/my-package",
-			expectedName: url.QueryEscape("my-namespace/my-package"),
+			purlStr:      "pkg:npm/%40my-namespace/my-package",
+			expectedName: "@my-namespace/my-package",
 		},
 		{
 			// Test case 2: When the package manager type is "npm"

@@ -19,7 +19,6 @@ package ecosystems
 import (
 	"context"
 	"fmt"
-	"net/url"
 
 	"github.com/package-url/packageurl-go"
 
@@ -84,16 +83,10 @@ func purlToEcosystemsName(purl packageurl.PackageURL) string {
 	case packageurl.TypeMaven:
 		name = fmt.Sprintf("%s:%s", purl.Namespace, purl.Name)
 
-	// ecosyste.ms npm requires the combination of namespace and name to
-	// be URL-encoded, including the separator.
-	case packageurl.TypeNPM:
-		name = url.QueryEscape(fmt.Sprintf("%s/%s", purl.Namespace, purl.Name))
-
 	// apk packages are only used by alpine, so the namespace isn't used in the
 	// package name for the ecosyste.ms API
 	case packageurl.TypeApk:
 		break
 	}
-
 	return name
 }
