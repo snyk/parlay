@@ -39,7 +39,7 @@ func TestEnrichSBOM_CycloneDX(t *testing.T) {
 	bom := &cdx.BOM{
 		Components: &[]cdx.Component{
 			{
-				PackageURL: "pkg:/example",
+				PackageURL: "pkg:type/example",
 			},
 		},
 	}
@@ -61,6 +61,44 @@ func TestEnrichSBOM_CycloneDX(t *testing.T) {
 	assert.Equal(t, 2, total)
 	calls := httpmock.GetCallCountInfo()
 	assert.Equal(t, 1, calls[`GET =~^https://packages.ecosyste.ms/api/v1/registries`])
+}
+
+func TestEnrichSBOM_CycloneDX_NestedComponents(t *testing.T) {
+	teardown := setupEcosystemsAPIMock(t)
+	defer teardown()
+
+	bom := &cdx.BOM{
+		Components: &[]cdx.Component{
+			{
+				PackageURL: "pkg:type/example",
+				Components: &[]cdx.Component{
+					{
+						PackageURL: "pkg:otherType/otherExample",
+					},
+				},
+			},
+		},
+	}
+	doc := &sbom.SBOMDocument{BOM: bom}
+
+	EnrichSBOM(doc)
+
+	assert.NotNil(t, bom.Components)
+	assert.Len(t, *bom.Components, 1)
+
+	for i := range *bom.Components {
+		enrichedComponent := (*bom.Components)[i]
+		assert.NotNil(t, enrichedComponent.ExternalReferences)
+		assert.Len(t, *enrichedComponent.ExternalReferences, 1)
+		assert.Equal(t, scorecardURL, (*enrichedComponent.ExternalReferences)[0].URL)
+		assert.Equal(t, "OpenSSF Scorecard", (*enrichedComponent.ExternalReferences)[0].Comment)
+		assert.Equal(t, cdx.ERTypeOther, (*enrichedComponent.ExternalReferences)[0].Type)
+	}
+
+	total := httpmock.GetTotalCallCount()
+	assert.Equal(t, 4, total)
+	calls := httpmock.GetCallCountInfo()
+	assert.Equal(t, 2, calls[`GET =~^https://packages.ecosyste.ms/api/v1/registries`])
 }
 
 func TestEnrichSBOM_ErrorFetchingPackageData(t *testing.T) {

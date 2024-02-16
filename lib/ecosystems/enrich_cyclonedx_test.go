@@ -44,6 +44,15 @@ func TestEnrichSBOM_CycloneDX(t *testing.T) {
 		})
 
 	bom := &cdx.BOM{
+		Metadata: &cdx.Metadata{
+			Component: &cdx.Component{
+				BOMRef:     "pkg:golang/github.com/ACME/Project@v1.0.0",
+				Type:       cdx.ComponentTypeApplication,
+				Name:       "Project",
+				Version:    "v1.0.0",
+				PackageURL: "pkg:golang/github.com/ACME/Project@v1.0.0",
+			},
+		},
 		Components: &[]cdx.Component{
 			{
 				BOMRef:     "pkg:golang/github.com/CycloneDX/cyclonedx-go@v0.3.0",
@@ -69,7 +78,45 @@ func TestEnrichSBOM_CycloneDX(t *testing.T) {
 
 	httpmock.GetTotalCallCount()
 	calls := httpmock.GetCallCountInfo()
-	assert.Equal(t, len(components), calls[`GET =~^https://packages.ecosyste.ms/api/v1/registries`])
+	assert.Equal(t, 2, calls[`GET =~^https://packages.ecosyste.ms/api/v1/registries`])
+}
+
+func TestEnrichSBOM_CycloneDX_NestedComps(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder("GET", `=~^https://packages.ecosyste.ms/api/v1/registries`,
+		func(req *http.Request) (*http.Response, error) {
+			return httpmock.NewJsonResponse(200, map[string]interface{}{})
+		})
+
+	bom := &cdx.BOM{
+		Components: &[]cdx.Component{
+			{
+				BOMRef:     "@emotion/babel-plugin@11.11.0",
+				Type:       cdx.ComponentTypeLibrary,
+				Name:       "babel-plugin",
+				Version:    "v11.11.0",
+				PackageURL: "pkg:npm/%40emotion/babel-plugin@11.11.0",
+				Components: &[]cdx.Component{
+					{
+						Type:       cdx.ComponentTypeLibrary,
+						Name:       "convert-source-map",
+						Version:    "v1.9.0",
+						BOMRef:     "@emotion/babel-plugin@11.11.0|convert-source-map@1.9.0",
+						PackageURL: "pkg:npm/convert-source-map@1.9.0",
+					},
+				},
+			},
+		},
+	}
+	doc := &sbom.SBOMDocument{BOM: bom}
+
+	EnrichSBOM(doc)
+
+	httpmock.GetTotalCallCount()
+	calls := httpmock.GetCallCountInfo()
+	assert.Equal(t, 2, calls[`GET =~^https://packages.ecosyste.ms/api/v1/registries`])
 }
 
 func TestEnrichSBOMWithoutLicense(t *testing.T) {

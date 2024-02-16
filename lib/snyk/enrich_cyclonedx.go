@@ -27,14 +27,11 @@ import (
 	"github.com/remeh/sizedwaitgroup"
 	"github.com/rs/zerolog"
 
+	"github.com/snyk/parlay/internal/utils"
 	"github.com/snyk/parlay/snyk/issues"
 )
 
 func enrichCycloneDX(bom *cdx.BOM, logger zerolog.Logger) *cdx.BOM {
-	if bom.Components == nil {
-		return bom
-	}
-
 	auth, err := AuthFromToken(APIToken())
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to authenticate.")
@@ -47,15 +44,14 @@ func enrichCycloneDX(bom *cdx.BOM, logger zerolog.Logger) *cdx.BOM {
 		return nil
 	}
 
-	wg := sizedwaitgroup.New(20)
 	var mutex = &sync.Mutex{}
 	vulnerabilities := make(map[cdx.Component][]issues.CommonIssueModelVTwo)
-
-	for i, component := range *bom.Components {
+	comps := utils.DiscoverCDXComponents(bom)
+	wg := sizedwaitgroup.New(20)
+	for i := range comps {
 		wg.Add()
-		go func(component cdx.Component, i int) {
+		go func(component *cdx.Component) {
 			defer wg.Done()
-
 			purl, err := packageurl.FromString(component.PackageURL)
 			if err != nil {
 				logger.Debug().
@@ -84,12 +80,11 @@ func enrichCycloneDX(bom *cdx.BOM, logger zerolog.Logger) *cdx.BOM {
 
 			if packageDoc.Data != nil {
 				mutex.Lock()
-				vulnerabilities[component] = *packageDoc.Data
+				vulnerabilities[*component] = *packageDoc.Data
 				mutex.Unlock()
 			}
-		}(component, i)
+		}(comps[i])
 	}
-
 	wg.Wait()
 
 	var vulns []cdx.Vulnerability

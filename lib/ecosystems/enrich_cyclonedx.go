@@ -24,6 +24,7 @@ import (
 	"github.com/remeh/sizedwaitgroup"
 
 	"github.com/snyk/parlay/ecosystems/packages"
+	"github.com/snyk/parlay/internal/utils"
 )
 
 type cdxEnricher = func(cdx.Component, packages.Package) cdx.Component
@@ -192,30 +193,26 @@ func enrichCDXTopics(component cdx.Component, packageData packages.Package) cdx.
 }
 
 func enrichCDX(bom *cdx.BOM) {
-	if bom.Components == nil {
-		return
-	}
-
+	comps := utils.DiscoverCDXComponents(bom)
 	wg := sizedwaitgroup.New(20)
-	newComponents := make([]cdx.Component, len(*bom.Components))
-	for i, component := range *bom.Components {
+	for i := range comps {
 		wg.Add()
-		go func(component cdx.Component, i int) {
-			// TODO: return when there is no usable Purl on the component.
-			purl, _ := packageurl.FromString(component.PackageURL) //nolint:errcheck
+		go func(component *cdx.Component) {
+			defer wg.Done()
+			purl, err := packageurl.FromString(component.PackageURL)
+			if err != nil {
+				return
+			}
 			resp, err := GetPackageData(purl)
 			if err == nil {
 				packageData := resp.JSON200
 				if packageData != nil {
 					for _, enrichFunc := range cdxEnrichers {
-						component = enrichFunc(component, *packageData)
+						*component = enrichFunc(*component, *packageData)
 					}
 				}
 			}
-			newComponents[i] = component
-			wg.Done()
-		}(component, i)
+		}(comps[i])
 	}
 	wg.Wait()
-	bom.Components = &newComponents
 }

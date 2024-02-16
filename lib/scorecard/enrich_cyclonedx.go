@@ -24,6 +24,7 @@ import (
 	"github.com/package-url/packageurl-go"
 	"github.com/remeh/sizedwaitgroup"
 
+	"github.com/snyk/parlay/internal/utils"
 	"github.com/snyk/parlay/lib/ecosystems"
 )
 
@@ -42,17 +43,16 @@ func cdxEnrichExternalReference(component cdx.Component, url string, comment str
 }
 
 func enrichCDX(bom *cdx.BOM) {
-	if bom.Components == nil {
-		return
-	}
-
+	comps := utils.DiscoverCDXComponents(bom)
 	wg := sizedwaitgroup.New(20)
-	newComponents := make([]cdx.Component, len(*bom.Components))
-	for i, component := range *bom.Components {
+	for i := range comps {
 		wg.Add()
-		go func(component cdx.Component, i int) {
-			// TODO: return when there is no usable Purl on the component.
-			purl, _ := packageurl.FromString(component.PackageURL) //nolint:errcheck
+		go func(component *cdx.Component) {
+			defer wg.Done()
+			purl, err := packageurl.FromString(component.PackageURL)
+			if err != nil {
+				return
+			}
 			resp, err := ecosystems.GetPackageData(purl)
 			if err == nil && resp.JSON200 != nil && resp.JSON200.RepositoryUrl != nil {
 				scorecardUrl := strings.ReplaceAll(*resp.JSON200.RepositoryUrl, "https://", "https://api.securityscorecards.dev/projects/")
@@ -60,14 +60,11 @@ func enrichCDX(bom *cdx.BOM) {
 				if err == nil {
 					defer response.Body.Close()
 					if response.StatusCode == http.StatusOK {
-						component = cdxEnrichExternalReference(component, scorecardUrl, "OpenSSF Scorecard", cdx.ERTypeOther)
+						*component = cdxEnrichExternalReference(*component, scorecardUrl, "OpenSSF Scorecard", cdx.ERTypeOther)
 					}
 				}
 			}
-			newComponents[i] = component
-			wg.Done()
-		}(component, i)
+		}(comps[i])
 	}
 	wg.Wait()
-	bom.Components = &newComponents
 }
