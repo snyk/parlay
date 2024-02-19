@@ -5,6 +5,11 @@
   [ "$status" -eq 0 ]
 }
 
+@test "Not fail when testing a JavaScript CycloneDX 1.5 SBOM" {
+  run ./parlay ecosystems enrich testing/sbom.cyclonedx-1.5.json
+  [ "$status" -eq 0 ]
+}
+
 @test "Not fail when testing an SBOM on stdin" {
   run bash -c "cat testing/sbom.cyclonedx.json | ./parlay ecosystems enrich -"
   [ "$status" -eq 0 ]

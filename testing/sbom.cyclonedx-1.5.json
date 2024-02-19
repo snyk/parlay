@@ -1,0 +1,192 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "serialNumber": "urn:uuid:2bc89cc4-93e1-42cc-a0b6-5f6a305161fe",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2024-02-19T15:41:53.826Z",
+    "tools": {
+      "components": [
+        {
+          "group": "@cyclonedx",
+          "name": "cdxgen",
+          "version": "10.1.2",
+          "purl": "pkg:npm/%40cyclonedx/cdxgen@10.1.2",
+          "type": "application",
+          "bom-ref": "pkg:npm/@cyclonedx/cdxgen@10.1.2",
+          "author": "OWASP Foundation",
+          "publisher": "OWASP Foundation"
+        }
+      ]
+    },
+    "authors": [
+      {
+        "name": "OWASP Foundation"
+      }
+    ],
+    "lifecycles": [
+      {
+        "phase": "build"
+      }
+    ],
+    "component": {
+      "group": "",
+      "name": "parlay-test",
+      "version": "0.1.0",
+      "type": "application",
+      "purl": "pkg:npm/parlay-test@0.1.0",
+      "bom-ref": "pkg:npm/parlay-test@0.1.0",
+      "components": []
+    }
+  },
+  "components": [
+    {
+      "group": "",
+      "name": "react",
+      "version": "18.2.0",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "ff722331d6f62fd41b05d5a25b97b73f6fe7a70301694f661c24825333659f464261b71f4ec19b4c9ad4fe419e99d1f6216981da2a19fb3931b66aba834f5f19"
+        }
+      ],
+      "purl": "pkg:npm/react@18.2.0",
+      "type": "framework",
+      "bom-ref": "pkg:npm/react@18.2.0",
+      "evidence": {
+        "identity": {
+          "field": "purl",
+          "confidence": 1,
+          "methods": [
+            {
+              "technique": "manifest-analysis",
+              "confidence": 1,
+              "value": "/Users/roscapaul/Documents/Playground/parlay-test/package-lock.json"
+            }
+          ]
+        },
+        "occurrences": [
+          {
+            "location": "src/index.js#1"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "SrcFile",
+          "value": "/Users/roscapaul/Documents/Playground/parlay-test/package-lock.json"
+        },
+        {
+          "name": "ResolvedUrl",
+          "value": "https://registry.npmjs.org/react/-/react-18.2.0.tgz"
+        },
+        {
+          "name": "ImportedModules",
+          "value": "react"
+        }
+      ]
+    },
+    {
+      "group": "",
+      "name": "loose-envify",
+      "version": "1.4.0",
+      "scope": "optional",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "972bb13c6aff59f86b95e9b608bfd472751cd7372a280226043cee918ed8e45ff242235d928ebe7d12debe5c351e03324b0edfeb5d54218e34f04b71452a0add"
+        }
+      ],
+      "purl": "pkg:npm/loose-envify@1.4.0",
+      "type": "library",
+      "bom-ref": "pkg:npm/loose-envify@1.4.0",
+      "evidence": {
+        "identity": {
+          "field": "purl",
+          "confidence": 1,
+          "methods": [
+            {
+              "technique": "manifest-analysis",
+              "confidence": 1,
+              "value": "/Users/roscapaul/Documents/Playground/parlay-test/package-lock.json"
+            }
+          ]
+        }
+      },
+      "properties": [
+        {
+          "name": "SrcFile",
+          "value": "/Users/roscapaul/Documents/Playground/parlay-test/package-lock.json"
+        },
+        {
+          "name": "ResolvedUrl",
+          "value": "https://registry.npmjs.org/loose-envify/-/loose-envify-1.4.0.tgz"
+        }
+      ]
+    },
+    {
+      "group": "",
+      "name": "js-tokens",
+      "version": "4.0.0",
+      "scope": "optional",
+      "hashes": [
+        {
+          "alg": "SHA-512",
+          "content": "45d2547e5704ddc5332a232a420b02bb4e853eef5474824ed1b7986cf84737893a6a9809b627dca02b53f5b7313a9601b690f690233a49bce0e026aeb16fcf29"
+        }
+      ],
+      "purl": "pkg:npm/js-tokens@4.0.0",
+      "type": "library",
+      "bom-ref": "pkg:npm/js-tokens@4.0.0",
+      "evidence": {
+        "identity": {
+          "field": "purl",
+          "confidence": 1,
+          "methods": [
+            {
+              "technique": "manifest-analysis",
+              "confidence": 1,
+              "value": "/Users/roscapaul/Documents/Playground/parlay-test/package-lock.json"
+            }
+          ]
+        }
+      },
+      "properties": [
+        {
+          "name": "SrcFile",
+          "value": "/Users/roscapaul/Documents/Playground/parlay-test/package-lock.json"
+        },
+        {
+          "name": "ResolvedUrl",
+          "value": "https://registry.npmjs.org/js-tokens/-/js-tokens-4.0.0.tgz"
+        }
+      ]
+    }
+  ],
+  "services": [],
+  "dependencies": [
+    {
+      "ref": "pkg:npm/js-tokens@4.0.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:npm/loose-envify@1.4.0",
+      "dependsOn": [
+        "pkg:npm/js-tokens@4.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:npm/react@18.2.0",
+      "dependsOn": [
+        "pkg:npm/loose-envify@1.4.0"
+      ]
+    },
+    {
+      "ref": "pkg:npm/parlay-test@0.1.0",
+      "dependsOn": [
+        "pkg:npm/react@18.2.0"
+      ]
+    }
+  ]
+}
