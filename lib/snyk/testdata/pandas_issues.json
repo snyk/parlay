@@ -1,0 +1,80 @@
+{
+  "jsonapi": {
+    "version": "1.0"
+  },
+  "data": [
+    {
+      "id": "SNYK-PYTHON-PANDAS-5879012",
+      "type": "issue",
+      "attributes": {
+        "key": "SNYK-PYTHON-PANDAS-5879012",
+        "title": "SQL Injection",
+        "type": "package_vulnerability",
+        "created_at": "2023-09-01T12:57:12.082697Z",
+        "updated_at": "2023-09-03T09:33:34.592326Z",
+        "description": "## Overview\n[pandas](https://pypi.org/project/pandas/) is a Python package providing data structures designed to make working with structured (tabular, multidimensional, potentially heterogeneous) and time series data both easy and intuitive.\n\nAffected versions of this package are vulnerable to SQL Injection via `sql.py`, due to improper input sanitization.\n## Remediation\nUpgrade `pandas` to version 0.16.0 or higher.\n## References\n- [GitHub Commit](https://github.com/pandas-dev/pandas/commit/a774ee84485412459f7205cccd87b639022afd07)\n- [GitHub PR](https://github.com/pandas-dev/pandas/pull/8986)\n",
+        "problems": [
+          {
+            "id": "CWE-89",
+            "source": "CWE"
+          },
+          {
+            "id": "PVE-2023-99975",
+            "source": "PVE"
+          }
+        ],
+        "coordinates": [
+          {
+            "remedies": [
+              {
+                "type": "indeterminate",
+                "description": "Upgrade the package version to 0.16.0 to fix this vulnerability",
+                "details": {
+                  "upgrade_package": "0.16.0"
+                }
+              }
+            ],
+            "representation": [
+              "[,0.16.0)"
+            ]
+          }
+        ],
+        "severities": [
+          {
+            "source": "Snyk",
+            "level": "high",
+            "score": 7.3,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:L"
+          }
+        ],
+        "effective_severity_level": "high",
+        "slots": {
+          "disclosure_time": "2023-09-01T06:35:07Z",
+          "exploit": "Not Defined",
+          "publication_time": "2023-09-03T09:33:34.590125Z",
+          "references": [
+            {
+              "url": "https://github.com/pandas-dev/pandas/commit/a774ee84485412459f7205cccd87b639022afd07",
+              "title": "GitHub Commit"
+            },
+            {
+              "url": "https://github.com/pandas-dev/pandas/pull/8986",
+              "title": "GitHub PR"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "links": {
+    "self": "/orgs/c8d8dc11-1d72-4051-bd73-9eb8694ceaa0/packages/pkg%3Apypi%2Fpandas%400.15.0/issues?version=2023-11-27&limit=1000&offset=0"
+  },
+  "meta": {
+    "package": {
+      "name": "pandas",
+      "type": "pypi",
+      "url": "pkg:pypi/pandas@0.15.0",
+      "version": "0.15.0"
+    }
+  }
+}

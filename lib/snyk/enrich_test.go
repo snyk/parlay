@@ -39,6 +39,37 @@ func TestEnrichSBOM_CycloneDXWithVulnerabilities(t *testing.T) {
 	assert.Equal(t, "SNYK-PYTHON-NUMPY-73513", vuln.ID)
 }
 
+func TestEnrichSBOM_CycloneDXWithVulnerabilities_NestedComponents(t *testing.T) {
+	teardown := setupTestEnv(t)
+	defer teardown()
+
+	bom := &cdx.BOM{
+		Components: &[]cdx.Component{
+			{
+				BOMRef:     "pkg:pypi/pandas@0.15.0",
+				Name:       "pandas",
+				Version:    "0.15.0",
+				PackageURL: "pkg:pypi/pandas@0.15.0",
+				Components: &[]cdx.Component{
+					{
+						BOMRef:     "pkg:pypi/numpy@1.16.0",
+						Name:       "numpy",
+						Version:    "1.16.0",
+						PackageURL: "pkg:pypi/numpy@1.16.0",
+					},
+				},
+			},
+		},
+	}
+	doc := &sbom.SBOMDocument{BOM: bom}
+	logger := zerolog.Nop()
+
+	EnrichSBOM(doc, logger)
+
+	assert.NotNil(t, bom.Vulnerabilities)
+	assert.Len(t, *bom.Vulnerabilities, 2)
+}
+
 func TestEnrichSBOM_CycloneDXWithoutVulnerabilities(t *testing.T) {
 	teardown := setupTestEnv(t)
 	defer teardown()
@@ -108,6 +139,11 @@ func setupTestEnv(t *testing.T) func() {
 		"GET",
 		`=~^https://api\.snyk\.io/rest/orgs/[a-z0-9-]+/packages/pkg%3Apypi%2Fnumpy%401.16.0/issues`,
 		httpmock.NewJsonResponderOrPanic(200, httpmock.File("testdata/numpy_issues.json")),
+	)
+	httpmock.RegisterResponder(
+		"GET",
+		`=~^https://api\.snyk\.io/rest/orgs/[a-z0-9-]+/packages/pkg%3Apypi%2Fpandas%400.15.0/issues`,
+		httpmock.NewJsonResponderOrPanic(200, httpmock.File("testdata/pandas_issues.json")),
 	)
 	httpmock.RegisterResponder(
 		"GET",
