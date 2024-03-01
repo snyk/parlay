@@ -13,6 +13,8 @@ import (
 	"github.com/snyk/parlay/lib/sbom"
 )
 
+var logger = zerolog.Nop()
+
 func TestEnrichSBOM_CycloneDXWithVulnerabilities(t *testing.T) {
 	teardown := setupTestEnv(t)
 	defer teardown()
@@ -28,9 +30,8 @@ func TestEnrichSBOM_CycloneDXWithVulnerabilities(t *testing.T) {
 		},
 	}
 	doc := &sbom.SBOMDocument{BOM: bom}
-	logger := zerolog.Nop()
 
-	EnrichSBOM(doc, logger)
+	EnrichSBOM(doc, &logger)
 
 	assert.NotNil(t, bom.Vulnerabilities)
 	assert.Len(t, *bom.Vulnerabilities, 1)
@@ -62,9 +63,8 @@ func TestEnrichSBOM_CycloneDXWithVulnerabilities_NestedComponents(t *testing.T) 
 		},
 	}
 	doc := &sbom.SBOMDocument{BOM: bom}
-	logger := zerolog.Nop()
 
-	EnrichSBOM(doc, logger)
+	EnrichSBOM(doc, &logger)
 
 	assert.NotNil(t, bom.Vulnerabilities)
 	assert.Len(t, *bom.Vulnerabilities, 2)
@@ -85,9 +85,8 @@ func TestEnrichSBOM_CycloneDXWithoutVulnerabilities(t *testing.T) {
 		},
 	}
 	doc := &sbom.SBOMDocument{BOM: bom}
-	logger := zerolog.Nop()
 
-	EnrichSBOM(doc, logger)
+	EnrichSBOM(doc, &logger)
 
 	assert.Nil(t, bom.Vulnerabilities, "should not extend vulnerabilities if there are none")
 }
@@ -113,9 +112,8 @@ func TestEnrichSBOM_SPDXWithVulnerabilities(t *testing.T) {
 		},
 	}
 	doc := &sbom.SBOMDocument{BOM: bom}
-	logger := zerolog.Nop()
 
-	EnrichSBOM(doc, logger)
+	EnrichSBOM(doc, &logger)
 
 	vulnRef := bom.Packages[0].PackageExternalReferences[1]
 	assert.Equal(t, "SECURITY", vulnRef.Category)

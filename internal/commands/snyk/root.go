@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewSnykRootCommand(logger zerolog.Logger) *cobra.Command {
+func NewSnykRootCommand(logger *zerolog.Logger) *cobra.Command {
 	cmd := cobra.Command{
 		Use:                   "snyk",
 		Short:                 "Commands for using parlay with Snyk",
@@ -18,6 +18,7 @@ func NewSnykRootCommand(logger zerolog.Logger) *cobra.Command {
 			}
 		},
 	}
+
 	cmd.AddCommand(NewPackageCommand(logger))
 	cmd.AddCommand(NewEnrichCommand(logger))
 

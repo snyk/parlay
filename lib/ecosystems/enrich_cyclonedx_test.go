@@ -23,11 +23,14 @@ import (
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/jarcoal/httpmock"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/snyk/parlay/ecosystems/packages"
 	"github.com/snyk/parlay/lib/sbom"
 )
+
+var logger = zerolog.Nop()
 
 func TestEnrichSBOM_CycloneDX(t *testing.T) {
 	httpmock.Activate()
@@ -65,7 +68,7 @@ func TestEnrichSBOM_CycloneDX(t *testing.T) {
 	}
 	doc := &sbom.SBOMDocument{BOM: bom}
 
-	EnrichSBOM(doc)
+	EnrichSBOM(doc, &logger)
 
 	components := *bom.Components
 	component := components[0]
@@ -112,7 +115,7 @@ func TestEnrichSBOM_CycloneDX_NestedComps(t *testing.T) {
 	}
 	doc := &sbom.SBOMDocument{BOM: bom}
 
-	EnrichSBOM(doc)
+	EnrichSBOM(doc, &logger)
 
 	httpmock.GetTotalCallCount()
 	calls := httpmock.GetCallCountInfo()
@@ -144,7 +147,7 @@ func TestEnrichSBOMWithoutLicense(t *testing.T) {
 	}
 	doc := &sbom.SBOMDocument{BOM: bom}
 
-	EnrichSBOM(doc)
+	EnrichSBOM(doc, &logger)
 
 	components := *bom.Components
 
@@ -188,7 +191,9 @@ func TestEnrichLicense(t *testing.T) {
 func TestEnrichBlankSBOM(t *testing.T) {
 	bom := new(cdx.BOM)
 	doc := &sbom.SBOMDocument{BOM: bom}
-	EnrichSBOM(doc)
+
+	EnrichSBOM(doc, &logger)
+
 	assert.Nil(t, bom.Components)
 }
 

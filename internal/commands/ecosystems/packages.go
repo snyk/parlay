@@ -10,20 +10,22 @@ import (
 	"github.com/snyk/parlay/lib/ecosystems"
 )
 
-func NewPackageCommand(logger zerolog.Logger) *cobra.Command {
+func NewPackageCommand(logger *zerolog.Logger) *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "package <purl> ",
+		Use:   "package <purl>",
 		Short: "Return package info from ecosyste.ms",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			purl, err := packageurl.FromString(args[0])
 			if err != nil {
-				logger.Fatal().Err(err)
+				logger.Fatal().Err(err).Msg("Failed to parse PackageURL")
 			}
+
 			resp, err := ecosystems.GetPackageData(purl)
 			if err != nil {
-				logger.Fatal().Err(err)
+				logger.Fatal().Err(err).Msg("Failed to get package data from ecosyste.ms")
 			}
+
 			fmt.Print(string(resp.Body))
 		},
 	}

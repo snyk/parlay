@@ -35,16 +35,20 @@ const (
 	snykVulnerabilityDB_URI = "https://security.snyk.io"
 )
 
-func enrichSPDX(bom *spdx.Document, logger zerolog.Logger) *spdx.Document {
+func enrichSPDX(bom *spdx.Document, logger *zerolog.Logger) *spdx.Document {
 	auth, err := AuthFromToken(APIToken())
 	if err != nil {
-		logger.Fatal().Err(err).Msg("Failed to authenticate.")
+		logger.Fatal().
+			Err(err).
+			Msg("Failed to authenticate")
 		return nil
 	}
 
 	orgID, err := SnykOrgID(auth)
 	if err != nil {
-		logger.Error().Err(err).Msg("Failed to infer preferred org.")
+		logger.Fatal().
+			Err(err).
+			Msg("Failed to infer preferred Snyk organization")
 		return nil
 	}
 
@@ -52,34 +56,36 @@ func enrichSPDX(bom *spdx.Document, logger zerolog.Logger) *spdx.Document {
 	wg := sizedwaitgroup.New(20)
 	vulnerabilities := make(map[*spdx_2_3.Package][]issues.CommonIssueModelVTwo)
 
-	for i, pkg := range bom.Packages {
+	packages := bom.Packages
+	logger.Debug().Msgf("Detected %d packages", len(packages))
+
+	for i, pkg := range packages {
 		wg.Add()
 
 		go func(pkg *spdx_2_3.Package, i int) {
 			defer wg.Done()
+			l := logger.With().Str("SPDXID", string(pkg.PackageSPDXIdentifier)).Logger()
 
 			purl, err := utils.GetPurlFromSPDXPackage(pkg)
 			if err != nil || purl == nil {
-				logger.Debug().
-					Str("SPDXID", string(pkg.PackageSPDXIdentifier)).
-					Msg("Could not identify package.")
+				l.Debug().Msg("Could not identify package")
 				return
 			}
 
 			resp, err := GetPackageVulnerabilities(purl, auth, orgID)
 			if err != nil {
-				logger.Err(err).
+				l.Err(err).
 					Str("purl", purl.ToString()).
-					Msg("Failed to fetch vulnerabilities for package.")
+					Msg("Failed to fetch vulnerabilities for package")
 				return
 			}
 
 			packageData := resp.Body
 			var packageDoc issues.IssuesWithPurlsResponse
 			if err := json.Unmarshal(packageData, &packageDoc); err != nil {
-				logger.Err(err).
+				l.Err(err).
 					Str("status", resp.Status()).
-					Msg("Failed to decode Snyk vulnerability response.")
+					Msg("Failed to decode Snyk vulnerability response")
 				return
 			}
 

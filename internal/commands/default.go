@@ -48,10 +48,10 @@ func NewDefaultCommand() *cobra.Command {
 
 	cmd.SetVersionTemplate(`{{.Version}}`)
 
-	cmd.AddCommand(ecosystems.NewEcosystemsRootCommand(logger))
-	cmd.AddCommand(snyk.NewSnykRootCommand(logger))
-	cmd.AddCommand(deps.NewDepsRootCommand(logger))
-	cmd.AddCommand(scorecard.NewRootCommand(logger))
+	cmd.AddCommand(ecosystems.NewEcosystemsRootCommand(&logger))
+	cmd.AddCommand(snyk.NewSnykRootCommand(&logger))
+	cmd.AddCommand(deps.NewDepsRootCommand(&logger))
+	cmd.AddCommand(scorecard.NewRootCommand(&logger))
 
 	return &cmd
 }

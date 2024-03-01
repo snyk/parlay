@@ -22,14 +22,17 @@ import (
 	"strings"
 
 	"github.com/package-url/packageurl-go"
+	"github.com/rs/zerolog"
 	"github.com/spdx/tools-golang/spdx"
 	"github.com/spdx/tools-golang/spdx/v2/v2_3"
 
 	"github.com/snyk/parlay/ecosystems/packages"
 )
 
-func enrichSPDX(bom *spdx.Document) {
+func enrichSPDX(bom *spdx.Document, logger *zerolog.Logger) {
 	packages := bom.Packages
+
+	logger.Debug().Msgf("Detected %d packages", len(packages))
 
 	for _, pkg := range packages {
 		purl, err := extractPurl(pkg)

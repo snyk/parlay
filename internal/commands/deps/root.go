@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewDepsRootCommand(logger zerolog.Logger) *cobra.Command {
+func NewDepsRootCommand(logger *zerolog.Logger) *cobra.Command {
 	cmd := cobra.Command{
 		Use:                   "deps",
 		Short:                 "Commands for using parlay with deps.dev",
