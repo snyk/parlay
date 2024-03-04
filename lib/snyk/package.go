@@ -26,8 +26,64 @@ import (
 	"github.com/snyk/parlay/snyk/issues"
 )
 
-const snykServer = "https://api.snyk.io/rest"
-const version = "2023-04-28"
+const (
+	snykServer        = "https://api.snyk.io/rest"
+	version           = "2023-04-28"
+	snykAdvisorServer = "https://snyk.io/advisor"
+	snykVulnDBServer  = "https://security.snyk.io/package"
+)
+
+func purlToSnykAdvisor(purl *packageurl.PackageURL) string {
+	return map[string]string{
+		packageurl.TypeNPM:    "npm-package",
+		packageurl.TypePyPi:   "python",
+		packageurl.TypeGolang: "golang",
+		packageurl.TypeDocker: "docker",
+	}[purl.Type]
+}
+
+func SnykAdvisorURL(purl *packageurl.PackageURL) string {
+	ecosystem := purlToSnykAdvisor(purl)
+	if ecosystem == "" {
+		return ""
+	}
+	url := snykAdvisorServer + "/" + ecosystem + "/"
+	if purl.Namespace != "" {
+		url += purl.Namespace + "/"
+	}
+	url += purl.Name
+	return url
+}
+
+func purlToSnykVulnDB(purl *packageurl.PackageURL) string {
+	return map[string]string{
+		packageurl.TypeCargo:     "cargo",
+		packageurl.TypeCocoapods: "cocoapods",
+		packageurl.TypeComposer:  "composer",
+		packageurl.TypeGolang:    "golang",
+		packageurl.TypeHex:       "hex",
+		packageurl.TypeMaven:     "maven",
+		packageurl.TypeNPM:       "npm",
+		packageurl.TypeNuget:     "nuget",
+		packageurl.TypePyPi:      "pip",
+		packageurl.TypePub:       "pub",
+		packageurl.TypeGem:       "rubygems",
+		packageurl.TypeSwift:     "swift",
+	}[purl.Type]
+}
+
+func SnykVulnURL(purl *packageurl.PackageURL) string {
+	ecosystem := purlToSnykVulnDB(purl)
+	if ecosystem == "" {
+		return ""
+	}
+	url := snykVulnDBServer + "/" + ecosystem + "/"
+	if purl.Namespace != "" {
+		url += purl.Namespace + "%2F"
+	}
+	url += purl.Name
+	return url
+}
 
 func GetPackageVulnerabilities(purl *packageurl.PackageURL, auth *securityprovider.SecurityProviderApiKey, orgID *uuid.UUID) (*issues.FetchIssuesPerPurlResponse, error) {
 	client, err := issues.NewClientWithResponses(snykServer, issues.WithRequestEditorFn(auth.Intercept))

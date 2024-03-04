@@ -22,6 +22,7 @@ import (
 	"net/url"
 	"sync"
 
+	"github.com/package-url/packageurl-go"
 	"github.com/remeh/sizedwaitgroup"
 	"github.com/rs/zerolog"
 	"github.com/spdx/tools-golang/spdx"
@@ -34,6 +35,47 @@ import (
 const (
 	snykVulnerabilityDB_URI = "https://security.snyk.io"
 )
+
+type spdxEnricher = func(*spdx_2_3.Package, *packageurl.PackageURL)
+
+var spdxEnrichers = []spdxEnricher{
+	enrichSPDXSnykAdvisorData,
+	enrichSPDXSnykVulnerabilityDBData,
+}
+
+func enrichSPDXSnykAdvisorData(component *spdx_2_3.Package, purl *packageurl.PackageURL) {
+	url := SnykAdvisorURL(purl)
+	if url != "" {
+		ext := &spdx_2_3.PackageExternalReference{
+			Locator:            url,
+			RefType:            "advisory",
+			Category:           spdx.CategoryOther,
+			ExternalRefComment: "Snyk Advisor",
+		}
+		if component.PackageExternalReferences == nil {
+			component.PackageExternalReferences = []*spdx_2_3.PackageExternalReference{ext}
+		} else {
+			component.PackageExternalReferences = append(component.PackageExternalReferences, ext)
+		}
+	}
+}
+
+func enrichSPDXSnykVulnerabilityDBData(component *spdx_2_3.Package, purl *packageurl.PackageURL) {
+	url := SnykVulnURL(purl)
+	if url != "" {
+		ext := &spdx_2_3.PackageExternalReference{
+			Locator:            url,
+			RefType:            "url",
+			Category:           spdx.CategoryOther,
+			ExternalRefComment: "Snyk Vulnerability DB",
+		}
+		if component.PackageExternalReferences == nil {
+			component.PackageExternalReferences = []*spdx_2_3.PackageExternalReference{ext}
+		} else {
+			component.PackageExternalReferences = append(component.PackageExternalReferences, ext)
+		}
+	}
+}
 
 func enrichSPDX(bom *spdx.Document, logger *zerolog.Logger) *spdx.Document {
 	auth, err := AuthFromToken(APIToken())
@@ -71,7 +113,9 @@ func enrichSPDX(bom *spdx.Document, logger *zerolog.Logger) *spdx.Document {
 				l.Debug().Msg("Could not identify package")
 				return
 			}
-
+			for _, enrichFn := range spdxEnrichers {
+				enrichFn(pkg, purl)
+			}
 			resp, err := GetPackageVulnerabilities(purl, auth, orgID)
 			if err != nil {
 				l.Err(err).
