@@ -31,50 +31,55 @@ import (
 	"github.com/snyk/parlay/snyk/issues"
 )
 
-func enrichCycloneDX(bom *cdx.BOM, logger zerolog.Logger) *cdx.BOM {
+func enrichCycloneDX(bom *cdx.BOM, logger *zerolog.Logger) *cdx.BOM {
 	auth, err := AuthFromToken(APIToken())
 	if err != nil {
-		logger.Fatal().Err(err).Msg("Failed to authenticate.")
+		logger.Fatal().Err(err).Msg("Failed to authenticate")
 		return nil
 	}
 
 	orgID, err := SnykOrgID(auth)
 	if err != nil {
-		logger.Error().Err(err).Msg("Failed to infer preferred org.")
+		logger.Error().Err(err).Msg("Failed to infer preferred Snyk organization")
 		return nil
 	}
+	logger.Debug().Str("org_id", orgID.String()).Msg("Inferred Snyk organization ID")
 
 	var mutex = &sync.Mutex{}
 	vulnerabilities := make(map[cdx.Component][]issues.CommonIssueModelVTwo)
-	comps := utils.DiscoverCDXComponents(bom)
 	wg := sizedwaitgroup.New(20)
+
+	comps := utils.DiscoverCDXComponents(bom)
+	logger.Debug().Msgf("Detected %d packages", len(comps))
+
 	for i := range comps {
 		wg.Add()
 		go func(component *cdx.Component) {
 			defer wg.Done()
+			l := logger.With().Str("bom-ref", component.BOMRef).Logger()
+
 			purl, err := packageurl.FromString(component.PackageURL)
 			if err != nil {
-				logger.Debug().
+				l.Debug().
 					Err(err).
-					Str("BOM-Ref", string(component.BOMRef)).
-					Msg("Could not identify package.")
+					Msg("Could not identify package")
 				return
 			}
 
 			resp, err := GetPackageVulnerabilities(&purl, auth, orgID)
 			if err != nil {
-				logger.Err(err).
+				l.Err(err).
 					Str("purl", purl.ToString()).
-					Msg("Failed to fetch vulnerabilities for package.")
+					Msg("Failed to fetch vulnerabilities for package")
 				return
 			}
 
 			packageData := resp.Body
 			var packageDoc issues.IssuesWithPurlsResponse
 			if err := json.Unmarshal(packageData, &packageDoc); err != nil {
-				logger.Err(err).
+				l.Err(err).
 					Str("status", resp.Status()).
-					Msg("Failed to decode Snyk vulnerability response.")
+					Msg("Failed to decode Snyk vulnerability response")
 				return
 			}
 
@@ -184,6 +189,8 @@ func enrichCycloneDX(bom *cdx.BOM, logger zerolog.Logger) *cdx.BOM {
 			}
 		}
 	}
+
+	logger.Debug().Msgf("Found %d vulnerabilities", len(vulns))
 
 	if len(vulns) > 0 {
 		bom.Vulnerabilities = &vulns

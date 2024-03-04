@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewEcosystemsRootCommand(logger zerolog.Logger) *cobra.Command {
+func NewEcosystemsRootCommand(logger *zerolog.Logger) *cobra.Command {
 	cmd := cobra.Command{
 		Use:                   "ecosystems",
 		Short:                 "Commands for using parlay with ecosystem.ms",

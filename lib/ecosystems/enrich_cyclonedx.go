@@ -22,6 +22,7 @@ import (
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/package-url/packageurl-go"
 	"github.com/remeh/sizedwaitgroup"
+	"github.com/rs/zerolog"
 
 	"github.com/snyk/parlay/ecosystems/packages"
 	"github.com/snyk/parlay/internal/utils"
@@ -63,7 +64,7 @@ func enrichCDXLicense(component cdx.Component, packageData packages.Package) cdx
 	return component
 }
 
-func enrichExternalReference(component cdx.Component, packageData packages.Package, url *string, refType cdx.ExternalReferenceType) cdx.Component {
+func enrichExternalReference(component cdx.Component, _ packages.Package, url *string, refType cdx.ExternalReferenceType) cdx.Component {
 	if url == nil {
 		return component
 	}
@@ -192,27 +193,46 @@ func enrichCDXTopics(component cdx.Component, packageData packages.Package) cdx.
 	return component
 }
 
-func enrichCDX(bom *cdx.BOM) {
-	comps := utils.DiscoverCDXComponents(bom)
+func enrichCDX(bom *cdx.BOM, logger *zerolog.Logger) {
 	wg := sizedwaitgroup.New(20)
+
+	comps := utils.DiscoverCDXComponents(bom)
+	logger.Debug().Msgf("Detected %d packages", len(comps))
+
 	for i := range comps {
 		wg.Add()
-		go func(component *cdx.Component) {
+		go func(comp *cdx.Component) {
 			defer wg.Done()
-			purl, err := packageurl.FromString(component.PackageURL)
+			l := logger.With().Str("bom-ref", comp.BOMRef).Logger()
+
+			purl, err := packageurl.FromString(comp.PackageURL)
 			if err != nil {
+				l.Debug().
+					Err(err).
+					Msg("Skipping package: no usable PackageURL")
 				return
 			}
+
 			resp, err := GetPackageData(purl)
-			if err == nil {
-				packageData := resp.JSON200
-				if packageData != nil {
-					for _, enrichFunc := range cdxEnrichers {
-						*component = enrichFunc(*component, *packageData)
-					}
-				}
+			if err != nil {
+				l.Debug().
+					Err(err).
+					Msg("Skipping package: failed to get package data")
+				return
+			}
+
+			if resp.JSON200 == nil {
+				l.Debug().
+					Err(err).
+					Msg("Skipping package: no data on ecosyste.ms response")
+				return
+			}
+
+			for _, enrichFunc := range cdxEnrichers {
+				*comp = enrichFunc(*comp, *resp.JSON200)
 			}
 		}(comps[i])
 	}
+
 	wg.Wait()
 }

@@ -24,7 +24,7 @@ import (
 	"github.com/snyk/parlay/lib/sbom"
 )
 
-func EnrichSBOM(doc *sbom.SBOMDocument, logger zerolog.Logger) *sbom.SBOMDocument {
+func EnrichSBOM(doc *sbom.SBOMDocument, logger *zerolog.Logger) *sbom.SBOMDocument {
 	switch bom := doc.BOM.(type) {
 	case *cdx.BOM:
 		enrichCycloneDX(bom, logger)

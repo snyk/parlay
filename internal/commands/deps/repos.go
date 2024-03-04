@@ -10,7 +10,7 @@ import (
 	"github.com/snyk/parlay/lib/deps"
 )
 
-func NewRepoCommand(logger zerolog.Logger) *cobra.Command {
+func NewRepoCommand(logger *zerolog.Logger) *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "repo <repo>",
 		Short: "Return repo info from deps.dev",
@@ -18,12 +18,14 @@ func NewRepoCommand(logger zerolog.Logger) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			repo, err := deps.GetRepoData(args[0])
 			if err != nil {
-				logger.Fatal().Err(err).Msg("Error retrieving data from deps.dev")
+				logger.Fatal().Err(err).Msg("Failed to retrieve data from deps.dev")
 			}
+
 			repository, err := json.Marshal(repo)
 			if err != nil {
-				logger.Fatal().Err(err).Msg("Error with JSON response from deps.dev")
+				logger.Fatal().Err(err).Msg("Failed to parse response from deps.dev")
 			}
+
 			fmt.Print(string(repository))
 		},
 	}

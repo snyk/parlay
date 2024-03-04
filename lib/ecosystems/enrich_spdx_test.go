@@ -61,7 +61,7 @@ func TestEnrichSBOM_SPDX(t *testing.T) {
 	}
 	doc := &sbom.SBOMDocument{BOM: bom}
 
-	EnrichSBOM(doc)
+	EnrichSBOM(doc, &logger)
 
 	pkgs := bom.Packages
 

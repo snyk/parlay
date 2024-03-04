@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewRootCommand(logger zerolog.Logger) *cobra.Command {
+func NewRootCommand(logger *zerolog.Logger) *cobra.Command {
 	cmd := cobra.Command{
 		Use:                   "scorecard",
 		Short:                 "Commands for using parlay with OpenSSF Scorecard",
