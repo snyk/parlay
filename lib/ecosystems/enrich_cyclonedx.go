@@ -28,7 +28,7 @@ import (
 	"github.com/snyk/parlay/internal/utils"
 )
 
-type cdxEnricher = func(cdx.Component, packages.Package) cdx.Component
+type cdxEnricher = func(*cdx.Component, *packages.Package)
 
 var cdxEnrichers = []cdxEnricher{
 	enrichCDXDescription,
@@ -46,122 +46,114 @@ var cdxEnrichers = []cdxEnricher{
 	enrichCDXSupplier,
 }
 
-func enrichCDXDescription(component cdx.Component, packageData packages.Package) cdx.Component {
-	if packageData.Description != nil {
-		component.Description = *packageData.Description
+func enrichCDXDescription(comp *cdx.Component, data *packages.Package) {
+	if data.Description != nil {
+		comp.Description = *data.Description
 	}
-	return component
 }
 
-func enrichCDXLicense(component cdx.Component, packageData packages.Package) cdx.Component {
-	if packageData.NormalizedLicenses != nil {
-		if len(packageData.NormalizedLicenses) > 0 {
-			expression := packageData.NormalizedLicenses[0]
+func enrichCDXLicense(comp *cdx.Component, data *packages.Package) {
+	if data.NormalizedLicenses != nil {
+		if len(data.NormalizedLicenses) > 0 {
+			expression := data.NormalizedLicenses[0]
 			licenses := cdx.LicenseChoice{Expression: expression}
-			component.Licenses = &cdx.Licenses{licenses}
+			comp.Licenses = &cdx.Licenses{licenses}
 		}
 	}
-	return component
 }
 
-func enrichExternalReference(component cdx.Component, _ packages.Package, url *string, refType cdx.ExternalReferenceType) cdx.Component {
+func enrichExternalReference(comp *cdx.Component, url *string, refType cdx.ExternalReferenceType) {
 	if url == nil {
-		return component
+		return
 	}
 	ext := cdx.ExternalReference{
 		URL:  *url,
 		Type: refType,
 	}
-	if component.ExternalReferences == nil {
-		component.ExternalReferences = &[]cdx.ExternalReference{ext}
+	if comp.ExternalReferences == nil {
+		comp.ExternalReferences = &[]cdx.ExternalReference{ext}
 	} else {
-		*component.ExternalReferences = append(*component.ExternalReferences, ext)
+		*comp.ExternalReferences = append(*comp.ExternalReferences, ext)
 	}
-	return component
 }
 
-func enrichProperty(component cdx.Component, name string, value string) cdx.Component {
+func enrichProperty(comp *cdx.Component, name string, value string) {
 	prop := cdx.Property{
 		Name:  name,
 		Value: value,
 	}
-	if component.Properties == nil {
-		component.Properties = &[]cdx.Property{prop}
+	if comp.Properties == nil {
+		comp.Properties = &[]cdx.Property{prop}
 	} else {
-		*component.Properties = append(*component.Properties, prop)
+		*comp.Properties = append(*comp.Properties, prop)
 	}
-	return component
 }
 
-func enrichCDXHomepage(component cdx.Component, packageData packages.Package) cdx.Component {
-	return enrichExternalReference(component, packageData, packageData.Homepage, cdx.ERTypeWebsite)
+func enrichCDXHomepage(comp *cdx.Component, data *packages.Package) {
+	enrichExternalReference(comp, data.Homepage, cdx.ERTypeWebsite)
 }
 
-func enrichCDXRegistryURL(component cdx.Component, packageData packages.Package) cdx.Component {
-	return enrichExternalReference(component, packageData, packageData.RegistryUrl, cdx.ERTypeDistribution)
+func enrichCDXRegistryURL(comp *cdx.Component, data *packages.Package) {
+	enrichExternalReference(comp, data.RegistryUrl, cdx.ERTypeDistribution)
 }
 
-func enrichCDXRepositoryURL(component cdx.Component, packageData packages.Package) cdx.Component {
-	return enrichExternalReference(component, packageData, packageData.RepositoryUrl, cdx.ERTypeVCS)
+func enrichCDXRepositoryURL(comp *cdx.Component, data *packages.Package) {
+	enrichExternalReference(comp, data.RepositoryUrl, cdx.ERTypeVCS)
 }
 
-func enrichCDXDocumentationURL(component cdx.Component, packageData packages.Package) cdx.Component {
-	return enrichExternalReference(component, packageData, packageData.DocumentationUrl, cdx.ERTypeDocumentation)
+func enrichCDXDocumentationURL(comp *cdx.Component, data *packages.Package) {
+	enrichExternalReference(comp, data.DocumentationUrl, cdx.ERTypeDocumentation)
 }
 
-func enrichCDXFirstReleasePublishedAt(component cdx.Component, packageData packages.Package) cdx.Component {
-	if packageData.FirstReleasePublishedAt == nil {
-		return component
+func enrichCDXFirstReleasePublishedAt(comp *cdx.Component, data *packages.Package) {
+	if data.FirstReleasePublishedAt == nil {
+		return
 	}
-	timestamp := packageData.FirstReleasePublishedAt.UTC().Format(time.RFC3339)
-	return enrichProperty(component, "ecosystems:first_release_published_at", timestamp)
+	timestamp := data.FirstReleasePublishedAt.UTC().Format(time.RFC3339)
+	enrichProperty(comp, "ecosystems:first_release_published_at", timestamp)
 }
 
-func enrichCDXLatestReleasePublishedAt(component cdx.Component, packageData packages.Package) cdx.Component {
-	if packageData.LatestReleasePublishedAt == nil {
-		return component
+func enrichCDXLatestReleasePublishedAt(comp *cdx.Component, data *packages.Package) {
+	if data.LatestReleasePublishedAt == nil {
+		return
 	}
-	timestamp := packageData.LatestReleasePublishedAt.UTC().Format(time.RFC3339)
-	return enrichProperty(component, "ecosystems:latest_release_published_at", timestamp)
+	timestamp := data.LatestReleasePublishedAt.UTC().Format(time.RFC3339)
+	enrichProperty(comp, "ecosystems:latest_release_published_at", timestamp)
 }
 
-func enrichCDXRepoArchived(component cdx.Component, packageData packages.Package) cdx.Component {
-	if packageData.RepoMetadata != nil {
-		if archived, ok := (*packageData.RepoMetadata)["archived"].(bool); ok && archived {
-			return enrichProperty(component, "ecosystems:repository_archived", "true")
+func enrichCDXRepoArchived(comp *cdx.Component, data *packages.Package) {
+	if data.RepoMetadata != nil {
+		if archived, ok := (*data.RepoMetadata)["archived"].(bool); ok && archived {
+			enrichProperty(comp, "ecosystems:repository_archived", "true")
 		}
 	}
-	return component
 }
 
-func enrichCDXLocation(component cdx.Component, packageData packages.Package) cdx.Component {
-	if packageData.RepoMetadata != nil {
-		meta := *packageData.RepoMetadata
+func enrichCDXLocation(comp *cdx.Component, data *packages.Package) {
+	if data.RepoMetadata != nil {
+		meta := *data.RepoMetadata
 		if ownerRecord, ok := meta["owner_record"].(map[string]interface{}); ok {
 			if location, ok := ownerRecord["location"].(string); ok {
-				return enrichProperty(component, "ecosystems:owner_location", location)
+				enrichProperty(comp, "ecosystems:owner_location", location)
 			}
 		}
 	}
-	return component
 }
 
-func enrichCDXAuthor(component cdx.Component, packageData packages.Package) cdx.Component {
-	if packageData.RepoMetadata != nil {
-		meta := *packageData.RepoMetadata
+func enrichCDXAuthor(comp *cdx.Component, data *packages.Package) {
+	if data.RepoMetadata != nil {
+		meta := *data.RepoMetadata
 		if ownerRecord, ok := meta["owner_record"].(map[string]interface{}); ok {
 			if name, ok := ownerRecord["name"].(string); ok {
-				component.Author = name
-				return component
+				comp.Author = name
 			}
 		}
 	}
-	return component
 }
 
-func enrichCDXSupplier(component cdx.Component, packageData packages.Package) cdx.Component {
-	if packageData.RepoMetadata != nil {
-		meta := *packageData.RepoMetadata
+func enrichCDXSupplier(comp *cdx.Component, data *packages.Package) {
+	if data.RepoMetadata != nil {
+		meta := *data.RepoMetadata
 		if ownerRecord, ok := meta["owner_record"].(map[string]interface{}); ok {
 			if name, ok := ownerRecord["name"].(string); ok {
 				supplier := cdx.OrganizationalEntity{
@@ -171,26 +163,22 @@ func enrichCDXSupplier(component cdx.Component, packageData packages.Package) cd
 					websites := []string{website}
 					supplier.URL = &websites
 				}
-				component.Supplier = &supplier
-				return component
+				comp.Supplier = &supplier
 			}
 		}
 	}
-	return component
 }
 
-func enrichCDXTopics(component cdx.Component, packageData packages.Package) cdx.Component {
-	if packageData.RepoMetadata != nil {
-		meta := *packageData.RepoMetadata
+func enrichCDXTopics(comp *cdx.Component, data *packages.Package) {
+	if data.RepoMetadata != nil {
+		meta := *data.RepoMetadata
 
 		if topics, ok := meta["topics"].([]interface{}); ok {
 			for _, topic := range topics {
-				component = enrichProperty(component, "ecosystems:topic", topic.(string))
+				enrichProperty(comp, "ecosystems:topic", topic.(string))
 			}
 		}
-		return component
 	}
-	return component
 }
 
 func enrichCDX(bom *cdx.BOM, logger *zerolog.Logger) {
@@ -229,7 +217,7 @@ func enrichCDX(bom *cdx.BOM, logger *zerolog.Logger) {
 			}
 
 			for _, enrichFunc := range cdxEnrichers {
-				*comp = enrichFunc(*comp, *resp.JSON200)
+				enrichFunc(comp, resp.JSON200)
 			}
 		}(comps[i])
 	}
