@@ -160,31 +160,34 @@ func TestEnrichSBOMWithoutLicense(t *testing.T) {
 }
 
 func TestEnrichDescription(t *testing.T) {
-	component := cdx.Component{
+	component := &cdx.Component{
 		Type:    cdx.ComponentTypeLibrary,
 		Name:    "cyclonedx-go",
 		Version: "v0.3.0",
 	}
 	desc := "description"
-	pack := packages.Package{
+	pack := &packages.Package{
 		Description: &desc,
 	}
-	component = enrichCDXDescription(component, pack)
+
+	enrichCDXDescription(component, pack)
+
 	assert.Equal(t, "description", component.Description)
 }
 
 func TestEnrichLicense(t *testing.T) {
-	component := cdx.Component{
+	component := &cdx.Component{
 		Type:    cdx.ComponentTypeLibrary,
 		Name:    "cyclonedx-go",
 		Version: "v0.3.0",
 	}
-	pack := packages.Package{
+	pack := &packages.Package{
 		NormalizedLicenses: []string{"BSD-3-Clause"},
 	}
-	component = enrichCDXLicense(component, pack)
-	licenses := *component.Licenses
 
+	enrichCDXLicense(component, pack)
+
+	licenses := *component.Licenses
 	comp := cdx.LicenseChoice(cdx.LicenseChoice{Expression: "BSD-3-Clause"})
 	assert.Equal(t, comp, licenses[0])
 }
@@ -200,93 +203,91 @@ func TestEnrichBlankSBOM(t *testing.T) {
 }
 
 func TestEnrichExternalReferenceWithNilURL(t *testing.T) {
-	component := cdx.Component{}
-	packageData := packages.Package{Homepage: nil}
+	component := &cdx.Component{}
+	packageData := &packages.Package{Homepage: nil}
 
-	result := enrichExternalReference(component, packageData, packageData.Homepage, cdx.ERTypeWebsite)
+	enrichExternalReference(component, packageData.Homepage, cdx.ERTypeWebsite)
 
-	assert.Equal(t, component, result)
+	assert.Nil(t, component.ExternalReferences)
 }
 
 func TestEnrichExternalReferenceWithNonNullURL(t *testing.T) {
-	component := cdx.Component{}
-	packageData := packages.Package{Homepage: pointerToString("https://example.com")}
+	component := &cdx.Component{}
+	packageData := packages.Package{Homepage: pointerToString(t, "https://example.com")}
 
-	result := enrichExternalReference(component, packageData, packageData.Homepage, cdx.ERTypeWebsite)
+	enrichExternalReference(component, packageData.Homepage, cdx.ERTypeWebsite)
 
-	expected := cdx.Component{
-		ExternalReferences: &[]cdx.ExternalReference{
-			{URL: "https://example.com", Type: cdx.ERTypeWebsite},
-		},
+	expected := &[]cdx.ExternalReference{
+		{URL: "https://example.com", Type: cdx.ERTypeWebsite},
 	}
-	assert.Equal(t, expected, result)
+	assert.Equal(t, expected, component.ExternalReferences)
 }
 
 func TestEnrichHomepageWithNilHomepage(t *testing.T) {
-	component := cdx.Component{}
-	packageData := packages.Package{Homepage: nil}
+	component := &cdx.Component{}
+	packageData := &packages.Package{Homepage: nil}
 
-	result := enrichCDXHomepage(component, packageData)
+	enrichCDXHomepage(component, packageData)
 
-	assert.Equal(t, component, result)
+	assert.Nil(t, component.ExternalReferences)
 }
 
 func TestEnrichHomepageWithNonNullHomepage(t *testing.T) {
-	component := cdx.Component{}
-	packageData := packages.Package{Homepage: pointerToString("https://example.com")}
+	component := &cdx.Component{}
+	packageData := &packages.Package{Homepage: pointerToString(t, "https://example.com")}
 
-	result := enrichCDXHomepage(component, packageData)
+	enrichCDXHomepage(component, packageData)
 
-	expected := cdx.Component{
-		ExternalReferences: &[]cdx.ExternalReference{
-			{URL: "https://example.com", Type: cdx.ERTypeWebsite},
-		},
+	expected := &[]cdx.ExternalReference{
+		{URL: "https://example.com", Type: cdx.ERTypeWebsite},
 	}
-	assert.Equal(t, expected, result)
+	assert.Equal(t, expected, component.ExternalReferences)
 }
 
 func TestEnrichRegistryURLWithNilRegistryURL(t *testing.T) {
-	component := cdx.Component{}
-	packageData := packages.Package{RegistryUrl: nil}
+	component := &cdx.Component{}
+	packageData := &packages.Package{RegistryUrl: nil}
 
-	result := enrichCDXRegistryURL(component, packageData)
+	enrichCDXRegistryURL(component, packageData)
 
-	assert.Equal(t, component, result)
+	assert.Nil(t, component.ExternalReferences)
 }
 
 func TestEnrichRegistryURLWithNonNullRegistryURL(t *testing.T) {
-	component := cdx.Component{}
-	packageData := packages.Package{RegistryUrl: pointerToString("https://example.com")}
+	component := &cdx.Component{}
+	packageData := &packages.Package{RegistryUrl: pointerToString(t, "https://example.com")}
 
-	result := enrichCDXRegistryURL(component, packageData)
+	enrichCDXRegistryURL(component, packageData)
 
-	expected := cdx.Component{
-		ExternalReferences: &[]cdx.ExternalReference{
-			{URL: "https://example.com", Type: cdx.ERTypeDistribution},
-		},
+	expected := &[]cdx.ExternalReference{
+		{URL: "https://example.com", Type: cdx.ERTypeDistribution},
 	}
-	assert.Equal(t, expected, result)
+	assert.Equal(t, expected, component.ExternalReferences)
 }
 
-func pointerToString(s string) *string {
+func pointerToString(t *testing.T, s string) *string {
+	t.Helper()
 	return &s
 }
 
 func TestEnrichLatestReleasePublishedAt(t *testing.T) {
-	component := cdx.Component{}
-	packageData := packages.Package{
+	component := &cdx.Component{}
+	packageData := &packages.Package{
 		LatestReleasePublishedAt: nil,
 	}
 
-	result := enrichCDXLatestReleasePublishedAt(component, packageData)
-	assert.Equal(t, component, result)
+	enrichCDXLatestReleasePublishedAt(component, packageData)
+
+	assert.Nil(t, component.Properties)
 
 	latestReleasePublishedAt := time.Date(2023, time.May, 1, 0, 0, 0, 0, time.UTC)
 	packageData.LatestReleasePublishedAt = &latestReleasePublishedAt
 	expectedTimestamp := latestReleasePublishedAt.UTC().Format(time.RFC3339)
-	result = enrichCDXLatestReleasePublishedAt(component, packageData)
 
-	prop := (*result.Properties)[0]
+	enrichCDXLatestReleasePublishedAt(component, packageData)
+
+	assert.Len(t, *component.Properties, 1)
+	prop := (*component.Properties)[0]
 	assert.Equal(t, "ecosystems:latest_release_published_at", prop.Name)
 	assert.Equal(t, expectedTimestamp, prop.Value)
 }
@@ -295,42 +296,38 @@ func TestEnrichLocation(t *testing.T) {
 	assert := assert.New(t)
 
 	// Test case 1: packageData.RepoMetadata is nil
-	component := cdx.Component{Name: "test"}
-	packageData := packages.Package{}
-	result := enrichCDXLocation(component, packageData)
-	assert.Equal(component, result)
+	component := &cdx.Component{Name: "test"}
+	packageData := &packages.Package{}
+	enrichCDXLocation(component, packageData)
+	assert.Nil(component.Properties)
 
 	// Test case 2: packageData.RepoMetadata is not nil, but "owner_record" is missing
-	component = cdx.Component{Name: "test"}
-	packageData = packages.Package{RepoMetadata: &map[string]interface{}{
+	component = &cdx.Component{Name: "test"}
+	packageData = &packages.Package{RepoMetadata: &map[string]interface{}{
 		"not_owner_record": map[string]interface{}{},
 	}}
-	result = enrichCDXLocation(component, packageData)
-	assert.Equal(component, result)
+	enrichCDXLocation(component, packageData)
+	assert.Nil(component.Properties)
 
 	// Test case 3: "location" field is missing in "owner_record"
-	component = cdx.Component{Name: "test"}
-	packageData = packages.Package{RepoMetadata: &map[string]interface{}{
+	component = &cdx.Component{Name: "test"}
+	packageData = &packages.Package{RepoMetadata: &map[string]interface{}{
 		"owner_record": map[string]interface{}{
 			"not_location": "test",
 		},
 	}}
-	result = enrichCDXLocation(component, packageData)
-	assert.Equal(component, result)
+	enrichCDXLocation(component, packageData)
+	assert.Nil(component.Properties)
 
 	// Test case 4: "location" field is present in "owner_record"
-	component = cdx.Component{Name: "test"}
-	packageData = packages.Package{RepoMetadata: &map[string]interface{}{
+	component = &cdx.Component{Name: "test"}
+	packageData = &packages.Package{RepoMetadata: &map[string]interface{}{
 		"owner_record": map[string]interface{}{
 			"location": "test_location",
 		},
 	}}
-	expectedComponent := cdx.Component{
-		Name: "test",
-		Properties: &[]cdx.Property{
-			{Name: "ecosystems:owner_location", Value: "test_location"},
-		},
-	}
-	result = enrichCDXLocation(component, packageData)
-	assert.Equal(expectedComponent, result)
+	enrichCDXLocation(component, packageData)
+	assert.Equal(&[]cdx.Property{
+		{Name: "ecosystems:owner_location", Value: "test_location"},
+	}, component.Properties)
 }
