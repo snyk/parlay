@@ -30,8 +30,6 @@ import (
 	"github.com/snyk/parlay/lib/sbom"
 )
 
-var logger = zerolog.Nop()
-
 func TestEnrichSBOM_CycloneDX(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
@@ -67,6 +65,7 @@ func TestEnrichSBOM_CycloneDX(t *testing.T) {
 		},
 	}
 	doc := &sbom.SBOMDocument{BOM: bom}
+	logger := zerolog.Nop()
 
 	EnrichSBOM(doc, &logger)
 
@@ -114,6 +113,7 @@ func TestEnrichSBOM_CycloneDX_NestedComps(t *testing.T) {
 		},
 	}
 	doc := &sbom.SBOMDocument{BOM: bom}
+	logger := zerolog.Nop()
 
 	EnrichSBOM(doc, &logger)
 
@@ -146,6 +146,7 @@ func TestEnrichSBOMWithoutLicense(t *testing.T) {
 		},
 	}
 	doc := &sbom.SBOMDocument{BOM: bom}
+	logger := zerolog.Nop()
 
 	EnrichSBOM(doc, &logger)
 
@@ -191,6 +192,7 @@ func TestEnrichLicense(t *testing.T) {
 func TestEnrichBlankSBOM(t *testing.T) {
 	bom := new(cdx.BOM)
 	doc := &sbom.SBOMDocument{BOM: bom}
+	logger := zerolog.Nop()
 
 	EnrichSBOM(doc, &logger)
 

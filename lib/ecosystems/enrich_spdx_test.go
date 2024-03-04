@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/jarcoal/httpmock"
+	"github.com/rs/zerolog"
 	"github.com/spdx/tools-golang/spdx/v2/common"
 	"github.com/spdx/tools-golang/spdx/v2/v2_3"
 	"github.com/stretchr/testify/assert"
@@ -60,6 +61,7 @@ func TestEnrichSBOM_SPDX(t *testing.T) {
 		},
 	}
 	doc := &sbom.SBOMDocument{BOM: bom}
+	logger := zerolog.Nop()
 
 	EnrichSBOM(doc, &logger)
 

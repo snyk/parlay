@@ -13,8 +13,6 @@ import (
 	"github.com/snyk/parlay/lib/sbom"
 )
 
-var logger = zerolog.Nop()
-
 func TestEnrichSBOM_CycloneDXWithVulnerabilities(t *testing.T) {
 	teardown := setupTestEnv(t)
 	defer teardown()
@@ -30,6 +28,7 @@ func TestEnrichSBOM_CycloneDXWithVulnerabilities(t *testing.T) {
 		},
 	}
 	doc := &sbom.SBOMDocument{BOM: bom}
+	logger := zerolog.Nop()
 
 	EnrichSBOM(doc, &logger)
 
@@ -63,6 +62,7 @@ func TestEnrichSBOM_CycloneDXWithVulnerabilities_NestedComponents(t *testing.T) 
 		},
 	}
 	doc := &sbom.SBOMDocument{BOM: bom}
+	logger := zerolog.Nop()
 
 	EnrichSBOM(doc, &logger)
 
@@ -85,6 +85,7 @@ func TestEnrichSBOM_CycloneDXWithoutVulnerabilities(t *testing.T) {
 		},
 	}
 	doc := &sbom.SBOMDocument{BOM: bom}
+	logger := zerolog.Nop()
 
 	EnrichSBOM(doc, &logger)
 
@@ -112,6 +113,7 @@ func TestEnrichSBOM_SPDXWithVulnerabilities(t *testing.T) {
 		},
 	}
 	doc := &sbom.SBOMDocument{BOM: bom}
+	logger := zerolog.Nop()
 
 	EnrichSBOM(doc, &logger)
 
