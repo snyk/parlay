@@ -8,13 +8,13 @@ require (
 	github.com/edoardottt/depsdev v0.0.3
 	github.com/google/uuid v1.3.0
 	github.com/jarcoal/httpmock v1.3.0
-	github.com/package-url/packageurl-go v0.1.2-0.20230717211154-3587d8c2829e
+	github.com/package-url/packageurl-go v0.1.2
 	github.com/remeh/sizedwaitgroup v1.0.0
 	github.com/rs/zerolog v1.29.1
-	github.com/spdx/tools-golang v0.5.2
+	github.com/spdx/tools-golang v0.5.4-0.20240304222056-8baafa1a79c4
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.15.0
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 )
 
 require (

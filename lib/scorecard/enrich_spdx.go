@@ -55,7 +55,7 @@ func enrichSPDX(bom *spdx.Document) {
 			}
 
 			pkg.PackageExternalReferences = append(pkg.PackageExternalReferences, &spdx_2_3.PackageExternalReference{
-				Category: "OTHER",
+				Category: spdx.CategoryOther,
 				RefType:  "openssfscorecard",
 				Locator:  scURL,
 			})

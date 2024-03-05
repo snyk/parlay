@@ -172,7 +172,7 @@ func TestEnrichSBOM_SPDX(t *testing.T) {
 			{
 				PackageExternalReferences: []*spdx_2_3.PackageExternalReference{
 					{
-						Category: "OTHER",
+						Category: spdx.CategoryOther,
 						RefType:  "purl",
 						Locator:  "pkg:golang/snyk/parlay",
 					},
@@ -191,7 +191,7 @@ func TestEnrichSBOM_SPDX(t *testing.T) {
 	scRef := pkg.PackageExternalReferences[1]
 	assert.Equal(t, scorecardURL, scRef.Locator)
 	assert.Equal(t, "openssfscorecard", scRef.RefType)
-	assert.Equal(t, "OTHER", scRef.Category)
+	assert.Equal(t, spdx.CategoryOther, scRef.Category)
 }
 
 func setupEcosystemsAPIMock(t *testing.T) func() {

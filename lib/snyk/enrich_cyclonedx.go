@@ -31,6 +31,45 @@ import (
 	"github.com/snyk/parlay/snyk/issues"
 )
 
+type cdxEnricher = func(*cdx.Component, *packageurl.PackageURL)
+
+var cdxEnrichers = []cdxEnricher{
+	enrichCDXSnykAdvisorData,
+	enrichCDXSnykVulnerabilityDBData,
+}
+
+func enrichCDXSnykVulnerabilityDBData(component *cdx.Component, purl *packageurl.PackageURL) {
+	url := SnykVulnURL(purl)
+	if url != "" {
+		ext := cdx.ExternalReference{
+			URL:     url,
+			Comment: "Snyk Vulnerability DB",
+			Type:    "Other",
+		}
+		if component.ExternalReferences == nil {
+			component.ExternalReferences = &[]cdx.ExternalReference{ext}
+		} else {
+			*component.ExternalReferences = append(*component.ExternalReferences, ext)
+		}
+	}
+}
+
+func enrichCDXSnykAdvisorData(component *cdx.Component, purl *packageurl.PackageURL) {
+	url := SnykAdvisorURL(purl)
+	if url != "" {
+		ext := cdx.ExternalReference{
+			URL:     url,
+			Comment: "Snyk Advisor",
+			Type:    "Other",
+		}
+		if component.ExternalReferences == nil {
+			component.ExternalReferences = &[]cdx.ExternalReference{ext}
+		} else {
+			*component.ExternalReferences = append(*component.ExternalReferences, ext)
+		}
+	}
+}
+
 func enrichCycloneDX(bom *cdx.BOM, logger *zerolog.Logger) *cdx.BOM {
 	auth, err := AuthFromToken(APIToken())
 	if err != nil {
@@ -65,7 +104,9 @@ func enrichCycloneDX(bom *cdx.BOM, logger *zerolog.Logger) *cdx.BOM {
 					Msg("Could not identify package")
 				return
 			}
-
+			for _, enrichFunc := range cdxEnrichers {
+				enrichFunc(component, &purl)
+			}
 			resp, err := GetPackageVulnerabilities(&purl, auth, orgID)
 			if err != nil {
 				l.Err(err).
