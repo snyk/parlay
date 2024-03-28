@@ -28,43 +28,54 @@ import (
 	"github.com/snyk/parlay/lib/ecosystems"
 )
 
-func cdxEnrichExternalReference(component cdx.Component, url string, comment string, refType cdx.ExternalReferenceType) cdx.Component {
+func cdxEnrichExternalReference(comp *cdx.Component, url, comment string, refType cdx.ExternalReferenceType) {
 	ext := cdx.ExternalReference{
 		URL:     url,
 		Comment: comment,
 		Type:    refType,
 	}
-	if component.ExternalReferences == nil {
-		component.ExternalReferences = &[]cdx.ExternalReference{ext}
+
+	if comp.ExternalReferences == nil {
+		comp.ExternalReferences = &[]cdx.ExternalReference{ext}
 	} else {
-		*component.ExternalReferences = append(*component.ExternalReferences, ext)
+		*comp.ExternalReferences = append(*comp.ExternalReferences, ext)
 	}
-	return component
 }
 
 func enrichCDX(bom *cdx.BOM) {
 	comps := utils.DiscoverCDXComponents(bom)
+
 	wg := sizedwaitgroup.New(20)
+
 	for i := range comps {
 		wg.Add()
 		go func(component *cdx.Component) {
 			defer wg.Done()
+
 			purl, err := packageurl.FromString(component.PackageURL)
 			if err != nil {
 				return
 			}
+
 			resp, err := ecosystems.GetPackageData(purl)
-			if err == nil && resp.JSON200 != nil && resp.JSON200.RepositoryUrl != nil {
-				scorecardUrl := strings.ReplaceAll(*resp.JSON200.RepositoryUrl, "https://", "https://api.securityscorecards.dev/projects/")
-				response, err := http.Get(scorecardUrl)
-				if err == nil {
-					defer response.Body.Close()
-					if response.StatusCode == http.StatusOK {
-						*component = cdxEnrichExternalReference(*component, scorecardUrl, "OpenSSF Scorecard", cdx.ERTypeOther)
-					}
-				}
+			if err != nil {
+				return
 			}
+
+			if resp.JSON200 == nil || resp.JSON200.RepositoryUrl == nil {
+				return
+			}
+
+			scorecardUrl := strings.ReplaceAll(*resp.JSON200.RepositoryUrl, "https://", "https://api.securityscorecards.dev/projects/")
+			response, err := http.Get(scorecardUrl)
+			response.Body.Close()
+			if err != nil || response.StatusCode != http.StatusOK {
+				return
+			}
+
+			cdxEnrichExternalReference(component, scorecardUrl, "OpenSSF Scorecard", cdx.ERTypeOther)
 		}(comps[i])
 	}
+
 	wg.Wait()
 }
