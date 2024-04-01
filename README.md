@@ -93,7 +93,7 @@ What about with SPDX? Let's take an SBOM containing a list of packages like so:
       "referenceLocator": "pkg:npm/concat-map@0.0.1"
     }
   ]
-} 
+}
 ```
 
 Running `parlay ecosystems enrich <sbom.spdx.json>` will add additional information:
@@ -114,7 +114,7 @@ Running `parlay ecosystems enrich <sbom.spdx.json>` will add additional informat
       "referenceType": "purl",
       "referenceLocator": "pkg:npm/concat-map@0.0.1"
     }
-  ] 
+  ]
 ```
 
 There are a few other utility commands for ecosyste.ms as well. The first returns raw JSON information about a specific package from ecosyste.ms:
@@ -137,6 +137,8 @@ parlay ecosystems repo https://github.com/open-policy-agent/conftest
 It's important to note vulnerability data is moment-in-time information. By adding vulnerability information directly to the SBOM this makes the SBOM moment-in-time too.
 
 Note the Snyk commands require you to be a Snyk customer, and require passing a valid Snyk API token in the `SNYK_TOKEN` environment variable.
+
+The API base url can be set using the `SNYK_API` environment variable, and if missing it will default to `https://api.snyk.io/rest`.
 
 ```
 parlay snyk enrich testing/sbom.cyclonedx.json
@@ -248,9 +250,9 @@ There are lots of other sources of package data, and it would be great to add su
 
 ## Pipes!
 
-`parlay` is a fan of stdin and stdout. You can pipe SBOMs from other tools into `parlay`, and pipe between the separate `enrich` commands too. 
+`parlay` is a fan of stdin and stdout. You can pipe SBOMs from other tools into `parlay`, and pipe between the separate `enrich` commands too.
 
-Maybe you want to enrich an SBOM with both ecosyste.ms and Snyk data: 
+Maybe you want to enrich an SBOM with both ecosyste.ms and Snyk data:
 
 ```
 cat testing/sbom.cyclonedx.json | ./parlay e enrich - | ./parlay s enrich - | jq
@@ -324,7 +326,7 @@ The various services used to enrich the SBOM data have data for a subset of purl
 * `npm`
 * `nuget`
 * `pypi`
-* `rpm` 
+* `rpm`
 * `swift`
 
 ### OpenSSF Scorecard

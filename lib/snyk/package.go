@@ -27,7 +27,6 @@ import (
 )
 
 const (
-	snykServer        = "https://api.snyk.io/rest"
 	version           = "2023-04-28"
 	snykAdvisorServer = "https://snyk.io/advisor"
 	snykVulnDBServer  = "https://security.snyk.io/package"
@@ -86,7 +85,7 @@ func SnykVulnURL(purl *packageurl.PackageURL) string {
 }
 
 func GetPackageVulnerabilities(purl *packageurl.PackageURL, auth *securityprovider.SecurityProviderApiKey, orgID *uuid.UUID) (*issues.FetchIssuesPerPurlResponse, error) {
-	client, err := issues.NewClientWithResponses(snykServer, issues.WithRequestEditorFn(auth.Intercept))
+	client, err := issues.NewClientWithResponses(APIBaseURL(), issues.WithRequestEditorFn(auth.Intercept))
 	if err != nil {
 		return nil, err
 	}
