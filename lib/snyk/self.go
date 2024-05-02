@@ -39,7 +39,7 @@ type selfDocument struct {
 }
 
 func SnykOrgID(auth *securityprovider.SecurityProviderApiKey) (*uuid.UUID, error) {
-	experimental, err := users.NewClientWithResponses(snykServer, users.WithRequestEditorFn(auth.Intercept))
+	experimental, err := users.NewClientWithResponses(APIBaseURL(), users.WithRequestEditorFn(auth.Intercept))
 	if err != nil {
 		return nil, err
 	}
@@ -81,4 +81,12 @@ func AuthFromToken(token string) (*securityprovider.SecurityProviderApiKey, erro
 
 func APIToken() string {
 	return os.Getenv("SNYK_TOKEN")
+}
+
+func APIBaseURL() string {
+	snykApiEnv := os.Getenv("SNYK_API")
+	if snykApiEnv != "" {
+		return snykApiEnv
+	}
+	return "https://api.snyk.io/rest"
 }
