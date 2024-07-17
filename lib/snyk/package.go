@@ -18,6 +18,8 @@ package snyk
 
 import (
 	"context"
+	"fmt"
+	"net/http"
 
 	"github.com/deepmap/oapi-codegen/pkg/securityprovider"
 	"github.com/google/uuid"
@@ -94,6 +96,10 @@ func GetPackageVulnerabilities(purl *packageurl.PackageURL, auth *securityprovid
 	resp, err := client.FetchIssuesPerPurlWithResponse(context.Background(), *orgID, purl.ToString(), &params)
 	if err != nil {
 		return nil, err
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		return resp, fmt.Errorf("unsuccessful request (%s)", resp.Status())
 	}
 
 	return resp, nil
