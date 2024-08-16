@@ -1,3 +1,4 @@
+version: 2
 before:
   hooks:
   - go mod download
@@ -25,7 +26,6 @@ builds:
 
 archives:
 - format: tar.gz
-  rlcp: true
   name_template: >-
     {{ .ProjectName }}_
     {{- title .Os }}_
@@ -77,7 +77,6 @@ nfpms:
     maintainer: garethr <gareth.rushgrove@snyk.io>
 
 source:
-  rlcp: true
   enabled: true
 
 sboms:
