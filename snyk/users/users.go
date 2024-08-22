@@ -497,6 +497,7 @@ func NewClient(server string, opts ...ClientOption) (*Client, error) {
 	if !strings.HasSuffix(client.Server, "/") {
 		client.Server += "/"
 	}
+	client.Server += "rest/"
 	// create httpClient, if not already present
 	if client.Client == nil {
 		client.Client = &http.Client{}

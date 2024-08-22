@@ -138,7 +138,7 @@ It's important to note vulnerability data is moment-in-time information. By addi
 
 Note the Snyk commands require you to be a Snyk customer, and require passing a valid Snyk API token in the `SNYK_TOKEN` environment variable.
 
-The API base url can be set using the `SNYK_API` environment variable, and if missing it will default to `https://api.snyk.io/rest`.
+The API base url can be set using the `SNYK_API` environment variable, and if missing it will default to `https://api.snyk.io`.
 
 ```
 parlay snyk enrich testing/sbom.cyclonedx.json
