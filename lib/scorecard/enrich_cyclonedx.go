@@ -62,7 +62,7 @@ func enrichCDX(bom *cdx.BOM) {
 				return
 			}
 
-			if resp.JSON200 == nil || resp.JSON200.RepositoryUrl == nil {
+			if resp.JSON200 == nil || resp.JSON200.RepositoryUrl == nil || *resp.JSON200.RepositoryUrl == "" {
 				return
 			}
 
