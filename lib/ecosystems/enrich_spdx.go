@@ -25,6 +25,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spdx/tools-golang/spdx"
 	"github.com/spdx/tools-golang/spdx/v2/v2_3"
+	"github.com/spdx/tools-golang/spdx/v2/common"
 
 	"github.com/snyk/parlay/ecosystems/packages"
 )
@@ -53,6 +54,7 @@ func enrichSPDX(bom *spdx.Document, logger *zerolog.Logger) {
 		enrichSPDXDescription(pkg, pkgData)
 		enrichSPDXLicense(pkg, pkgData)
 		enrichSPDXHomepage(pkg, pkgData)
+		enrichSPDXSupplier(pkg, pkgData)
 	}
 }
 
@@ -68,6 +70,21 @@ func extractPurl(pkg *v2_3.Package) (*packageurl.PackageURL, error) {
 		return &purl, nil
 	}
 	return nil, errors.New("no purl found on SPDX package")
+}
+
+func enrichSPDXSupplier(pkg *v2_3.Package, data *packages.Package) {
+	if data.RepoMetadata != nil {
+		meta := *data.RepoMetadata
+		if ownerRecord, ok := meta["owner_record"].(map[string]interface{}); ok {
+			if name, ok := ownerRecord["name"].(string); ok {
+				supplier := common.Supplier{
+					SupplierType: "Organization",
+					Supplier: name,
+				}
+				pkg.PackageSupplier = &supplier
+			}
+		}
+	}
 }
 
 func enrichSPDXLicense(pkg *v2_3.Package, data *packages.Package) {
