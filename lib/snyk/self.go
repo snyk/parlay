@@ -88,5 +88,5 @@ func APIBaseURL() string {
 	if snykApiEnv != "" {
 		return snykApiEnv
 	}
-	return "https://api.snyk.io/rest"
+	return "https://api.snyk.io"
 }
