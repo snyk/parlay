@@ -41,6 +41,11 @@ func TestEnrichSBOM_SPDX(t *testing.T) {
 					"BSD-3-Clause",
 				},
 				"homepage": "https://github.com/spdx/tools-golang",
+				"repo_metadata": map[string]interface{}{
+					"owner_record": map[string]interface{}{
+						"name": "Acme Corp",
+					},
+				},
 			})
 		})
 
@@ -70,6 +75,8 @@ func TestEnrichSBOM_SPDX(t *testing.T) {
 	assert.Equal(t, "description", pkgs[0].PackageDescription)
 	assert.Equal(t, "BSD-3-Clause", pkgs[0].PackageLicenseConcluded)
 	assert.Equal(t, "https://github.com/spdx/tools-golang", pkgs[0].PackageHomePage)
+	assert.Equal(t, "Organization", pkgs[0].PackageSupplier.SupplierType)
+	assert.Equal(t, "Acme Corp", pkgs[0].PackageSupplier.Supplier)
 
 	httpmock.GetTotalCallCount()
 	calls := httpmock.GetCallCountInfo()
