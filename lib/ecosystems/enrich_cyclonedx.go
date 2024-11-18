@@ -161,7 +161,7 @@ func enrichCDXSupplier(comp *cdx.Component, data *packages.Package) {
 					Name: name,
 				}
 				if website, ok := ownerRecord["website"].(string); ok {
-					split := strings.Split(website, ",")
+					split := strings.Split(website, ", ")
 					for i := range split {
 						split[i] = strings.TrimSpace(split[i])
 					}
