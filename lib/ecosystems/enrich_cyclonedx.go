@@ -17,6 +17,7 @@
 package ecosystems
 
 import (
+	"strings"
 	"time"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
@@ -160,8 +161,11 @@ func enrichCDXSupplier(comp *cdx.Component, data *packages.Package) {
 					Name: name,
 				}
 				if website, ok := ownerRecord["website"].(string); ok {
-					websites := []string{website}
-					supplier.URL = &websites
+					split := strings.Split(website, ",")
+					for i := range split {
+						split[i] = strings.TrimSpace(split[i])
+					}
+					supplier.URL = &split
 				}
 				comp.Supplier = &supplier
 			}
