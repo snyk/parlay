@@ -204,10 +204,21 @@ func enrichCycloneDX(bom *cdx.BOM, logger *zerolog.Logger) *cdx.BOM {
 
 				if issue.Attributes.Severities != nil {
 					for _, sev := range *issue.Attributes.Severities {
-						source := cdx.Source{
-							Name: "Snyk",
-							URL:  "https://security.snyk.io",
+						var source cdx.Source
+						if sev.Source != nil {
+							source = cdx.Source{
+								Name: *sev.Source,
+							}
+						} else {
+							source = cdx.Source{
+								Name: "Snyk",
+							}
 						}
+
+						if source.Name == "Snyk" {
+							source.URL = "https://security.snyk.io"
+						}
+
 						if sev.Score != nil {
 							score := float64(*sev.Score)
 							rating := cdx.VulnerabilityRating{
