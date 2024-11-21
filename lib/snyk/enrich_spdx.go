@@ -112,7 +112,7 @@ func enrichSPDX(cfg *Config, bom *spdx.Document, logger *zerolog.Logger) *spdx.D
 			for _, enrichFn := range spdxEnrichers {
 				enrichFn(cfg, pkg, purl)
 			}
-			resp, err := GetPackageVulnerabilities(cfg, purl, auth, orgID)
+			resp, err := GetPackageVulnerabilities(cfg, purl, auth, orgID, logger)
 			if err != nil {
 				l.Err(err).
 					Str("purl", purl.ToString()).

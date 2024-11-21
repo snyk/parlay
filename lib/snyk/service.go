@@ -41,7 +41,7 @@ func (svc *serviceImpl) GetPackageVulnerabilities(purl *packageurl.PackageURL) (
 		return nil, err
 	}
 
-	return GetPackageVulnerabilities(svc.cfg, purl, auth, orgID)
+	return GetPackageVulnerabilities(svc.cfg, purl, auth, orgID, svc.logger)
 }
 
 func (svc *serviceImpl) getAuth() (*securityprovider.SecurityProviderApiKey, error) {

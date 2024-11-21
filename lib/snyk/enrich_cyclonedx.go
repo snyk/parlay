@@ -107,7 +107,7 @@ func enrichCycloneDX(cfg *Config, bom *cdx.BOM, logger *zerolog.Logger) *cdx.BOM
 			for _, enrichFunc := range cdxEnrichers {
 				enrichFunc(cfg, component, &purl)
 			}
-			resp, err := GetPackageVulnerabilities(cfg, &purl, auth, orgID)
+			resp, err := GetPackageVulnerabilities(cfg, &purl, auth, orgID, logger)
 			if err != nil {
 				l.Err(err).
 					Str("purl", purl.ToString()).
