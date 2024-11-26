@@ -1,5 +1,5 @@
 /*
- * © 2023 Snyk Limited All rights reserved.
+ * © 2024 Snyk Limited All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,17 @@
 
 package snyk
 
-import (
-	cdx "github.com/CycloneDX/cyclonedx-go"
-	"github.com/rs/zerolog"
-	"github.com/spdx/tools-golang/spdx"
+type Config struct {
+	SnykAdvisorWebURL         string
+	SnykVulnerabilityDBWebURL string
+	SnykAPIURL                string
+	APIToken                  string
+}
 
-	"github.com/snyk/parlay/lib/sbom"
-)
-
-func EnrichSBOM(conf *Config, doc *sbom.SBOMDocument, logger *zerolog.Logger) *sbom.SBOMDocument {
-	switch bom := doc.BOM.(type) {
-	case *cdx.BOM:
-		enrichCycloneDX(conf, bom, logger)
-	case *spdx.Document:
-		enrichSPDX(conf, bom, logger)
+func DefaultConfig() *Config {
+	return &Config{
+		SnykAdvisorWebURL:         "https://snyk.io/advisor",
+		SnykVulnerabilityDBWebURL: "https://security.snyk.io",
+		SnykAPIURL:                "https://api.snyk.io",
 	}
-
-	return doc
 }

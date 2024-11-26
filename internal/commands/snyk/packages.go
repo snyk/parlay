@@ -16,6 +16,8 @@ func NewPackageCommand(logger *zerolog.Logger) *cobra.Command {
 		Short: "Return package vulnerabilities from Snyk",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			conf := config()
+
 			purl, err := packageurl.FromString(args[0])
 			if err != nil {
 				logger.Fatal().Err(err).Msg("Failed to parse PackageURL")
@@ -26,7 +28,7 @@ func NewPackageCommand(logger *zerolog.Logger) *cobra.Command {
 				Str("purl", args[0]).
 				Msg("Looking up package vulnerabilities from Snyk")
 
-			auth, err := snyk.AuthFromToken(snyk.APIToken())
+			auth, err := snyk.AuthFromToken(conf.APIToken)
 			if err != nil {
 				logger.
 					Fatal().
@@ -34,7 +36,7 @@ func NewPackageCommand(logger *zerolog.Logger) *cobra.Command {
 					Msg("Failed to get API credentials")
 			}
 
-			orgID, err := snyk.SnykOrgID(auth)
+			orgID, err := snyk.SnykOrgID(conf, auth)
 			if err != nil {
 				logger.
 					Fatal().
@@ -42,7 +44,7 @@ func NewPackageCommand(logger *zerolog.Logger) *cobra.Command {
 					Msg("Failed to look up user info")
 			}
 
-			resp, err := snyk.GetPackageVulnerabilities(&purl, auth, orgID)
+			resp, err := snyk.GetPackageVulnerabilities(conf, &purl, auth, orgID)
 			if err != nil {
 				logger.Fatal().Err(err).Msg("Failed to look up package vulnerabilities")
 			}

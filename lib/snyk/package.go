@@ -31,7 +31,7 @@ import (
 const (
 	version           = "2023-04-28"
 	snykAdvisorServer = "https://snyk.io/advisor"
-	snykVulnDBServer  = "https://security.snyk.io/package"
+	snykVulnDBServer  = "https://security.snyk.io"
 )
 
 func purlToSnykAdvisor(purl *packageurl.PackageURL) string {
@@ -43,12 +43,12 @@ func purlToSnykAdvisor(purl *packageurl.PackageURL) string {
 	}[purl.Type]
 }
 
-func SnykAdvisorURL(purl *packageurl.PackageURL) string {
+func SnykAdvisorURL(conf *Config, purl *packageurl.PackageURL) string {
 	ecosystem := purlToSnykAdvisor(purl)
 	if ecosystem == "" {
 		return ""
 	}
-	url := snykAdvisorServer + "/" + ecosystem + "/"
+	url := conf.SnykAdvisorWebURL + "/" + ecosystem + "/"
 	if purl.Namespace != "" {
 		url += purl.Namespace + "/"
 	}
@@ -73,12 +73,12 @@ func purlToSnykVulnDB(purl *packageurl.PackageURL) string {
 	}[purl.Type]
 }
 
-func SnykVulnURL(purl *packageurl.PackageURL) string {
+func SnykVulnURL(conf *Config, purl *packageurl.PackageURL) string {
 	ecosystem := purlToSnykVulnDB(purl)
 	if ecosystem == "" {
 		return ""
 	}
-	url := snykVulnDBServer + "/" + ecosystem + "/"
+	url := conf.SnykVulnerabilityDBWebURL + "/package/" + ecosystem + "/"
 	if purl.Namespace != "" {
 		url += purl.Namespace + "%2F"
 	}
@@ -86,8 +86,8 @@ func SnykVulnURL(purl *packageurl.PackageURL) string {
 	return url
 }
 
-func GetPackageVulnerabilities(purl *packageurl.PackageURL, auth *securityprovider.SecurityProviderApiKey, orgID *uuid.UUID) (*issues.FetchIssuesPerPurlResponse, error) {
-	client, err := issues.NewClientWithResponses(APIBaseURL(), issues.WithRequestEditorFn(auth.Intercept))
+func GetPackageVulnerabilities(conf *Config, purl *packageurl.PackageURL, auth *securityprovider.SecurityProviderApiKey, orgID *uuid.UUID) (*issues.FetchIssuesPerPurlResponse, error) {
+	client, err := issues.NewClientWithResponses(conf.SnykAPIURL, issues.WithRequestEditorFn(auth.Intercept))
 	if err != nil {
 		return nil, err
 	}

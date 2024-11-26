@@ -38,7 +38,7 @@ func TestGetSnykOrg_Success(t *testing.T) {
 		httpmock.NewJsonResponderOrPanic(http.StatusOK, httpmock.File("testdata/self.json")),
 	)
 
-	actualOrg, err := SnykOrgID(auth)
+	actualOrg, err := SnykOrgID(DefaultConfig(), auth)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedOrg, *actualOrg)
 }
@@ -53,7 +53,7 @@ func TestGetSnykOrg_Unauthorized(t *testing.T) {
 		httpmock.NewJsonResponderOrPanic(http.StatusUnauthorized, []byte(`{"msg":"unauthorized"}`)),
 	)
 
-	actualOrg, err := SnykOrgID(auth)
+	actualOrg, err := SnykOrgID(DefaultConfig(), auth)
 	assert.ErrorContains(t, err, "Failed to get user info (401)")
 	assert.Nil(t, actualOrg)
 }

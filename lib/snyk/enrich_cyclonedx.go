@@ -31,15 +31,15 @@ import (
 	"github.com/snyk/parlay/snyk/issues"
 )
 
-type cdxEnricher = func(*cdx.Component, *packageurl.PackageURL)
+type cdxEnricher = func(*Config, *cdx.Component, *packageurl.PackageURL)
 
 var cdxEnrichers = []cdxEnricher{
 	enrichCDXSnykAdvisorData,
 	enrichCDXSnykVulnerabilityDBData,
 }
 
-func enrichCDXSnykVulnerabilityDBData(component *cdx.Component, purl *packageurl.PackageURL) {
-	url := SnykVulnURL(purl)
+func enrichCDXSnykVulnerabilityDBData(conf *Config, component *cdx.Component, purl *packageurl.PackageURL) {
+	url := SnykVulnURL(conf, purl)
 	if url != "" {
 		ext := cdx.ExternalReference{
 			URL:     url,
@@ -54,8 +54,8 @@ func enrichCDXSnykVulnerabilityDBData(component *cdx.Component, purl *packageurl
 	}
 }
 
-func enrichCDXSnykAdvisorData(component *cdx.Component, purl *packageurl.PackageURL) {
-	url := SnykAdvisorURL(purl)
+func enrichCDXSnykAdvisorData(conf *Config, component *cdx.Component, purl *packageurl.PackageURL) {
+	url := SnykAdvisorURL(conf, purl)
 	if url != "" {
 		ext := cdx.ExternalReference{
 			URL:     url,
@@ -70,14 +70,14 @@ func enrichCDXSnykAdvisorData(component *cdx.Component, purl *packageurl.Package
 	}
 }
 
-func enrichCycloneDX(bom *cdx.BOM, logger *zerolog.Logger) *cdx.BOM {
-	auth, err := AuthFromToken(APIToken())
+func enrichCycloneDX(conf *Config, bom *cdx.BOM, logger *zerolog.Logger) *cdx.BOM {
+	auth, err := AuthFromToken(conf.APIToken)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to authenticate")
 		return nil
 	}
 
-	orgID, err := SnykOrgID(auth)
+	orgID, err := SnykOrgID(conf, auth)
 	if err != nil {
 		logger.Error().Err(err).Msg("Failed to infer preferred Snyk organization")
 		return nil
@@ -105,9 +105,9 @@ func enrichCycloneDX(bom *cdx.BOM, logger *zerolog.Logger) *cdx.BOM {
 				return
 			}
 			for _, enrichFunc := range cdxEnrichers {
-				enrichFunc(component, &purl)
+				enrichFunc(conf, component, &purl)
 			}
-			resp, err := GetPackageVulnerabilities(&purl, auth, orgID)
+			resp, err := GetPackageVulnerabilities(conf, &purl, auth, orgID)
 			if err != nil {
 				l.Err(err).
 					Str("purl", purl.ToString()).
@@ -206,7 +206,7 @@ func enrichCycloneDX(bom *cdx.BOM, logger *zerolog.Logger) *cdx.BOM {
 					for _, sev := range *issue.Attributes.Severities {
 						source := cdx.Source{
 							Name: "Snyk",
-							URL:  "https://security.snyk.io",
+							URL:  snykVulnDBServer,
 						}
 						if sev.Score != nil {
 							score := float64(*sev.Score)
