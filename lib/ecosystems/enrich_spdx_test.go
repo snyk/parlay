@@ -33,11 +33,20 @@ func TestEnrichSBOM_SPDX(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 
+	httpmock.RegisterResponder("GET", `=~^https://packages.ecosyste.ms/api/v1/registries/.*/packages/.*/versions`,
+		func(r *http.Request) (*http.Response, error) {
+			return httpmock.NewJsonResponse(200, map[string]interface{}{
+				// This is the license we expect to see for the specific package version
+				"licenses": "MIT",
+			})
+		},
+	)
 	httpmock.RegisterResponder("GET", `=~^https://packages.ecosyste.ms/api/v1/registries`,
 		func(req *http.Request) (*http.Response, error) {
 			return httpmock.NewJsonResponse(200, map[string]interface{}{
 				"description": "description",
 				"normalized_licenses": []string{
+					// This license should be ignored as it corresponds to the latest version of the package
 					"BSD-3-Clause",
 				},
 				"homepage": "https://github.com/spdx/tools-golang",
@@ -73,7 +82,7 @@ func TestEnrichSBOM_SPDX(t *testing.T) {
 	pkgs := bom.Packages
 
 	assert.Equal(t, "description", pkgs[0].PackageDescription)
-	assert.Equal(t, "BSD-3-Clause", pkgs[0].PackageLicenseConcluded)
+	assert.Equal(t, "MIT", pkgs[0].PackageLicenseConcluded)
 	assert.Equal(t, "https://github.com/spdx/tools-golang", pkgs[0].PackageHomePage)
 	assert.Equal(t, "Organization", pkgs[0].PackageSupplier.SupplierType)
 	assert.Equal(t, "Acme Corp", pkgs[0].PackageSupplier.Supplier)
