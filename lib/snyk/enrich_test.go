@@ -17,7 +17,10 @@ func TestEnrichSBOM_CycloneDXWithVulnerabilities(t *testing.T) {
 	teardown := setupTestEnv(t)
 	defer teardown()
 
-	conf := newTestConfig(t)
+	cfg := newTestConfig(t)
+	logger := zerolog.Nop()
+	svc := NewService(cfg, &logger)
+
 	bom := &cdx.BOM{
 		Components: &[]cdx.Component{
 			{
@@ -30,8 +33,7 @@ func TestEnrichSBOM_CycloneDXWithVulnerabilities(t *testing.T) {
 	}
 	doc := &sbom.SBOMDocument{BOM: bom}
 
-	logger := zerolog.Nop()
-	EnrichSBOM(conf, doc, &logger)
+	svc.EnrichSBOM(doc)
 
 	assert.NotNil(t, bom.Vulnerabilities)
 	assert.Len(t, *bom.Vulnerabilities, 1)
@@ -44,7 +46,10 @@ func TestEnrichSBOM_CycloneDXExternalRefs(t *testing.T) {
 	teardown := setupTestEnv(t)
 	defer teardown()
 
-	conf := newTestConfig(t)
+	cfg := newTestConfig(t)
+	logger := zerolog.Nop()
+	svc := NewService(cfg, &logger)
+
 	bom := &cdx.BOM{
 		Components: &[]cdx.Component{
 			{
@@ -57,8 +62,7 @@ func TestEnrichSBOM_CycloneDXExternalRefs(t *testing.T) {
 	}
 	doc := &sbom.SBOMDocument{BOM: bom}
 
-	logger := zerolog.Nop()
-	EnrichSBOM(conf, doc, &logger)
+	svc.EnrichSBOM(doc)
 
 	assert.NotNil(t, bom.Components)
 	refs := (*bom.Components)[0].ExternalReferences
@@ -79,7 +83,10 @@ func TestEnrichSBOM_CycloneDXExternalRefs_WithNamespace(t *testing.T) {
 	teardown := setupTestEnv(t)
 	defer teardown()
 
-	conf := newTestConfig(t)
+	cfg := newTestConfig(t)
+	logger := zerolog.Nop()
+	svc := NewService(cfg, &logger)
+
 	bom := &cdx.BOM{
 		Components: &[]cdx.Component{
 			{
@@ -92,8 +99,7 @@ func TestEnrichSBOM_CycloneDXExternalRefs_WithNamespace(t *testing.T) {
 	}
 	doc := &sbom.SBOMDocument{BOM: bom}
 
-	logger := zerolog.Nop()
-	EnrichSBOM(conf, doc, &logger)
+	svc.EnrichSBOM(doc)
 
 	assert.NotNil(t, bom.Components)
 	refs := (*bom.Components)[0].ExternalReferences
@@ -114,7 +120,10 @@ func TestEnrichSBOM_CycloneDXWithVulnerabilities_NestedComponents(t *testing.T) 
 	teardown := setupTestEnv(t)
 	defer teardown()
 
-	conf := newTestConfig(t)
+	cfg := newTestConfig(t)
+	logger := zerolog.Nop()
+	svc := NewService(cfg, &logger)
+
 	bom := &cdx.BOM{
 		Components: &[]cdx.Component{
 			{
@@ -135,8 +144,7 @@ func TestEnrichSBOM_CycloneDXWithVulnerabilities_NestedComponents(t *testing.T) 
 	}
 	doc := &sbom.SBOMDocument{BOM: bom}
 
-	logger := zerolog.Nop()
-	EnrichSBOM(conf, doc, &logger)
+	svc.EnrichSBOM(doc)
 
 	assert.NotNil(t, bom.Vulnerabilities)
 	assert.Len(t, *bom.Vulnerabilities, 2)
@@ -146,7 +154,10 @@ func TestEnrichSBOM_CycloneDXWithoutVulnerabilities(t *testing.T) {
 	teardown := setupTestEnv(t)
 	defer teardown()
 
-	conf := newTestConfig(t)
+	cfg := newTestConfig(t)
+	logger := zerolog.Nop()
+	svc := NewService(cfg, &logger)
+
 	bom := &cdx.BOM{
 		Components: &[]cdx.Component{
 			{
@@ -159,8 +170,7 @@ func TestEnrichSBOM_CycloneDXWithoutVulnerabilities(t *testing.T) {
 	}
 	doc := &sbom.SBOMDocument{BOM: bom}
 
-	logger := zerolog.Nop()
-	EnrichSBOM(conf, doc, &logger)
+	svc.EnrichSBOM(doc)
 
 	assert.Nil(t, bom.Vulnerabilities, "should not extend vulnerabilities if there are none")
 }
@@ -169,7 +179,10 @@ func TestEnrichSBOM_SPDXWithVulnerabilities(t *testing.T) {
 	teardown := setupTestEnv(t)
 	defer teardown()
 
-	conf := newTestConfig(t)
+	cfg := newTestConfig(t)
+	logger := zerolog.Nop()
+	svc := NewService(cfg, &logger)
+
 	bom := &spdx_2_3.Document{
 		Packages: []*spdx_2_3.Package{
 			{
@@ -188,8 +201,7 @@ func TestEnrichSBOM_SPDXWithVulnerabilities(t *testing.T) {
 	}
 	doc := &sbom.SBOMDocument{BOM: bom}
 
-	logger := zerolog.Nop()
-	EnrichSBOM(conf, doc, &logger)
+	svc.EnrichSBOM(doc)
 
 	vulnRef := bom.Packages[0].PackageExternalReferences[3]
 	assert.Equal(t, "SECURITY", vulnRef.Category)
@@ -202,7 +214,10 @@ func TestEnrichSBOM_SPDXExternalRefs(t *testing.T) {
 	teardown := setupTestEnv(t)
 	defer teardown()
 
-	conf := newTestConfig(t)
+	cfg := newTestConfig(t)
+	logger := zerolog.Nop()
+	svc := NewService(cfg, &logger)
+
 	bom := &spdx_2_3.Document{
 		Packages: []*spdx_2_3.Package{
 			{
@@ -222,8 +237,7 @@ func TestEnrichSBOM_SPDXExternalRefs(t *testing.T) {
 
 	doc := &sbom.SBOMDocument{BOM: bom}
 
-	logger := zerolog.Nop()
-	EnrichSBOM(conf, doc, &logger)
+	svc.EnrichSBOM(doc)
 
 	assert.NotNil(t, bom.Packages)
 	refs := (*bom.Packages[0]).PackageExternalReferences

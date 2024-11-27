@@ -17,7 +17,8 @@ func NewEnrichCommand(logger *zerolog.Logger) *cobra.Command {
 		Short: "Enrich an SBOM with Snyk data",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			conf := config()
+			cfg := config()
+			svc := snyk.NewService(cfg, logger)
 
 			b, err := utils.GetUserInput(args[0], os.Stdin)
 			if err != nil {
@@ -29,7 +30,7 @@ func NewEnrichCommand(logger *zerolog.Logger) *cobra.Command {
 				logger.Fatal().Err(err).Msg("Failed to read SBOM input")
 			}
 
-			snyk.EnrichSBOM(conf, doc, logger)
+			svc.EnrichSBOM(doc)
 
 			if err := doc.Encode(os.Stdout); err != nil {
 				logger.Fatal().Err(err).Msg("Failed to encode new SBOM")

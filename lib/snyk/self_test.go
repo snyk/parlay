@@ -27,7 +27,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetSnykOrg_Success(t *testing.T) {
+func TestSnykOrgID_Success(t *testing.T) {
 	expectedOrg := uuid.MustParse("00000000-0000-0000-0000-000000000000")
 	auth, err := securityprovider.NewSecurityProviderApiKey("header", "name", "value")
 	require.NoError(t, err)
@@ -43,7 +43,7 @@ func TestGetSnykOrg_Success(t *testing.T) {
 	assert.Equal(t, expectedOrg, *actualOrg)
 }
 
-func TestGetSnykOrg_Unauthorized(t *testing.T) {
+func TestSnykOrgID_Unauthorized(t *testing.T) {
 	auth, err := securityprovider.NewSecurityProviderApiKey("header", "name", "value")
 	require.NoError(t, err)
 
