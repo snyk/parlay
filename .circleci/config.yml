@@ -6,7 +6,7 @@ orbs:
 go_image: &go_image
   resource_class: small
   docker:
-    - image: cimg/go:1.21
+    - image: cimg/go:1.23
 
 jobs:
   security-scans:

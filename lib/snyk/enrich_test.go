@@ -1,25 +1,32 @@
 package snyk
 
 import (
+	_ "embed"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
-	"github.com/jarcoal/httpmock"
 	"github.com/rs/zerolog"
 	spdx "github.com/spdx/tools-golang/spdx/v2/common"
 	spdx_2_3 "github.com/spdx/tools-golang/spdx/v2/v2_3"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/snyk/parlay/lib/sbom"
 )
 
-func TestEnrichSBOM_CycloneDXWithVulnerabilities(t *testing.T) {
-	teardown := setupTestEnv(t)
-	defer teardown()
+var (
+	//go:embed testdata/numpy_issues.json
+	numpyIssues []byte
+	//go:embed testdata/pandas_issues.json
+	pandasIssues []byte
+	//go:embed testdata/no_issues.json
+	noIssues []byte
+)
 
-	cfg := newTestConfig(t)
-	logger := zerolog.Nop()
-	svc := NewService(cfg, &logger)
+func TestEnrichSBOM_CycloneDXWithVulnerabilities(t *testing.T) {
+	svc := setupTestEnv(t)
 
 	bom := &cdx.BOM{
 		Components: &[]cdx.Component{
@@ -35,7 +42,7 @@ func TestEnrichSBOM_CycloneDXWithVulnerabilities(t *testing.T) {
 
 	svc.EnrichSBOM(doc)
 
-	assert.NotNil(t, bom.Vulnerabilities)
+	require.NotNil(t, bom.Vulnerabilities)
 	assert.Len(t, *bom.Vulnerabilities, 1)
 	vuln := (*bom.Vulnerabilities)[0]
 	assert.Equal(t, "pkg:pypi/numpy@1.16.0", vuln.BOMRef)
@@ -43,12 +50,7 @@ func TestEnrichSBOM_CycloneDXWithVulnerabilities(t *testing.T) {
 }
 
 func TestEnrichSBOM_CycloneDXExternalRefs(t *testing.T) {
-	teardown := setupTestEnv(t)
-	defer teardown()
-
-	cfg := newTestConfig(t)
-	logger := zerolog.Nop()
-	svc := NewService(cfg, &logger)
+	svc := setupTestEnv(t)
 
 	bom := &cdx.BOM{
 		Components: &[]cdx.Component{
@@ -64,7 +66,7 @@ func TestEnrichSBOM_CycloneDXExternalRefs(t *testing.T) {
 
 	svc.EnrichSBOM(doc)
 
-	assert.NotNil(t, bom.Components)
+	require.NotNil(t, bom.Components)
 	refs := (*bom.Components)[0].ExternalReferences
 	assert.Len(t, *refs, 2)
 
@@ -80,12 +82,7 @@ func TestEnrichSBOM_CycloneDXExternalRefs(t *testing.T) {
 }
 
 func TestEnrichSBOM_CycloneDXExternalRefs_WithNamespace(t *testing.T) {
-	teardown := setupTestEnv(t)
-	defer teardown()
-
-	cfg := newTestConfig(t)
-	logger := zerolog.Nop()
-	svc := NewService(cfg, &logger)
+	svc := setupTestEnv(t)
 
 	bom := &cdx.BOM{
 		Components: &[]cdx.Component{
@@ -101,7 +98,7 @@ func TestEnrichSBOM_CycloneDXExternalRefs_WithNamespace(t *testing.T) {
 
 	svc.EnrichSBOM(doc)
 
-	assert.NotNil(t, bom.Components)
+	require.NotNil(t, bom.Components)
 	refs := (*bom.Components)[0].ExternalReferences
 	assert.Len(t, *refs, 2)
 
@@ -117,12 +114,7 @@ func TestEnrichSBOM_CycloneDXExternalRefs_WithNamespace(t *testing.T) {
 }
 
 func TestEnrichSBOM_CycloneDXWithVulnerabilities_NestedComponents(t *testing.T) {
-	teardown := setupTestEnv(t)
-	defer teardown()
-
-	cfg := newTestConfig(t)
-	logger := zerolog.Nop()
-	svc := NewService(cfg, &logger)
+	svc := setupTestEnv(t)
 
 	bom := &cdx.BOM{
 		Components: &[]cdx.Component{
@@ -146,17 +138,12 @@ func TestEnrichSBOM_CycloneDXWithVulnerabilities_NestedComponents(t *testing.T) 
 
 	svc.EnrichSBOM(doc)
 
-	assert.NotNil(t, bom.Vulnerabilities)
+	require.NotNil(t, bom.Vulnerabilities)
 	assert.Len(t, *bom.Vulnerabilities, 2)
 }
 
 func TestEnrichSBOM_CycloneDXWithoutVulnerabilities(t *testing.T) {
-	teardown := setupTestEnv(t)
-	defer teardown()
-
-	cfg := newTestConfig(t)
-	logger := zerolog.Nop()
-	svc := NewService(cfg, &logger)
+	svc := setupTestEnv(t)
 
 	bom := &cdx.BOM{
 		Components: &[]cdx.Component{
@@ -176,12 +163,7 @@ func TestEnrichSBOM_CycloneDXWithoutVulnerabilities(t *testing.T) {
 }
 
 func TestEnrichSBOM_SPDXWithVulnerabilities(t *testing.T) {
-	teardown := setupTestEnv(t)
-	defer teardown()
-
-	cfg := newTestConfig(t)
-	logger := zerolog.Nop()
-	svc := NewService(cfg, &logger)
+	svc := setupTestEnv(t)
 
 	bom := &spdx_2_3.Document{
 		Packages: []*spdx_2_3.Package{
@@ -211,12 +193,7 @@ func TestEnrichSBOM_SPDXWithVulnerabilities(t *testing.T) {
 }
 
 func TestEnrichSBOM_SPDXExternalRefs(t *testing.T) {
-	teardown := setupTestEnv(t)
-	defer teardown()
-
-	cfg := newTestConfig(t)
-	logger := zerolog.Nop()
-	svc := NewService(cfg, &logger)
+	svc := setupTestEnv(t)
 
 	bom := &spdx_2_3.Document{
 		Packages: []*spdx_2_3.Package{
@@ -256,39 +233,51 @@ func TestEnrichSBOM_SPDXExternalRefs(t *testing.T) {
 	assert.Equal(t, spdx.CategoryOther, ref2.Category)
 }
 
-func setupTestEnv(t *testing.T) func() {
+func setupTestEnv(t *testing.T) Service {
 	t.Helper()
 
-	httpmock.Activate()
-	httpmock.RegisterResponder(
-		"GET",
-		`=~^https://api\.snyk\.io/rest/self`,
-		httpmock.NewJsonResponderOrPanic(200, httpmock.File("testdata/self.json")),
-	)
-	httpmock.RegisterResponder(
-		"GET",
-		`=~^https://api\.snyk\.io/rest/orgs/[a-z0-9-]+/packages/pkg%3Apypi%2Fnumpy%401.16.0/issues`,
-		httpmock.NewJsonResponderOrPanic(200, httpmock.File("testdata/numpy_issues.json")),
-	)
-	httpmock.RegisterResponder(
-		"GET",
-		`=~^https://api\.snyk\.io/rest/orgs/[a-z0-9-]+/packages/pkg%3Apypi%2Fpandas%400.15.0/issues`,
-		httpmock.NewJsonResponderOrPanic(200, httpmock.File("testdata/pandas_issues.json")),
-	)
-	httpmock.RegisterResponder(
-		"GET",
-		`=~^https://api\.snyk\.io/rest/orgs/[a-z0-9-]+/packages/.*/issues`,
-		httpmock.NewJsonResponderOrPanic(200, httpmock.File("testdata/no_issues.json")),
-	)
+	mux := http.NewServeMux()
 
-	return func() {
-		httpmock.DeactivateAndReset()
-	}
+	mux.HandleFunc(
+		"GET /rest/self",
+		func(w http.ResponseWriter, r *http.Request) {
+			respond(w, selfBody)
+		})
+
+	mux.HandleFunc(
+		"GET /rest/orgs/{org_id}/packages/{purl}/issues",
+		func(w http.ResponseWriter, r *http.Request) {
+			respond(w, noIssues)
+		})
+
+	mux.HandleFunc(
+		"GET /rest/orgs/{org_id}/packages/pkg%3Apypi%2Fnumpy%401.16.0/issues",
+		func(w http.ResponseWriter, r *http.Request) {
+			respond(w, numpyIssues)
+		})
+
+	mux.HandleFunc(
+		"GET /rest/orgs/{org_id}/packages/pkg%3Apypi%2Fpandas%400.15.0/issues",
+		func(w http.ResponseWriter, r *http.Request) {
+			respond(w, pandasIssues)
+		})
+
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+
+	cfg := DefaultConfig()
+	cfg.APIToken = "asdf"
+	cfg.SnykAPIURL = srv.URL
+
+	logger := zerolog.Nop()
+	svc := NewService(cfg, &logger)
+
+	return svc
 }
 
-func newTestConfig(t *testing.T) *Config {
-	t.Helper()
-	c := DefaultConfig()
-	c.APIToken = "asdf"
-	return c
+func respond(w http.ResponseWriter, data []byte) {
+	w.Header().Set("content-type", "application/vnd.api+json")
+	if _, err := w.Write(data); err != nil {
+		panic(err)
+	}
 }
