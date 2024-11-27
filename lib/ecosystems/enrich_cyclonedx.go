@@ -29,11 +29,11 @@ import (
 	"github.com/snyk/parlay/internal/utils"
 )
 
-type cdxEnricher = func(*cdx.Component, *packages.Package)
+type cdxPackageEnricher = func(*cdx.Component, *packages.Package)
+type cdxPackageVersionEnricher = func(*cdx.Component, *packages.Version)
 
-var cdxEnrichers = []cdxEnricher{
+var cdxPackageEnrichers = []cdxPackageEnricher{
 	enrichCDXDescription,
-	enrichCDXLicense,
 	enrichCDXHomepage,
 	enrichCDXRegistryURL,
 	enrichCDXRepositoryURL,
@@ -47,19 +47,21 @@ var cdxEnrichers = []cdxEnricher{
 	enrichCDXSupplier,
 }
 
+var cdxPackageVersionEnrichers = []cdxPackageVersionEnricher{
+	enrichCDXLicense,
+}
+
 func enrichCDXDescription(comp *cdx.Component, data *packages.Package) {
 	if data.Description != nil {
 		comp.Description = *data.Description
 	}
 }
 
-func enrichCDXLicense(comp *cdx.Component, data *packages.Package) {
-	if data.NormalizedLicenses != nil {
-		if len(data.NormalizedLicenses) > 0 {
-			expression := data.NormalizedLicenses[0]
-			licenses := cdx.LicenseChoice{Expression: expression}
-			comp.Licenses = &cdx.Licenses{licenses}
-		}
+func enrichCDXLicense(comp *cdx.Component, data *packages.Version) {
+	expression := utils.GetSPDXLicenseExpressionFromEcosystemsLicense(data)
+	if expression != "" {
+		licenses := cdx.LicenseChoice{Expression: expression}
+		comp.Licenses = &cdx.Licenses{licenses}
 	}
 }
 
@@ -207,7 +209,7 @@ func enrichCDX(bom *cdx.BOM, logger *zerolog.Logger) {
 				return
 			}
 
-			resp, err := GetPackageData(purl)
+			packageResp, err := GetPackageData(purl)
 			if err != nil {
 				l.Debug().
 					Err(err).
@@ -215,16 +217,36 @@ func enrichCDX(bom *cdx.BOM, logger *zerolog.Logger) {
 				return
 			}
 
-			if resp.JSON200 == nil {
+			if packageResp.JSON200 == nil {
 				l.Debug().
 					Err(err).
 					Msg("Skipping package: no data on ecosyste.ms response")
 				return
 			}
 
-			for _, enrichFunc := range cdxEnrichers {
-				enrichFunc(comp, resp.JSON200)
+			for _, enrichFunc := range cdxPackageEnrichers {
+				enrichFunc(comp, packageResp.JSON200)
 			}
+
+			packageVersionResp, err := GetPackageVersionData(purl)
+			if err != nil {
+				l.Debug().
+					Err(err).
+					Msg("Skipping package version enrichment: failed to get package version data")
+				return
+			}
+
+			if packageVersionResp.JSON200 == nil {
+				l.Debug().
+					Err(err).
+					Msg("Skipping package version enrichment: no data on ecosyste.ms response")
+				return
+			}
+
+			for _, enrichFunc := range cdxPackageVersionEnrichers {
+				enrichFunc(comp, packageVersionResp.JSON200)
+			}
+
 		}(comps[i])
 	}
 

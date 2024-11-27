@@ -34,11 +34,20 @@ func TestEnrichSBOM_CycloneDX(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 
+	httpmock.RegisterResponder("GET", `=~^https://packages.ecosyste.ms/api/v1/registries/.*/packages/.*/versions`,
+		func(r *http.Request) (*http.Response, error) {
+			return httpmock.NewJsonResponse(200, map[string]interface{}{
+				// This is the license we expect to see for the specific package version
+				"licenses": "MIT",
+			})
+		},
+	)
 	httpmock.RegisterResponder("GET", `=~^https://packages.ecosyste.ms/api/v1/registries`,
 		func(req *http.Request) (*http.Response, error) {
 			return httpmock.NewJsonResponse(200, map[string]interface{}{
 				"description": "description",
 				"normalized_licenses": []string{
+					// This license should be ignored as it corresponds to the latest version of the package
 					"BSD-3-Clause",
 				},
 			})
@@ -73,7 +82,7 @@ func TestEnrichSBOM_CycloneDX(t *testing.T) {
 	component := components[0]
 	licenses := *component.Licenses
 
-	comp := cdx.LicenseChoice(cdx.LicenseChoice{Expression: "BSD-3-Clause"})
+	comp := cdx.LicenseChoice(cdx.LicenseChoice{Expression: "(MIT)"})
 
 	assert.Equal(t, "description", components[0].Description)
 	assert.Equal(t, comp, licenses[0])
@@ -119,7 +128,7 @@ func TestEnrichSBOM_CycloneDX_NestedComps(t *testing.T) {
 
 	httpmock.GetTotalCallCount()
 	calls := httpmock.GetCallCountInfo()
-	assert.Equal(t, 2, calls[`GET =~^https://packages.ecosyste.ms/api/v1/registries`])
+	assert.Equal(t, 4, calls[`GET =~^https://packages.ecosyste.ms/api/v1/registries`])
 }
 
 func TestEnrichSBOMWithoutLicense(t *testing.T) {
@@ -156,7 +165,7 @@ func TestEnrichSBOMWithoutLicense(t *testing.T) {
 
 	httpmock.GetTotalCallCount()
 	calls := httpmock.GetCallCountInfo()
-	assert.Equal(t, len(components), calls[`GET =~^https://packages.ecosyste.ms/api/v1/registries`])
+	assert.Equal(t, 2*len(components), calls[`GET =~^https://packages.ecosyste.ms/api/v1/registries`])
 }
 
 func TestEnrichDescription(t *testing.T) {
@@ -181,14 +190,15 @@ func TestEnrichLicense(t *testing.T) {
 		Name:    "cyclonedx-go",
 		Version: "v0.3.0",
 	}
-	pack := &packages.Package{
-		NormalizedLicenses: []string{"BSD-3-Clause"},
+	lic := "BSD-3-Clause"
+	pack := &packages.Version{
+		Licenses: &lic,
 	}
 
 	enrichCDXLicense(component, pack)
 
 	licenses := *component.Licenses
-	comp := cdx.LicenseChoice(cdx.LicenseChoice{Expression: "BSD-3-Clause"})
+	comp := cdx.LicenseChoice(cdx.LicenseChoice{Expression: "(BSD-3-Clause)"})
 	assert.Equal(t, comp, licenses[0])
 }
 
