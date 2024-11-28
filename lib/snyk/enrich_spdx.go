@@ -32,19 +32,15 @@ import (
 	"github.com/snyk/parlay/snyk/issues"
 )
 
-const (
-	snykVulnerabilityDB_URI = "https://security.snyk.io"
-)
-
-type spdxEnricher = func(*spdx_2_3.Package, *packageurl.PackageURL)
+type spdxEnricher = func(*Config, *spdx_2_3.Package, *packageurl.PackageURL)
 
 var spdxEnrichers = []spdxEnricher{
 	enrichSPDXSnykAdvisorData,
 	enrichSPDXSnykVulnerabilityDBData,
 }
 
-func enrichSPDXSnykAdvisorData(component *spdx_2_3.Package, purl *packageurl.PackageURL) {
-	url := SnykAdvisorURL(purl)
+func enrichSPDXSnykAdvisorData(cfg *Config, component *spdx_2_3.Package, purl *packageurl.PackageURL) {
+	url := SnykAdvisorURL(cfg, purl)
 	if url != "" {
 		ext := &spdx_2_3.PackageExternalReference{
 			Locator:            url,
@@ -60,8 +56,8 @@ func enrichSPDXSnykAdvisorData(component *spdx_2_3.Package, purl *packageurl.Pac
 	}
 }
 
-func enrichSPDXSnykVulnerabilityDBData(component *spdx_2_3.Package, purl *packageurl.PackageURL) {
-	url := SnykVulnURL(purl)
+func enrichSPDXSnykVulnerabilityDBData(cfg *Config, component *spdx_2_3.Package, purl *packageurl.PackageURL) {
+	url := SnykVulnURL(cfg, purl)
 	if url != "" {
 		ext := &spdx_2_3.PackageExternalReference{
 			Locator:            url,
@@ -77,8 +73,8 @@ func enrichSPDXSnykVulnerabilityDBData(component *spdx_2_3.Package, purl *packag
 	}
 }
 
-func enrichSPDX(bom *spdx.Document, logger *zerolog.Logger) *spdx.Document {
-	auth, err := AuthFromToken(APIToken())
+func enrichSPDX(cfg *Config, bom *spdx.Document, logger *zerolog.Logger) *spdx.Document {
+	auth, err := AuthFromToken(cfg.APIToken)
 	if err != nil {
 		logger.Fatal().
 			Err(err).
@@ -86,7 +82,7 @@ func enrichSPDX(bom *spdx.Document, logger *zerolog.Logger) *spdx.Document {
 		return nil
 	}
 
-	orgID, err := SnykOrgID(auth)
+	orgID, err := SnykOrgID(cfg, auth)
 	if err != nil {
 		logger.Fatal().
 			Err(err).
@@ -114,9 +110,9 @@ func enrichSPDX(bom *spdx.Document, logger *zerolog.Logger) *spdx.Document {
 				return
 			}
 			for _, enrichFn := range spdxEnrichers {
-				enrichFn(pkg, purl)
+				enrichFn(cfg, pkg, purl)
 			}
-			resp, err := GetPackageVulnerabilities(purl, auth, orgID)
+			resp, err := GetPackageVulnerabilities(cfg, purl, auth, orgID)
 			if err != nil {
 				l.Err(err).
 					Str("purl", purl.ToString()).
@@ -154,9 +150,8 @@ func enrichSPDX(bom *spdx.Document, logger *zerolog.Logger) *spdx.Document {
 				RefType:  spdx.SecurityAdvisory,
 				Locator: fmt.Sprintf(
 					"%s/vuln/%s",
-					snykVulnerabilityDB_URI,
-					url.PathEscape(*issue.Id),
-				),
+					snykVulnerabilityDBWebURL,
+					url.PathEscape(*issue.Id)),
 			}
 
 			if issue.Attributes.Title != nil {

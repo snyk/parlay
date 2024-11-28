@@ -17,43 +17,51 @@
 package snyk
 
 import (
+	_ "embed"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/deepmap/oapi-codegen/pkg/securityprovider"
 	"github.com/google/uuid"
-	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetSnykOrg_Success(t *testing.T) {
-	expectedOrg := uuid.MustParse("00000000-0000-0000-0000-000000000000")
-	auth, err := securityprovider.NewSecurityProviderApiKey("header", "name", "value")
+//go:embed testdata/self.json
+var selfBody []byte
+
+func TestSnykOrgID_Success(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		respond(w, selfBody)
+	}))
+	defer srv.Close()
+
+	cfg := DefaultConfig()
+	cfg.SnykAPIURL = srv.URL
+	auth, err := securityprovider.NewSecurityProviderApiKey("header", "authorization", "asdf")
 	require.NoError(t, err)
 
-	httpmock.Activate()
-	defer httpmock.DeactivateAndReset()
-	httpmock.RegisterResponder("GET", "https://api.snyk.io/rest/self",
-		httpmock.NewJsonResponderOrPanic(http.StatusOK, httpmock.File("testdata/self.json")),
-	)
+	actualOrg, err := SnykOrgID(cfg, auth)
 
-	actualOrg, err := SnykOrgID(auth)
 	assert.NoError(t, err)
-	assert.Equal(t, expectedOrg, *actualOrg)
+	assert.Equal(t, uuid.MustParse("00000000-0000-0000-0000-000000000000"), *actualOrg)
 }
 
-func TestGetSnykOrg_Unauthorized(t *testing.T) {
-	auth, err := securityprovider.NewSecurityProviderApiKey("header", "name", "value")
+func TestSnykOrgID_Unauthorized(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusUnauthorized)
+		respond(w, []byte(`{"msg":"unauthorized"}`))
+	}))
+	defer srv.Close()
+
+	cfg := DefaultConfig()
+	cfg.SnykAPIURL = srv.URL
+	auth, err := securityprovider.NewSecurityProviderApiKey("header", "authorization", "asdf")
 	require.NoError(t, err)
 
-	httpmock.Activate()
-	defer httpmock.DeactivateAndReset()
-	httpmock.RegisterResponder("GET", "https://api.snyk.io/rest/self",
-		httpmock.NewJsonResponderOrPanic(http.StatusUnauthorized, []byte(`{"msg":"unauthorized"}`)),
-	)
+	actualOrg, err := SnykOrgID(cfg, auth)
 
-	actualOrg, err := SnykOrgID(auth)
-	assert.ErrorContains(t, err, "Failed to get user info (401)")
+	assert.ErrorContains(t, err, "Failed to get user info (401 Unauthorized)")
 	assert.Nil(t, actualOrg)
 }
