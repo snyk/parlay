@@ -47,6 +47,26 @@ func GetPackageData(purl packageurl.PackageURL) (*packages.GetRegistryPackageRes
 	return resp, nil
 }
 
+func GetPackageVersionData(purl packageurl.PackageURL) (*packages.GetRegistryPackageVersionResponse, error) {
+	client, err := packages.NewClientWithResponses(server)
+	if err != nil {
+		return nil, err
+	}
+
+	// Ecosyste.ms has a purl based API, but unfortunately slower
+	// so we break the purl down to registry and name values locally
+	// params := packages.LookupPackageParams{Purl: &p}
+	// resp, err := client.LookupPackageWithResponse(context.Background(), &params)
+	name := purlToEcosystemsName(purl)
+	registry := purlToEcosystemsRegistry(purl)
+	resp, err := client.GetRegistryPackageVersionWithResponse(context.Background(), registry, name, purl.Version)
+
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
 func purlToEcosystemsRegistry(purl packageurl.PackageURL) string {
 	return map[string]string{
 		packageurl.TypeApk:       "alpine-edge",
