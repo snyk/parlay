@@ -20,10 +20,14 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/deepmap/oapi-codegen/pkg/securityprovider"
 	"github.com/google/uuid"
+	"github.com/hashicorp/go-retryablehttp"
 	"github.com/package-url/packageurl-go"
+	"github.com/rs/zerolog"
 
 	"github.com/snyk/parlay/snyk/issues"
 )
@@ -82,8 +86,11 @@ func SnykVulnURL(cfg *Config, purl *packageurl.PackageURL) string {
 	return url
 }
 
-func GetPackageVulnerabilities(cfg *Config, purl *packageurl.PackageURL, auth *securityprovider.SecurityProviderApiKey, orgID *uuid.UUID) (*issues.FetchIssuesPerPurlResponse, error) {
-	client, err := issues.NewClientWithResponses(cfg.SnykAPIURL, issues.WithRequestEditorFn(auth.Intercept))
+func GetPackageVulnerabilities(cfg *Config, purl *packageurl.PackageURL, auth *securityprovider.SecurityProviderApiKey, orgID *uuid.UUID, logger *zerolog.Logger) (*issues.FetchIssuesPerPurlResponse, error) {
+	client, err := issues.NewClientWithResponses(
+		cfg.SnykAPIURL,
+		issues.WithRequestEditorFn(auth.Intercept),
+		issues.WithHTTPClient(getRetryClient(logger)))
 	if err != nil {
 		return nil, err
 	}
@@ -99,4 +106,32 @@ func GetPackageVulnerabilities(cfg *Config, purl *packageurl.PackageURL, auth *s
 	}
 
 	return resp, nil
+}
+
+func getRetryClient(logger *zerolog.Logger) *http.Client {
+	rc := retryablehttp.NewClient()
+	rc.Logger = nil
+	rc.Backoff = func(min, max time.Duration, attemptNum int, resp *http.Response) time.Duration {
+		if sleep, ok := parseRateLimitHeader(resp.Header.Get("X-RateLimit-Reset")); ok {
+			logger.Warn().
+				Dur("Retry-After", sleep).
+				Msg("Getting rate-limited, waiting...")
+			return sleep
+		}
+		return retryablehttp.DefaultBackoff(min, max, attemptNum, resp)
+	}
+
+	return rc.StandardClient()
+}
+
+func parseRateLimitHeader(v string) (time.Duration, bool) {
+	if v == "" {
+		return 0, false
+	}
+
+	if sec, err := strconv.ParseInt(v, 10, 64); err == nil {
+		return time.Duration(sec) * time.Second, true
+	}
+
+	return 0, false
 }
