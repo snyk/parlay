@@ -37,8 +37,8 @@ type selfDocument struct {
 	}
 }
 
-func SnykOrgID(conf *Config, auth *securityprovider.SecurityProviderApiKey) (*uuid.UUID, error) {
-	experimental, err := users.NewClientWithResponses(conf.SnykAPIURL, users.WithRequestEditorFn(auth.Intercept))
+func SnykOrgID(cfg *Config, auth *securityprovider.SecurityProviderApiKey) (*uuid.UUID, error) {
+	experimental, err := users.NewClientWithResponses(cfg.SnykAPIURL, users.WithRequestEditorFn(auth.Intercept))
 	if err != nil {
 		return nil, err
 	}

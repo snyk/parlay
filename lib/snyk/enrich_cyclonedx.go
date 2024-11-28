@@ -38,8 +38,8 @@ var cdxEnrichers = []cdxEnricher{
 	enrichCDXSnykVulnerabilityDBData,
 }
 
-func enrichCDXSnykVulnerabilityDBData(conf *Config, component *cdx.Component, purl *packageurl.PackageURL) {
-	url := SnykVulnURL(conf, purl)
+func enrichCDXSnykVulnerabilityDBData(cfg *Config, component *cdx.Component, purl *packageurl.PackageURL) {
+	url := SnykVulnURL(cfg, purl)
 	if url != "" {
 		ext := cdx.ExternalReference{
 			URL:     url,
@@ -54,8 +54,8 @@ func enrichCDXSnykVulnerabilityDBData(conf *Config, component *cdx.Component, pu
 	}
 }
 
-func enrichCDXSnykAdvisorData(conf *Config, component *cdx.Component, purl *packageurl.PackageURL) {
-	url := SnykAdvisorURL(conf, purl)
+func enrichCDXSnykAdvisorData(cfg *Config, component *cdx.Component, purl *packageurl.PackageURL) {
+	url := SnykAdvisorURL(cfg, purl)
 	if url != "" {
 		ext := cdx.ExternalReference{
 			URL:     url,
@@ -70,14 +70,14 @@ func enrichCDXSnykAdvisorData(conf *Config, component *cdx.Component, purl *pack
 	}
 }
 
-func enrichCycloneDX(conf *Config, bom *cdx.BOM, logger *zerolog.Logger) *cdx.BOM {
-	auth, err := AuthFromToken(conf.APIToken)
+func enrichCycloneDX(cfg *Config, bom *cdx.BOM, logger *zerolog.Logger) *cdx.BOM {
+	auth, err := AuthFromToken(cfg.APIToken)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to authenticate")
 		return nil
 	}
 
-	orgID, err := SnykOrgID(conf, auth)
+	orgID, err := SnykOrgID(cfg, auth)
 	if err != nil {
 		logger.Error().Err(err).Msg("Failed to infer preferred Snyk organization")
 		return nil
@@ -105,9 +105,9 @@ func enrichCycloneDX(conf *Config, bom *cdx.BOM, logger *zerolog.Logger) *cdx.BO
 				return
 			}
 			for _, enrichFunc := range cdxEnrichers {
-				enrichFunc(conf, component, &purl)
+				enrichFunc(cfg, component, &purl)
 			}
-			resp, err := GetPackageVulnerabilities(conf, &purl, auth, orgID)
+			resp, err := GetPackageVulnerabilities(cfg, &purl, auth, orgID)
 			if err != nil {
 				l.Err(err).
 					Str("purl", purl.ToString()).
@@ -206,7 +206,7 @@ func enrichCycloneDX(conf *Config, bom *cdx.BOM, logger *zerolog.Logger) *cdx.BO
 					for _, sev := range *issue.Attributes.Severities {
 						source := cdx.Source{
 							Name: "Snyk",
-							URL:  snykVulnDBServer,
+							URL:  snykVulnerabilityDBWebURL,
 						}
 						if sev.Score != nil {
 							score := float64(*sev.Score)

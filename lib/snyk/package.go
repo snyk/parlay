@@ -28,11 +28,7 @@ import (
 	"github.com/snyk/parlay/snyk/issues"
 )
 
-const (
-	version           = "2023-04-28"
-	snykAdvisorServer = "https://snyk.io/advisor"
-	snykVulnDBServer  = "https://security.snyk.io"
-)
+const version = "2023-04-28"
 
 func purlToSnykAdvisor(purl *packageurl.PackageURL) string {
 	return map[string]string{
@@ -43,12 +39,12 @@ func purlToSnykAdvisor(purl *packageurl.PackageURL) string {
 	}[purl.Type]
 }
 
-func SnykAdvisorURL(conf *Config, purl *packageurl.PackageURL) string {
+func SnykAdvisorURL(cfg *Config, purl *packageurl.PackageURL) string {
 	ecosystem := purlToSnykAdvisor(purl)
 	if ecosystem == "" {
 		return ""
 	}
-	url := conf.SnykAdvisorWebURL + "/" + ecosystem + "/"
+	url := snykAdvisorWebURL + "/" + ecosystem + "/"
 	if purl.Namespace != "" {
 		url += purl.Namespace + "/"
 	}
@@ -73,12 +69,12 @@ func purlToSnykVulnDB(purl *packageurl.PackageURL) string {
 	}[purl.Type]
 }
 
-func SnykVulnURL(conf *Config, purl *packageurl.PackageURL) string {
+func SnykVulnURL(cfg *Config, purl *packageurl.PackageURL) string {
 	ecosystem := purlToSnykVulnDB(purl)
 	if ecosystem == "" {
 		return ""
 	}
-	url := conf.SnykVulnerabilityDBWebURL + "/package/" + ecosystem + "/"
+	url := snykVulnerabilityDBWebURL + "/package/" + ecosystem + "/"
 	if purl.Namespace != "" {
 		url += purl.Namespace + "%2F"
 	}
@@ -86,8 +82,8 @@ func SnykVulnURL(conf *Config, purl *packageurl.PackageURL) string {
 	return url
 }
 
-func GetPackageVulnerabilities(conf *Config, purl *packageurl.PackageURL, auth *securityprovider.SecurityProviderApiKey, orgID *uuid.UUID) (*issues.FetchIssuesPerPurlResponse, error) {
-	client, err := issues.NewClientWithResponses(conf.SnykAPIURL, issues.WithRequestEditorFn(auth.Intercept))
+func GetPackageVulnerabilities(cfg *Config, purl *packageurl.PackageURL, auth *securityprovider.SecurityProviderApiKey, orgID *uuid.UUID) (*issues.FetchIssuesPerPurlResponse, error) {
+	client, err := issues.NewClientWithResponses(cfg.SnykAPIURL, issues.WithRequestEditorFn(auth.Intercept))
 	if err != nil {
 		return nil, err
 	}

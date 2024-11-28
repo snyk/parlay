@@ -17,16 +17,12 @@
 package snyk
 
 type Config struct {
-	SnykAdvisorWebURL         string
-	SnykVulnerabilityDBWebURL string
-	SnykAPIURL                string
-	APIToken                  string
+	SnykAPIURL string
+	APIToken   string
 }
 
 func DefaultConfig() *Config {
 	return &Config{
-		SnykAdvisorWebURL:         "https://snyk.io/advisor",
-		SnykVulnerabilityDBWebURL: "https://security.snyk.io",
-		SnykAPIURL:                "https://api.snyk.io",
+		SnykAPIURL: "https://api.snyk.io",
 	}
 }

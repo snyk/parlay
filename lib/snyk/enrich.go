@@ -24,12 +24,17 @@ import (
 	"github.com/snyk/parlay/lib/sbom"
 )
 
-func EnrichSBOM(conf *Config, doc *sbom.SBOMDocument, logger *zerolog.Logger) *sbom.SBOMDocument {
+const (
+	snykAdvisorWebURL         = "https://snyk.io/advisor"
+	snykVulnerabilityDBWebURL = "https://security.snyk.io"
+)
+
+func EnrichSBOM(cfg *Config, doc *sbom.SBOMDocument, logger *zerolog.Logger) *sbom.SBOMDocument {
 	switch bom := doc.BOM.(type) {
 	case *cdx.BOM:
-		enrichCycloneDX(conf, bom, logger)
+		enrichCycloneDX(cfg, bom, logger)
 	case *spdx.Document:
-		enrichSPDX(conf, bom, logger)
+		enrichSPDX(cfg, bom, logger)
 	}
 
 	return doc
