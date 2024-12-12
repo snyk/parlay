@@ -17,6 +17,7 @@
 package ecosystems
 
 import (
+	"bytes"
 	"net/http"
 	"testing"
 
@@ -25,6 +26,7 @@ import (
 	"github.com/spdx/tools-golang/spdx/v2/common"
 	"github.com/spdx/tools-golang/spdx/v2/v2_3"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/snyk/parlay/lib/sbom"
 )
@@ -49,23 +51,26 @@ func TestEnrichSBOM_SPDX(t *testing.T) {
 			})
 		})
 
-	bom := &v2_3.Document{
-		Packages: []*v2_3.Package{
-			{
-				PackageSPDXIdentifier: "pkg:golang/github.com/spdx/tools-golang@v0.5.2",
-				PackageName:           "github.com/spdx/tools-golang",
-				PackageVersion:        "v0.5.2",
-				PackageExternalReferences: []*v2_3.PackageExternalReference{
-					{
-						Category: common.CategoryPackageManager,
-						RefType:  "purl",
-						Locator:  "pkg:golang/github.com/spdx/tools-golang@v0.5.2",
-					},
+	doc, err := sbom.DecodeSBOMDocument([]byte(`{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT"}`))
+	require.NoError(t, err)
+
+	bom, ok := doc.BOM.(*v2_3.Document)
+	require.True(t, ok)
+
+	bom.Packages = []*v2_3.Package{
+		{
+			PackageSPDXIdentifier: "pkg:golang/github.com/spdx/tools-golang@v0.5.2",
+			PackageName:           "github.com/spdx/tools-golang",
+			PackageVersion:        "v0.5.2",
+			PackageExternalReferences: []*v2_3.PackageExternalReference{
+				{
+					Category: common.CategoryPackageManager,
+					RefType:  "purl",
+					Locator:  "pkg:golang/github.com/spdx/tools-golang@v0.5.2",
 				},
 			},
 		},
 	}
-	doc := &sbom.SBOMDocument{BOM: bom}
 	logger := zerolog.Nop()
 
 	EnrichSBOM(doc, &logger)
@@ -81,4 +86,55 @@ func TestEnrichSBOM_SPDX(t *testing.T) {
 	httpmock.GetTotalCallCount()
 	calls := httpmock.GetCallCountInfo()
 	assert.Equal(t, len(pkgs), calls[`GET =~^https://packages.ecosyste.ms/api/v1/registries`])
+
+	buf := bytes.NewBuffer(nil)
+	require.NoError(t, doc.Encode(buf))
+}
+
+func TestEnrichSBOM_SPDX_NoSupplierName(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder("GET", `=~^https://packages.ecosyste.ms/api/v1/registries`,
+		func(req *http.Request) (*http.Response, error) {
+			return httpmock.NewJsonResponse(200, map[string]interface{}{
+				"description": "description",
+				"normalized_licenses": []string{
+					"BSD-3-Clause",
+				},
+				"homepage": "https://github.com/spdx/tools-golang",
+				"repo_metadata": map[string]interface{}{
+					"owner_record": map[string]interface{}{
+						"name": "",
+					},
+				},
+			})
+		})
+
+	doc, err := sbom.DecodeSBOMDocument([]byte(`{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT"}`))
+	require.NoError(t, err)
+
+	bom, ok := doc.BOM.(*v2_3.Document)
+	require.True(t, ok)
+
+	bom.Packages = []*v2_3.Package{
+		{
+			PackageSPDXIdentifier: "pkg:golang/github.com/spdx/tools-golang@v0.5.2",
+			PackageName:           "github.com/spdx/tools-golang",
+			PackageVersion:        "v0.5.2",
+			PackageExternalReferences: []*v2_3.PackageExternalReference{
+				{
+					Category: common.CategoryPackageManager,
+					RefType:  "purl",
+					Locator:  "pkg:golang/github.com/spdx/tools-golang@v0.5.2",
+				},
+			},
+		},
+	}
+	logger := zerolog.Nop()
+
+	EnrichSBOM(doc, &logger)
+
+	buf := bytes.NewBuffer(nil)
+	require.NoError(t, doc.Encode(buf))
 }

@@ -76,7 +76,7 @@ func enrichSPDXSupplier(pkg *v2_3.Package, data *packages.Package) {
 	if data.RepoMetadata != nil {
 		meta := *data.RepoMetadata
 		if ownerRecord, ok := meta["owner_record"].(map[string]interface{}); ok {
-			if name, ok := ownerRecord["name"].(string); ok {
+			if name, ok := ownerRecord["name"].(string); ok && name != "" {
 				pkg.PackageSupplier = &common.Supplier{
 					SupplierType: "Organization",
 					Supplier:     name,
