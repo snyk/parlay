@@ -53,3 +53,36 @@ func encodeCycloneDX(bom *cdx.BOM, f cdx.BOMFileFormat) encoderFn {
 		return cdx.NewBOMEncoder(w, f).Encode(bom)
 	}
 }
+
+func addCDXTool(bom *cdx.BOM, name, version string) {
+	if bom.Metadata == nil {
+		bom.Metadata = &cdx.Metadata{}
+	}
+
+	if bom.Metadata.Tools == nil {
+		bom.Metadata.Tools = &cdx.ToolsChoice{}
+	}
+
+	// Handle possibly existing, legacy "Tools" entry
+	if bom.Metadata.Tools.Tools != nil {
+		//nolint:staticcheck // Intentionally using a deprecated type in this case.
+		*bom.Metadata.Tools.Tools = append(*bom.Metadata.Tools.Tools, cdx.Tool{
+			Vendor: "Snyk",
+			Name:   name,
+		})
+		return
+	}
+
+	if bom.Metadata.Tools.Components == nil {
+		bom.Metadata.Tools.Components = &[]cdx.Component{}
+	}
+
+	*bom.Metadata.Tools.Components = append(
+		*bom.Metadata.Tools.Components,
+		cdx.Component{
+			Type:       cdx.ComponentTypeApplication,
+			Name:       name,
+			Version:    version,
+			Publisher:  "Snyk",
+			PackageURL: "pkg:github/snyk/parlay"})
+}

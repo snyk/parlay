@@ -1,5 +1,5 @@
 /*
- * © 2023 Snyk Limited All rights reserved.
+ * © 2024 Snyk Limited All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,29 +17,15 @@
 package sbom
 
 import (
-	"bytes"
-	"io"
-
-	spdx_json "github.com/spdx/tools-golang/json"
+	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/spdx/tools-golang/spdx"
 )
 
-func decodeSPDX2_3JSON(b []byte) (*spdx.Document, error) {
-	return spdx_json.Read(bytes.NewReader(b))
-}
-
-func encodeSPDX2_3JSON(bom *spdx.Document) encoderFn {
-	return func(w io.Writer) error {
-		return spdx_json.Write(bom, w)
+func AddParlayWatermark(doc *SBOMDocument, version string) {
+	switch bom := doc.BOM.(type) {
+	case *cdx.BOM:
+		addCDXTool(bom, "parlay", version)
+	case *spdx.Document:
+		addSPDXTool(bom, "parlay", version)
 	}
-}
-
-func addSPDXTool(bom *spdx.Document, name, _ string) {
-	if bom.CreationInfo == nil {
-		bom.CreationInfo = &spdx.CreationInfo{}
-	}
-
-	bom.CreationInfo.Creators = append(
-		bom.CreationInfo.Creators,
-		spdx.Creator{Creator: name, CreatorType: "Tool"})
 }
