@@ -47,6 +47,11 @@ func TestEnrichSBOM_CycloneDXWithVulnerabilities(t *testing.T) {
 	vuln := (*bom.Vulnerabilities)[0]
 	assert.Equal(t, "pkg:pypi/numpy@1.16.0", vuln.BOMRef)
 	assert.Equal(t, "SNYK-PYTHON-NUMPY-73513", vuln.ID)
+
+	assert.NotNil(t, vuln.Ratings)
+	assert.Len(t, *vuln.Ratings, 4)
+	assert.Equal(t, (*vuln.Ratings)[0].Source, &cdx.Source{Name: "Snyk", URL: "https://security.snyk.io"})
+	assert.Equal(t, (*vuln.Ratings)[1].Source, &cdx.Source{Name: "NVD"})
 }
 
 func TestEnrichSBOM_CycloneDXExternalRefs(t *testing.T) {
