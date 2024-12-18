@@ -2,9 +2,12 @@ package utils
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/package-url/packageurl-go"
 	spdx_2_3 "github.com/spdx/tools-golang/spdx/v2/v2_3"
+
+	"github.com/snyk/parlay/ecosystems/packages"
 )
 
 func GetPurlFromSPDXPackage(pkg *spdx_2_3.Package) (*packageurl.PackageURL, error) {
@@ -27,4 +30,11 @@ func GetPurlFromSPDXPackage(pkg *spdx_2_3.Package) (*packageurl.PackageURL, erro
 	}
 
 	return &purl, nil
+}
+
+func GetSPDXLicenseExpressionFromEcosystemsLicense(data *packages.Version) string {
+	if data == nil || data.Licenses == nil || *data.Licenses == "" {
+		return ""
+	}
+	return fmt.Sprintf("(%s)", strings.Join(strings.Split(*data.Licenses, ","), " OR "))
 }

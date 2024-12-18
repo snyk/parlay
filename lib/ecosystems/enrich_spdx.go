@@ -18,8 +18,6 @@ package ecosystems
 
 import (
 	"errors"
-	"fmt"
-	"strings"
 
 	"github.com/package-url/packageurl-go"
 	"github.com/rs/zerolog"
@@ -28,6 +26,7 @@ import (
 	"github.com/spdx/tools-golang/spdx/v2/v2_3"
 
 	"github.com/snyk/parlay/ecosystems/packages"
+	"github.com/snyk/parlay/internal/utils"
 )
 
 func enrichSPDX(bom *spdx.Document, logger *zerolog.Logger) {
@@ -41,20 +40,31 @@ func enrichSPDX(bom *spdx.Document, logger *zerolog.Logger) {
 			continue
 		}
 
-		resp, err := GetPackageData(*purl)
+		packageResp, err := GetPackageData(*purl)
 		if err != nil {
 			continue
 		}
 
-		pkgData := resp.JSON200
+		pkgData := packageResp.JSON200
 		if pkgData == nil {
 			continue
 		}
 
 		enrichSPDXDescription(pkg, pkgData)
-		enrichSPDXLicense(pkg, pkgData)
 		enrichSPDXHomepage(pkg, pkgData)
 		enrichSPDXSupplier(pkg, pkgData)
+
+		packageVersionResp, err := GetPackageVersionData(*purl)
+		if err != nil {
+			continue
+		}
+
+		pkgVersionData := packageVersionResp.JSON200
+		if pkgData == nil {
+			continue
+		}
+
+		enrichSPDXLicense(pkg, pkgVersionData)
 	}
 }
 
@@ -86,11 +96,10 @@ func enrichSPDXSupplier(pkg *v2_3.Package, data *packages.Package) {
 	}
 }
 
-func enrichSPDXLicense(pkg *v2_3.Package, data *packages.Package) {
-	if len(data.NormalizedLicenses) == 1 {
-		pkg.PackageLicenseConcluded = data.NormalizedLicenses[0]
-	} else if len(data.NormalizedLicenses) > 1 {
-		pkg.PackageLicenseConcluded = fmt.Sprintf("(%s)", strings.Join(data.NormalizedLicenses, " OR "))
+func enrichSPDXLicense(pkg *v2_3.Package, data *packages.Version) {
+	expression := utils.GetSPDXLicenseExpressionFromEcosystemsLicense(data)
+	if expression != "" {
+		pkg.PackageLicenseConcluded = *data.Licenses
 	}
 }
 
