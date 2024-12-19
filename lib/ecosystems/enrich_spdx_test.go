@@ -18,6 +18,7 @@ package ecosystems
 
 import (
 	"bytes"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -39,7 +40,7 @@ func TestEnrichSBOM_SPDX(t *testing.T) {
 		func(r *http.Request) (*http.Response, error) {
 			return httpmock.NewJsonResponse(200, map[string]interface{}{
 				// This is the license we expect to see for the specific package version
-				"licenses": "MIT",
+				"licenses": "MIT,Unknown",
 			})
 		},
 	)
@@ -86,8 +87,11 @@ func TestEnrichSBOM_SPDX(t *testing.T) {
 
 	pkgs := bom.Packages
 
+	lics := bom.OtherLicenses
+	assert.Len(t, lics, 1)
+
 	assert.Equal(t, "description", pkgs[0].PackageDescription)
-	assert.Equal(t, "MIT", pkgs[0].PackageLicenseConcluded)
+	assert.Equal(t, fmt.Sprintf("(MIT OR %s)", lics[0].LicenseIdentifier), pkgs[0].PackageLicenseConcluded)
 	assert.Equal(t, "https://github.com/spdx/tools-golang", pkgs[0].PackageHomePage)
 	assert.Equal(t, "Organization", pkgs[0].PackageSupplier.SupplierType)
 	assert.Equal(t, "Acme Corp", pkgs[0].PackageSupplier.Supplier)
