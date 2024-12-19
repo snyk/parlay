@@ -82,7 +82,8 @@ func TestEnrichSBOM_CycloneDX(t *testing.T) {
 	component := components[0]
 	licenses := *component.Licenses
 
-	comp := cdx.LicenseChoice(cdx.LicenseChoice{Expression: "(MIT)"})
+	cdxLic := cdx.License{ID: "MIT"}
+	comp := cdx.LicenseChoice(cdx.LicenseChoice{License: &cdxLic})
 
 	assert.Equal(t, "description", components[0].Description)
 	assert.Equal(t, comp, licenses[0])
@@ -198,7 +199,8 @@ func TestEnrichLicense(t *testing.T) {
 	enrichCDXLicense(component, pack)
 
 	licenses := *component.Licenses
-	comp := cdx.LicenseChoice(cdx.LicenseChoice{Expression: "(BSD-3-Clause)"})
+	cdxLic := cdx.License{ID: "BSD-3-Clause"}
+	comp := cdx.LicenseChoice(cdx.LicenseChoice{License: &cdxLic})
 	assert.Equal(t, comp, licenses[0])
 }
 

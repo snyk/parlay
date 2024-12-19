@@ -18,7 +18,11 @@ package ecosystems
 
 import (
 	"errors"
+	"fmt"
+	"slices"
+	"strings"
 
+	"github.com/google/uuid"
 	"github.com/package-url/packageurl-go"
 	"github.com/rs/zerolog"
 	"github.com/spdx/tools-golang/spdx"
@@ -31,6 +35,7 @@ import (
 
 func enrichSPDX(bom *spdx.Document, logger *zerolog.Logger) {
 	packages := bom.Packages
+	licenses := &bom.OtherLicenses
 
 	logger.Debug().Msgf("Detected %d packages", len(packages))
 
@@ -64,7 +69,7 @@ func enrichSPDX(bom *spdx.Document, logger *zerolog.Logger) {
 			continue
 		}
 
-		enrichSPDXLicense(pkg, pkgVersionData)
+		enrichSPDXLicense(pkg, pkgVersionData, licenses)
 	}
 }
 
@@ -96,11 +101,24 @@ func enrichSPDXSupplier(pkg *v2_3.Package, data *packages.Package) {
 	}
 }
 
-func enrichSPDXLicense(pkg *v2_3.Package, data *packages.Version) {
-	expression := utils.GetSPDXLicenseExpressionFromEcosystemsLicense(data)
-	if expression != "" {
-		pkg.PackageLicenseConcluded = *data.Licenses
+func enrichSPDXLicense(pkg *v2_3.Package, data *packages.Version, licenses *[]*v2_3.OtherLicense) {
+	validLics, invalidLics := utils.GetSPDXLicensesFromEcosystemsLicense(data)
+	for _, lic := range invalidLics {
+		var spdxOtherLic *v2_3.OtherLicense
+		idx := slices.IndexFunc(*licenses, func(l *v2_3.OtherLicense) bool { return l.LicenseName == lic })
+		if idx == -1 {
+			spdxOtherLic = &v2_3.OtherLicense{
+				LicenseIdentifier: fmt.Sprintf("LicenseRef-%s", uuid.NewString()),
+				LicenseName:       lic,
+				ExtractedText:     lic,
+			}
+			*licenses = append(*licenses, spdxOtherLic)
+		} else {
+			spdxOtherLic = (*licenses)[idx]
+		}
+		validLics = append(validLics, spdxOtherLic.LicenseIdentifier)
 	}
+	pkg.PackageLicenseConcluded = fmt.Sprintf("(%s)", strings.Join(validLics, " OR "))
 }
 
 func enrichSPDXHomepage(pkg *v2_3.Package, data *packages.Package) {

@@ -9,31 +9,48 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetSPDXLicenseExpressionFromEcosystemsLicense(t *testing.T) {
+func TestGetSPDXLicensesFromEcosystemsLicense(t *testing.T) {
 	assert := assert.New(t)
-	licenses := "GPLv2,MIT"
+	licenses := "MIT,AGPL-3.0-or-later,Unknown,AGPL-1.0"
 	data := packages.Version{Licenses: &licenses}
-	expression := utils.GetSPDXLicenseExpressionFromEcosystemsLicense(&data)
-	assert.Equal("(GPLv2 OR MIT)", expression)
+
+	validLics, invalidLics := utils.GetSPDXLicensesFromEcosystemsLicense(&data)
+
+	assert.Len(validLics, 3)
+	assert.Equal(validLics[0], "MIT")
+	assert.Equal(validLics[1], "AGPL-3.0-or-later")
+	assert.Equal(validLics[2], "AGPL-1.0")
+
+	assert.Len(invalidLics, 1)
+	assert.Equal(invalidLics[0], "Unknown")
 }
 
-func TestGetSPDXLicenseExpressionFromEcosystemsLicense_NoData(t *testing.T) {
+func TestGetSPDXLicensesFromEcosystemsLicense_NoData(t *testing.T) {
 	assert := assert.New(t)
-	expression := utils.GetSPDXLicenseExpressionFromEcosystemsLicense(nil)
-	assert.Equal("", expression)
+
+	validLics, invalidLics := utils.GetSPDXLicensesFromEcosystemsLicense(nil)
+
+	assert.Len(validLics, 0)
+	assert.Len(invalidLics, 0)
 }
 
-func TestGetSPDXLicenseExpressionFromEcosystemsLicense_NoLicenses(t *testing.T) {
+func TestGetSPDXLicensesFromEcosystemsLicense_NoLicenses(t *testing.T) {
 	assert := assert.New(t)
-	data := packages.Version{}
-	expression := utils.GetSPDXLicenseExpressionFromEcosystemsLicense(&data)
-	assert.Equal("", expression)
+	data := packages.Version{Licenses: nil}
+
+	validLics, invalidLics := utils.GetSPDXLicensesFromEcosystemsLicense(&data)
+
+	assert.Len(validLics, 0)
+	assert.Len(invalidLics, 0)
 }
 
-func TestGetSPDXLicenseExpressionFromEcosystemsLicense_EmptyLicenses(t *testing.T) {
+func TestGetSPDXLicensesFromEcosystemsLicense_EmptyLicenses(t *testing.T) {
 	assert := assert.New(t)
 	licenses := ""
 	data := packages.Version{Licenses: &licenses}
-	expression := utils.GetSPDXLicenseExpressionFromEcosystemsLicense(&data)
-	assert.Equal("", expression)
+
+	validLics, invalidLics := utils.GetSPDXLicensesFromEcosystemsLicense(&data)
+
+	assert.Len(validLics, 0)
+	assert.Len(invalidLics, 0)
 }

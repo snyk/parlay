@@ -2,8 +2,10 @@ package utils
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
+	"github.com/github/go-spdx/v2/spdxexp"
 	"github.com/package-url/packageurl-go"
 	spdx_2_3 "github.com/spdx/tools-golang/spdx/v2/v2_3"
 
@@ -32,9 +34,16 @@ func GetPurlFromSPDXPackage(pkg *spdx_2_3.Package) (*packageurl.PackageURL, erro
 	return &purl, nil
 }
 
-func GetSPDXLicenseExpressionFromEcosystemsLicense(data *packages.Version) string {
+func GetSPDXLicensesFromEcosystemsLicense(data *packages.Version) (valid []string, invalid []string) {
 	if data == nil || data.Licenses == nil || *data.Licenses == "" {
-		return ""
+		return nil, nil
 	}
-	return fmt.Sprintf("(%s)", strings.Join(strings.Split(*data.Licenses, ","), " OR "))
+	licenses := strings.Split(*data.Licenses, ",")
+	_, invalid = spdxexp.ValidateLicenses(licenses)
+	for _, lic := range licenses {
+		if !slices.Contains(invalid, lic) {
+			valid = append(valid, lic)
+		}
+	}
+	return valid, invalid
 }
