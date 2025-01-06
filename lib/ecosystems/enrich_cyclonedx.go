@@ -17,7 +17,7 @@
 package ecosystems
 
 import (
-	gourl "net/url"
+	"net/url"
 	"strings"
 	"time"
 
@@ -66,15 +66,15 @@ func enrichCDXLicense(comp *cdx.Component, data *packages.Version) {
 	}
 }
 
-func enrichExternalReference(comp *cdx.Component, url *string, refType cdx.ExternalReferenceType) {
-	if url == nil {
+func enrichExternalReference(comp *cdx.Component, ref *string, refType cdx.ExternalReferenceType) {
+	if ref == nil {
 		return
 	}
-	if _, err := gourl.Parse(*url); err != nil {
+	if _, err := url.Parse(*ref); err != nil {
 		return
 	}
 	ext := cdx.ExternalReference{
-		URL:  *url,
+		URL:  *ref,
 		Type: refType,
 	}
 	if comp.ExternalReferences == nil {
