@@ -111,12 +111,15 @@ func GetPackageVulnerabilities(cfg *Config, purl *packageurl.PackageURL, auth *s
 func getRetryClient(logger *zerolog.Logger) *http.Client {
 	rc := retryablehttp.NewClient()
 	rc.Logger = nil
+	rc.ErrorHandler = retryablehttp.PassthroughErrorHandler
 	rc.Backoff = func(min, max time.Duration, attemptNum int, resp *http.Response) time.Duration {
-		if sleep, ok := parseRateLimitHeader(resp.Header.Get("X-RateLimit-Reset")); ok {
-			logger.Warn().
-				Dur("Retry-After", sleep).
-				Msg("Getting rate-limited, waiting...")
-			return sleep
+		if resp != nil {
+			if sleep, ok := parseRateLimitHeader(resp.Header.Get("X-RateLimit-Reset")); ok {
+				logger.Warn().
+					Dur("Retry-After", sleep).
+					Msg("Getting rate-limited, waiting...")
+				return sleep
+			}
 		}
 		return retryablehttp.DefaultBackoff(min, max, attemptNum, resp)
 	}
