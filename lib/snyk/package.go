@@ -112,6 +112,11 @@ func getRetryClient(logger *zerolog.Logger) *http.Client {
 	rc := retryablehttp.NewClient()
 	rc.Logger = nil
 	rc.ErrorHandler = retryablehttp.PassthroughErrorHandler
+	rc.ResponseLogHook = func(_ retryablehttp.Logger, r *http.Response) {
+		if r != nil && r.StatusCode >= 400 {
+			logger.Warn().Msgf("Unexpected status code (%s) for %s %s", r.Status, r.Request.Method, r.Request.URL.String())
+		}
+	}
 	rc.Backoff = func(min, max time.Duration, attemptNum int, resp *http.Response) time.Duration {
 		if resp != nil {
 			if sleep, ok := parseRateLimitHeader(resp.Header.Get("X-RateLimit-Reset")); ok {
