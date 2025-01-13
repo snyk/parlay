@@ -59,11 +59,17 @@ func enrichCDXDescription(comp *cdx.Component, data *packages.Package) {
 }
 
 func enrichCDXLicense(comp *cdx.Component, data *packages.Version) {
-	expression := utils.GetSPDXLicenseExpressionFromEcosystemsLicense(data)
-	if expression != "" {
-		licenses := cdx.LicenseChoice{Expression: expression}
-		comp.Licenses = &cdx.Licenses{licenses}
+	validLics, invalidLics := utils.GetSPDXLicensesFromEcosystemsLicense(data)
+	var licenses cdx.Licenses
+	for _, licenseID := range validLics {
+		license := cdx.License{ID: licenseID}
+		licenses = append(licenses, cdx.LicenseChoice{License: &license})
 	}
+	for _, licenseName := range invalidLics {
+		license := cdx.License{Name: licenseName}
+		licenses = append(licenses, cdx.LicenseChoice{License: &license})
+	}
+	comp.Licenses = &licenses
 }
 
 func enrichExternalReference(comp *cdx.Component, ref *string, refType cdx.ExternalReferenceType) {
