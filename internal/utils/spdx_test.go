@@ -12,7 +12,7 @@ import (
 func TestGetSPDXLicenseExpressionFromEcosystemsLicense(t *testing.T) {
 	assert := assert.New(t)
 	licenses := "GPLv2,MIT"
-	data := packages.Version{Licenses: &licenses}
+	data := packages.VersionWithDependencies{Licenses: &licenses}
 	expression := utils.GetSPDXLicenseExpressionFromEcosystemsLicense(&data)
 	assert.Equal("(GPLv2 OR MIT)", expression)
 }
@@ -25,7 +25,7 @@ func TestGetSPDXLicenseExpressionFromEcosystemsLicense_NoData(t *testing.T) {
 
 func TestGetSPDXLicenseExpressionFromEcosystemsLicense_NoLicenses(t *testing.T) {
 	assert := assert.New(t)
-	data := packages.Version{}
+	data := packages.VersionWithDependencies{}
 	expression := utils.GetSPDXLicenseExpressionFromEcosystemsLicense(&data)
 	assert.Equal("", expression)
 }
@@ -33,7 +33,7 @@ func TestGetSPDXLicenseExpressionFromEcosystemsLicense_NoLicenses(t *testing.T) 
 func TestGetSPDXLicenseExpressionFromEcosystemsLicense_EmptyLicenses(t *testing.T) {
 	assert := assert.New(t)
 	licenses := ""
-	data := packages.Version{Licenses: &licenses}
+	data := packages.VersionWithDependencies{Licenses: &licenses}
 	expression := utils.GetSPDXLicenseExpressionFromEcosystemsLicense(&data)
 	assert.Equal("", expression)
 }

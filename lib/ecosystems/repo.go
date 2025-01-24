@@ -29,7 +29,7 @@ func GetRepoData(url string) (*repos.RepositoriesLookupResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	params := repos.RepositoriesLookupParams{Url: url}
+	params := repos.RepositoriesLookupParams{Url: &url}
 	resp, err := client.RepositoriesLookupWithResponse(context.Background(), &params)
 	if err != nil {
 		return nil, err

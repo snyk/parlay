@@ -18,7 +18,6 @@ package snyk
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -31,14 +30,10 @@ import (
 
 const experimentalVersion = "2023-04-28~experimental"
 
-type selfDocument struct {
-	Data struct {
-		Attributes users.User `json:"attributes,omitempty"`
-	}
-}
-
 func SnykOrgID(cfg *Config, auth *securityprovider.SecurityProviderApiKey) (*uuid.UUID, error) {
-	experimental, err := users.NewClientWithResponses(cfg.SnykAPIURL, users.WithRequestEditorFn(auth.Intercept))
+	experimental, err := users.NewClientWithResponses(
+		cfg.SnykAPIURL+"/rest",
+		users.WithRequestEditorFn(auth.Intercept))
 	if err != nil {
 		return nil, err
 	}
@@ -53,12 +48,12 @@ func SnykOrgID(cfg *Config, auth *securityprovider.SecurityProviderApiKey) (*uui
 		return nil, fmt.Errorf("Failed to get user info (%s).", self.HTTPResponse.Status)
 	}
 
-	var userInfo selfDocument
-	if err = json.Unmarshal(self.Body, &userInfo); err != nil {
+	user, err := self.ApplicationvndApiJSON200.Data.Attributes.AsUser20240422()
+	if err != nil {
 		return nil, err
 	}
 
-	if org := userInfo.Data.Attributes.DefaultOrgContext; org != nil {
+	if org := user.DefaultOrgContext; org != nil {
 		return org, nil
 	}
 

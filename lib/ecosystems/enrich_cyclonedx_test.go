@@ -191,7 +191,7 @@ func TestEnrichLicense(t *testing.T) {
 		Version: "v0.3.0",
 	}
 	lic := "BSD-3-Clause"
-	pack := &packages.Version{
+	pack := &packages.VersionWithDependencies{
 		Licenses: &lic,
 	}
 

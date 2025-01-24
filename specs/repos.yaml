@@ -10,8 +10,8 @@ info:
     url: https://ecosyste.ms
   version: 1.0.0
   license:
-    name: CC-BY-4.0
-    url: https://creativecommons.org/licenses/by/4.0/
+    name: CC-BY-SA-4.0
+    url: https://creativecommons.org/licenses/by-sa/4.0/
 externalDocs:
   description: GitHub Repository
   url: https://github.com/ecosyste-ms/repos
@@ -67,6 +67,44 @@ paths:
         required: false
         schema:
           type: integer
+      - name: created_after
+        in: query
+        description: filter by created_at after given time
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: updated_after
+        in: query
+        description: filter by updated_at after given time
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: fork
+        in: query
+        description: filter by fork
+        required: false
+        schema:
+          type: boolean
+      - name: archived
+        in: query
+        description: filter by archived
+        required: false
+        schema:
+          type: boolean
+      - name: sort
+        in: query
+        description: field to order results by
+        required: false
+        schema:
+          type: string
+      - name: order
+        in: query
+        description: direction to order results by
+        required: false
+        schema:
+          type: string
       responses:
         200:
           description: OK
@@ -76,13 +114,19 @@ paths:
                 "$ref": "#/components/schemas/TopicWithRepositories"
   "/repositories/lookup":
     get:
-      summary: Lookup repository metadata
+      summary: Lookup repository metadata by url or purl
       operationId: repositoriesLookup
       parameters:
       - name: url
         in: query
         description: The URL of the repository to lookup
-        required: true
+        required: false
+        schema:
+          type: string
+      - name: purl
+        in: query
+        description: package URL
+        required: false
         schema:
           type: string
       responses:
@@ -149,6 +193,30 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/PackageUsage"
+  "/usage/{ecosystem}/{package}/dependencies":
+    get:
+      summary: Get dependent repositories for a package
+      operationId: usagePackageDependencies
+      parameters:
+      - name: ecosystem
+        in: path
+        description: The ecosystem to get usage for
+        required: true
+        schema:
+          type: string
+      - name: package
+        in: path
+        description: The package to get usage for
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/DependencyWithRepository"
   "/hosts":
     get:
       summary: list registies
@@ -263,6 +331,38 @@ paths:
                 type: array
                 items:
                   "$ref": "#/components/schemas/Owner"
+  "/hosts/{HostName}/owners/lookup":
+    get:
+      summary: lookup owner by name or email
+      operationId: lookupHostOwner
+      parameters:
+      - in: path
+        name: HostName
+        schema:
+          type: string
+        required: true
+        description: name of host
+      - name: name
+        in: query
+        description: name of owner
+        required: false
+        schema:
+          type: string
+      - name: email
+        in: query
+        description: email of owner
+        required: false
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/Owner"
   "/hosts/{hostName}/owners/{ownerLogin}":
     get:
       summary: get a owner by login
@@ -330,6 +430,18 @@ paths:
         schema:
           type: string
           format: date-time
+      - name: fork
+        in: query
+        description: filter by fork
+        required: false
+        schema:
+          type: boolean
+      - name: archived
+        in: query
+        description: filter by archived
+        required: false
+        schema:
+          type: boolean
       - name: sort
         in: query
         description: field to order results by
@@ -388,6 +500,18 @@ paths:
         schema:
           type: string
           format: date-time
+      - name: fork
+        in: query
+        description: filter by fork
+        required: false
+        schema:
+          type: boolean
+      - name: archived
+        in: query
+        description: filter by archived
+        required: false
+        schema:
+          type: boolean
       - name: sort
         in: query
         description: field to order results by
@@ -446,6 +570,18 @@ paths:
         schema:
           type: string
           format: date-time
+      - name: fork
+        in: query
+        description: filter by fork
+        required: false
+        schema:
+          type: boolean
+      - name: archived
+        in: query
+        description: filter by archived
+        required: false
+        schema:
+          type: boolean
       - name: sort
         in: query
         description: field to order results by
@@ -558,6 +694,18 @@ paths:
         required: false
         schema:
           type: integer
+      - name: sort
+        in: query
+        description: field to order results by
+        required: false
+        schema:
+          type: string
+      - name: order
+        in: query
+        description: direction to order results by
+        required: false
+        schema:
+          type: string
       responses:
         200:
           description: OK
@@ -567,6 +715,148 @@ paths:
                 type: array
                 items:
                   "$ref": "#/components/schemas/Tag"
+  "/hosts/{hostName}/repositories/{repositoryName}/tags/{tag}":
+    get:
+      summary: get a tag for a repository
+      operationId: getHostRepositoryTag
+      parameters:
+      - in: path
+        name: hostName
+        schema:
+          type: string
+        required: true
+        description: name of host
+      - in: path
+        name: repositoryName
+        schema:
+          type: string
+        required: true
+        description: name of repository
+      - in: path
+        name: tag
+        schema:
+          type: string
+        required: true
+        description: name of tag
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Tag"
+  "/hosts/{hostName}/repositories/{repositoryName}/tags/{tag}/manifests":
+    get:
+      summary: get dependency manifests for a tag
+      operationId: getHostRepositoryTagManifests
+      parameters:
+      - in: path
+        name: hostName
+        schema:
+          type: string
+        required: true
+        description: name of host
+      - in: path
+        name: repositoryName
+        schema:
+          type: string
+        required: true
+        description: name of repository
+      - in: path
+        name: tag
+        schema:
+          type: string
+        required: true
+        description: name of tag
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/Manifest"
+  "/hosts/{hostName}/repositories/{repositoryName}/releases":
+    get:
+      summary: get a list of releases for a repository
+      operationId: getHostRepositoryReleases
+      parameters:
+      - in: path
+        name: hostName
+        schema:
+          type: string
+        required: true
+        description: name of host
+      - in: path
+        name: repositoryName
+        schema:
+          type: string
+        required: true
+        description: name of repository
+      - name: page
+        in: query
+        description: pagination page number
+        required: false
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        description: Number of records to return
+        required: false
+        schema:
+          type: integer
+      - name: sort
+        in: query
+        description: field to order results by
+        required: false
+        schema:
+          type: string
+      - name: order
+        in: query
+        description: direction to order results by
+        required: false
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/Tag"
+  "/hosts/{hostName}/repositories/{repositoryName}/releases/{release}":
+    get:
+      summary: get a release for a repository
+      operationId: getHostRepositoryRelease
+      parameters:
+      - in: path
+        name: hostName
+        schema:
+          type: string
+        required: true
+        description: name of host
+      - in: path
+        name: repositoryName
+        schema:
+          type: string
+        required: true
+        description: name of repository
+      - in: path
+        name: release
+        schema:
+          type: string
+        required: true
+        description: tag_name of release
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Release"
 components:
   schemas:
     Host:
@@ -592,9 +882,19 @@ components:
           type: string
         owners_url:
           type: string
+        version:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
     Repository:
       type: object
       properties:
+        id:
+          type: integer
         uuid:
           type: string
         full_name:
@@ -672,13 +972,32 @@ components:
           type: string
         html_url:
           type: string
+        previous_names:
+          type: array
+          items:
+            type: string
+        tags_count:
+          type: integer
+        template:
+          type: boolean
+        template_full_name:
+          type: string
+        latest_tag_name:
+          type: string
+        latest_tag_published_at:
+          type: string
+          format: date-time
         repository_url:
           type: string
         tags_url:
           type: string
+        releases_url:
+          type: string
         manifests_url:
           type: string
         owner_url:
+          type: string
+        download_url:
           type: string
         commit_stats:
           type: object
@@ -725,6 +1044,29 @@ components:
           type: boolean
         optional:
           type: boolean
+    DependencyWithRepository:
+      type: object
+      properties:
+        id:
+          type: integer
+        package_name:
+          type: string
+        ecosystem:
+          type: string
+        requirements:
+          type: string
+        kind:
+          type: string
+        direct:
+          type: boolean
+        optional:
+          type: boolean
+        repository:
+          type: object
+          "$ref": "#/components/schemas/Repository"
+        manifest:
+          type: object
+          "$ref": "#/components/schemas/Manifest"
     Tag:
       type: object
       properties:
@@ -740,6 +1082,15 @@ components:
         download_url:
           type: string
         html_url:
+          type: string
+        dependencies_parsed_at:
+          type: string
+          format: date-time
+        dependency_job_id:
+          type: string
+        tag_url:
+          type: string
+        manifests_url:
           type: string
     Ecosystem:
       type: object
@@ -759,12 +1110,6 @@ components:
           type: string
         dependents_count:
           type: integer
-        requirements:
-          type: object
-        kind:
-          type: object
-        direct:
-          type: object
         package_usage_url:
           type: string
         dependencies_url:
@@ -813,6 +1158,16 @@ components:
           type: string
         html_url:
           type: string
+        funding_links:
+          type: array
+          items:
+            type: string
+        total_stars:
+          type: integer
+        followers:
+          type: integer
+        following:
+          type: integer
     Topic:
       type: object
       properties:
@@ -839,3 +1194,39 @@ components:
           type: array
           items:
             "$ref": "#/components/schemas/Repository"
+    Release:
+      type: object
+      properties:
+        name:
+          type: string
+        uuid:
+          type: string
+        tag_name:
+          type: string
+        target_commitish:
+          type: string
+        body:
+          type: string
+        draft:
+          type: boolean
+        prerelease:
+          type: boolean
+        published_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        author:
+          type: string
+        assets:
+          type: array
+          items:
+            type: object
+        last_synced_at:
+          type: string
+          format: date-time
+        tag_url:
+          type: string
+        html_url:
+          type: string

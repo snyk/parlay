@@ -31,8 +31,8 @@ cover:
 specs:
 	@curl --silent https://packages.ecosyste.ms/docs/api/v1/openapi.yaml -o specs/packages.yaml
 	@curl --silent https://repos.ecosyste.ms/docs/api/v1/openapi.yaml -o specs/repos.yaml
-	@curl --silent https://api.snyk.io/rest/openapi/2023-04-28~experimental -o specs/snyk-experimental.json
-	@curl --silent https://api.snyk.io/rest/openapi/2023-04-28 -o specs/snyk.json
+	@curl --silent https://api.snyk.io/rest/openapi/2024-06-26~experimental -o specs/snyk-experimental.json
+	@curl --silent https://api.snyk.io/rest/openapi/2024-06-26 -o specs/snyk.json
 
 clients: specs
 	@oapi-codegen -generate types,client -package packages specs/packages.yaml > ecosystems/packages/packages.go

@@ -60,7 +60,7 @@ func enrichSPDX(bom *spdx.Document, logger *zerolog.Logger) {
 		}
 
 		pkgVersionData := packageVersionResp.JSON200
-		if pkgData == nil {
+		if pkgVersionData == nil {
 			continue
 		}
 
@@ -96,7 +96,7 @@ func enrichSPDXSupplier(pkg *v2_3.Package, data *packages.Package) {
 	}
 }
 
-func enrichSPDXLicense(pkg *v2_3.Package, data *packages.Version) {
+func enrichSPDXLicense(pkg *v2_3.Package, data *packages.VersionWithDependencies) {
 	expression := utils.GetSPDXLicenseExpressionFromEcosystemsLicense(data)
 	if expression != "" {
 		pkg.PackageLicenseConcluded = *data.Licenses

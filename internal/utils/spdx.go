@@ -32,7 +32,7 @@ func GetPurlFromSPDXPackage(pkg *spdx_2_3.Package) (*packageurl.PackageURL, erro
 	return &purl, nil
 }
 
-func GetSPDXLicenseExpressionFromEcosystemsLicense(data *packages.Version) string {
+func GetSPDXLicenseExpressionFromEcosystemsLicense(data *packages.VersionWithDependencies) string {
 	if data == nil || data.Licenses == nil || *data.Licenses == "" {
 		return ""
 	}

@@ -88,7 +88,7 @@ func SnykVulnURL(cfg *Config, purl *packageurl.PackageURL) string {
 
 func GetPackageVulnerabilities(cfg *Config, purl *packageurl.PackageURL, auth *securityprovider.SecurityProviderApiKey, orgID *uuid.UUID, logger *zerolog.Logger) (*issues.FetchIssuesPerPurlResponse, error) {
 	client, err := issues.NewClientWithResponses(
-		cfg.SnykAPIURL,
+		cfg.SnykAPIURL+"/rest",
 		issues.WithRequestEditorFn(auth.Intercept),
 		issues.WithHTTPClient(getRetryClient(logger)))
 	if err != nil {
