@@ -51,7 +51,9 @@ func TestEnrichSBOM_CycloneDXWithVulnerabilities(t *testing.T) {
 	assert.NotNil(t, vuln.Ratings)
 	assert.Len(t, *vuln.Ratings, 4)
 	assert.Equal(t, (*vuln.Ratings)[0].Source, &cdx.Source{Name: "Snyk", URL: "https://security.snyk.io"})
+	assert.Equal(t, (*vuln.Ratings)[0].Method, cdx.ScoringMethodCVSSv31)
 	assert.Equal(t, (*vuln.Ratings)[1].Source, &cdx.Source{Name: "NVD"})
+	assert.Equal(t, (*vuln.Ratings)[1].Method, cdx.ScoringMethodCVSSv3)
 }
 
 func TestEnrichSBOM_CycloneDXExternalRefs(t *testing.T) {

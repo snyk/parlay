@@ -32,7 +32,7 @@ import (
 	"github.com/snyk/parlay/snyk/issues"
 )
 
-const version = "2023-04-28"
+const version = "2024-06-26"
 
 func purlToSnykAdvisor(purl *packageurl.PackageURL) string {
 	return map[string]string{
