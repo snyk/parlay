@@ -225,7 +225,7 @@ func enrichCycloneDX(cfg *Config, bom *cdx.BOM, logger *zerolog.Logger) *cdx.BOM
 								Source:   &source,
 								Score:    &score,
 								Severity: levelToCdxSeverity(sev.Level),
-								Method:   "CVSSv31",
+								Method:   versionToCdxMethod(sev.Version),
 								Vector:   *sev.Vector,
 							}
 							if vuln.Ratings == nil {
@@ -263,6 +263,20 @@ func levelToCdxSeverity(level *string) (severity cdx.Severity) {
 		severity = cdx.SeverityLow
 	default:
 		severity = cdx.SeverityUnknown
+	}
+	return
+}
+
+func versionToCdxMethod(version *string) (method cdx.ScoringMethod) {
+	switch *version {
+	case "3.0":
+		method = cdx.ScoringMethodCVSSv3
+	case "3.1":
+		method = cdx.ScoringMethodCVSSv31
+	case "4.0":
+		method = cdx.ScoringMethodCVSSv4
+	default:
+		method = cdx.ScoringMethodOther
 	}
 	return
 }
