@@ -110,6 +110,9 @@ func GetPackageVulnerabilities(cfg *Config, purl *packageurl.PackageURL, auth *s
 
 func getRetryClient(logger *zerolog.Logger) *http.Client {
 	rc := retryablehttp.NewClient()
+	rc.RetryMax = 50
+    	rc.RetryWaitMin = 2 * time.Second
+    	rc.RetryWaitMax = 120 * time.Second
 	rc.Logger = nil
 	rc.ErrorHandler = retryablehttp.PassthroughErrorHandler
 	rc.ResponseLogHook = func(_ retryablehttp.Logger, r *http.Response) {
