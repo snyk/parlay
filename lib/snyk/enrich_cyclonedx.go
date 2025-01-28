@@ -85,7 +85,7 @@ func enrichCycloneDX(cfg *Config, bom *cdx.BOM, logger *zerolog.Logger) *cdx.BOM
 	logger.Debug().Str("org_id", orgID.String()).Msg("Inferred Snyk organization ID")
 
 	var mutex = &sync.Mutex{}
-	vulnerabilities := make(map[cdx.Component][]issues.CommonIssueModelVTwo)
+	vulnerabilities := make(map[cdx.Component][]issues.CommonIssueModelVThree)
 	wg := sizedwaitgroup.New(20)
 
 	comps := utils.DiscoverCDXComponents(bom)

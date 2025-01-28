@@ -31,7 +31,7 @@ import (
 )
 
 type cdxPackageEnricher = func(*cdx.Component, *packages.Package)
-type cdxPackageVersionEnricher = func(*cdx.Component, *packages.Version)
+type cdxPackageVersionEnricher = func(*cdx.Component, *packages.VersionWithDependencies)
 
 var cdxPackageEnrichers = []cdxPackageEnricher{
 	enrichCDXDescription,
@@ -58,7 +58,7 @@ func enrichCDXDescription(comp *cdx.Component, data *packages.Package) {
 	}
 }
 
-func enrichCDXLicense(comp *cdx.Component, data *packages.Version) {
+func enrichCDXLicense(comp *cdx.Component, data *packages.VersionWithDependencies) {
 	expression := utils.GetSPDXLicenseExpressionFromEcosystemsLicense(data)
 	if expression != "" {
 		licenses := cdx.LicenseChoice{Expression: expression}

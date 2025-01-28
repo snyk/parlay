@@ -92,7 +92,7 @@ func enrichSPDX(cfg *Config, bom *spdx.Document, logger *zerolog.Logger) *spdx.D
 
 	mutex := &sync.Mutex{}
 	wg := sizedwaitgroup.New(20)
-	vulnerabilities := make(map[*spdx_2_3.Package][]issues.CommonIssueModelVTwo)
+	vulnerabilities := make(map[*spdx_2_3.Package][]issues.CommonIssueModelVThree)
 
 	packages := bom.Packages
 	logger.Debug().Msgf("Detected %d packages", len(packages))

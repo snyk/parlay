@@ -9,10 +9,11 @@
       "name": "jane.doe@example.com",
       "default_org_context": "00000000-0000-0000-0000-000000000000",
       "username": "jane.doe@example.com",
-      "email": "jane.doe@example.com"
+      "email": "jane.doe@example.com",
+      "avatar_url": "http://example.com/avatar.png"
     }
   },
   "links": {
-    "self": "/self?version=2023-04-28~experimental"
+    "self": "/self?version=2024-06-26~experimental"
   }
 }
