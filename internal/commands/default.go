@@ -11,11 +11,7 @@ import (
 	"github.com/snyk/parlay/internal/commands/ecosystems"
 	"github.com/snyk/parlay/internal/commands/scorecard"
 	"github.com/snyk/parlay/internal/commands/snyk"
-)
-
-// These values are set at build time
-var (
-	version = ""
+	"github.com/snyk/parlay/internal/utils"
 )
 
 func NewDefaultCommand() *cobra.Command {
@@ -26,7 +22,7 @@ func NewDefaultCommand() *cobra.Command {
 		Use:                   "parlay",
 		Short:                 "Enrich an SBOM with context from third party services",
 		SilenceUsage:          true,
-		Version:               GetVersion(),
+		Version:               utils.GetVersion(),
 		DisableFlagsInUseLine: true,
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := cmd.Help(); err != nil {
@@ -54,8 +50,4 @@ func NewDefaultCommand() *cobra.Command {
 	cmd.AddCommand(scorecard.NewRootCommand(&logger))
 
 	return &cmd
-}
-
-func GetVersion() string {
-	return version
 }

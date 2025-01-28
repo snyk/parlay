@@ -12,10 +12,13 @@ import (
 )
 
 func NewEnrichCommand(logger *zerolog.Logger) *cobra.Command {
+	var omitWatermark bool
+
 	cmd := cobra.Command{
-		Use:   "enrich <sbom>",
-		Short: "Enrich an SBOM with OpenSSF Scorecard data",
-		Args:  cobra.ExactArgs(1),
+		Use:     "enrich <sbom>",
+		Short:   "Enrich an SBOM with OpenSSF Scorecard data",
+		Args:    cobra.ExactArgs(1),
+		Version: utils.GetVersion(),
 		Run: func(cmd *cobra.Command, args []string) {
 			b, err := utils.GetUserInput(args[0], os.Stdin)
 			if err != nil {
@@ -29,10 +32,17 @@ func NewEnrichCommand(logger *zerolog.Logger) *cobra.Command {
 
 			scorecard.EnrichSBOM(doc)
 
+			if !omitWatermark {
+				sbom.AddParlayWatermark(doc, cmd.Version)
+			}
+
 			if err := doc.Encode(os.Stdout); err != nil {
 				logger.Fatal().Err(err).Msg("Failed to encode new SBOM")
 			}
 		},
 	}
+
+	cmd.Flags().BoolVar(&omitWatermark, "omit-watermark", false, "omit parlay watermark")
+
 	return &cmd
 }
