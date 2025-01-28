@@ -33,6 +33,7 @@ import (
 )
 
 const version = "2024-06-26"
+var requestSemaphore = make(chan struct{}, 1)
 
 func purlToSnykAdvisor(purl *packageurl.PackageURL) string {
 	return map[string]string{
@@ -109,7 +110,14 @@ func GetPackageVulnerabilities(cfg *Config, purl *packageurl.PackageURL, auth *s
 }
 
 func getRetryClient(logger *zerolog.Logger) *http.Client {
+	requestSemaphore <- struct{}{}
+	defer func() {
+		<-requestSemaphore
+	}()
 	rc := retryablehttp.NewClient()
+	rc.RetryMax = 50
+    	rc.RetryWaitMin = 2 * time.Second
+    	rc.RetryWaitMax = 120 * time.Second
 	rc.Logger = nil
 	rc.ErrorHandler = retryablehttp.PassthroughErrorHandler
 	rc.ResponseLogHook = func(_ retryablehttp.Logger, r *http.Response) {
