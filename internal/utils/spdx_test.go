@@ -11,29 +11,52 @@ import (
 
 func TestGetSPDXLicenseExpressionFromEcosystemsLicense(t *testing.T) {
 	assert := assert.New(t)
-	licenses := "GPLv2,MIT"
-	data := packages.VersionWithDependencies{Licenses: &licenses}
-	expression := utils.GetSPDXLicenseExpressionFromEcosystemsLicense(&data)
+	versionedLicenses := "GPLv2,MIT"
+	pkgVersionData := packages.VersionWithDependencies{Licenses: &versionedLicenses}
+	latestLicenses := "Apache-2.0"
+	pkgData := packages.Package{Licenses: &latestLicenses}
+	expression := utils.GetSPDXLicenseExpressionFromEcosystemsLicense(&pkgVersionData, &pkgData)
 	assert.Equal("(GPLv2 OR MIT)", expression)
 }
 
 func TestGetSPDXLicenseExpressionFromEcosystemsLicense_NoData(t *testing.T) {
 	assert := assert.New(t)
-	expression := utils.GetSPDXLicenseExpressionFromEcosystemsLicense(nil)
+	expression := utils.GetSPDXLicenseExpressionFromEcosystemsLicense(nil, nil)
 	assert.Equal("", expression)
+}
+
+func TestGetSPDXLicenseExpressionFromEcosystemsLicense_NoVersionedData(t *testing.T) {
+	assert := assert.New(t)
+	pkgVersionData := packages.VersionWithDependencies{}
+	latestLicenses := "Apache-2.0"
+	pkgData := packages.Package{Licenses: &latestLicenses}
+	expression := utils.GetSPDXLicenseExpressionFromEcosystemsLicense(&pkgVersionData, &pkgData)
+	assert.Equal("(Apache-2.0)", expression)
+}
+
+func TestGetSPDXLicenseExpressionFromEcosystemsLicense_NoLatestData(t *testing.T) {
+	assert := assert.New(t)
+	versionedLicenses := "GPLv2,MIT"
+	pkgVersionData := packages.VersionWithDependencies{Licenses: &versionedLicenses}
+	pkgData := packages.Package{}
+	expression := utils.GetSPDXLicenseExpressionFromEcosystemsLicense(&pkgVersionData, &pkgData)
+	assert.Equal("(GPLv2 OR MIT)", expression)
 }
 
 func TestGetSPDXLicenseExpressionFromEcosystemsLicense_NoLicenses(t *testing.T) {
 	assert := assert.New(t)
-	data := packages.VersionWithDependencies{}
-	expression := utils.GetSPDXLicenseExpressionFromEcosystemsLicense(&data)
+	pkgVersionData := packages.VersionWithDependencies{}
+	pkgData := packages.Package{}
+	expression := utils.GetSPDXLicenseExpressionFromEcosystemsLicense(&pkgVersionData, &pkgData)
 	assert.Equal("", expression)
 }
 
 func TestGetSPDXLicenseExpressionFromEcosystemsLicense_EmptyLicenses(t *testing.T) {
 	assert := assert.New(t)
-	licenses := ""
-	data := packages.VersionWithDependencies{Licenses: &licenses}
-	expression := utils.GetSPDXLicenseExpressionFromEcosystemsLicense(&data)
+	versionedLicenses := ""
+	pkgVersionData := packages.VersionWithDependencies{Licenses: &versionedLicenses}
+	latestLicenses := ""
+	pkgData := packages.Package{Licenses: &latestLicenses}
+	expression := utils.GetSPDXLicenseExpressionFromEcosystemsLicense(&pkgVersionData, &pkgData)
 	assert.Equal("", expression)
 }

@@ -31,7 +31,7 @@ import (
 )
 
 type cdxPackageEnricher = func(*cdx.Component, *packages.Package)
-type cdxPackageVersionEnricher = func(*cdx.Component, *packages.VersionWithDependencies)
+type cdxPackageVersionEnricher = func(*cdx.Component, *packages.VersionWithDependencies, *packages.Package)
 
 var cdxPackageEnrichers = []cdxPackageEnricher{
 	enrichCDXDescription,
@@ -58,8 +58,8 @@ func enrichCDXDescription(comp *cdx.Component, data *packages.Package) {
 	}
 }
 
-func enrichCDXLicense(comp *cdx.Component, data *packages.VersionWithDependencies) {
-	expression := utils.GetSPDXLicenseExpressionFromEcosystemsLicense(data)
+func enrichCDXLicense(comp *cdx.Component, pkgVersionData *packages.VersionWithDependencies, pkgData *packages.Package) {
+	expression := utils.GetSPDXLicenseExpressionFromEcosystemsLicense(pkgVersionData, pkgData)
 	if expression != "" {
 		licenses := cdx.LicenseChoice{Expression: expression}
 		comp.Licenses = &cdx.Licenses{licenses}
@@ -248,7 +248,7 @@ func enrichCDX(bom *cdx.BOM, logger *zerolog.Logger) {
 			}
 
 			for _, enrichFunc := range cdxPackageVersionEnrichers {
-				enrichFunc(comp, packageVersionResp.JSON200)
+				enrichFunc(comp, packageVersionResp.JSON200, packageResp.JSON200)
 			}
 
 		}(comps[i])

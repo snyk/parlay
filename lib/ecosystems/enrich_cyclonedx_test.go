@@ -190,15 +190,54 @@ func TestEnrichLicense(t *testing.T) {
 		Name:    "cyclonedx-go",
 		Version: "v0.3.0",
 	}
-	lic := "BSD-3-Clause"
-	pack := &packages.VersionWithDependencies{
-		Licenses: &lic,
-	}
+	versionedLicenses := "BSD-3-Clause"
+	pkgVersionData := &packages.VersionWithDependencies{Licenses: &versionedLicenses}
+	latestLicenses := "Apache-2.0"
+	pkgData := &packages.Package{Licenses: &latestLicenses}
 
-	enrichCDXLicense(component, pack)
+	enrichCDXLicense(component, pkgVersionData, pkgData)
 
 	licenses := *component.Licenses
 	comp := cdx.LicenseChoice(cdx.LicenseChoice{Expression: "(BSD-3-Clause)"})
+	assert.Equal(t, 1, len(licenses))
+	assert.Equal(t, comp, licenses[0])
+}
+
+func TestEnrichLicenseNoVersionedLicense(t *testing.T) {
+	component := &cdx.Component{
+		Type:    cdx.ComponentTypeLibrary,
+		Name:    "cyclonedx-go",
+		Version: "v0.3.0",
+	}
+	versionedLicenses := ""
+	pkgVersionData := &packages.VersionWithDependencies{Licenses: &versionedLicenses}
+	latestLicenses := "Apache-2.0"
+	pkgData := &packages.Package{Licenses: &latestLicenses}
+
+	enrichCDXLicense(component, pkgVersionData, pkgData)
+
+	licenses := *component.Licenses
+	comp := cdx.LicenseChoice(cdx.LicenseChoice{Expression: "(Apache-2.0)"})
+	assert.Equal(t, 1, len(licenses))
+	assert.Equal(t, comp, licenses[0])
+}
+
+func TestEnrichLicenseNoLatestLicense(t *testing.T) {
+	component := &cdx.Component{
+		Type:    cdx.ComponentTypeLibrary,
+		Name:    "cyclonedx-go",
+		Version: "v0.3.0",
+	}
+	versionedLicenses := "BSD-3-Clause"
+	pkgVersionData := &packages.VersionWithDependencies{Licenses: &versionedLicenses}
+	latestLicenses := ""
+	pkgData := &packages.Package{Licenses: &latestLicenses}
+
+	enrichCDXLicense(component, pkgVersionData, pkgData)
+
+	licenses := *component.Licenses
+	comp := cdx.LicenseChoice(cdx.LicenseChoice{Expression: "(BSD-3-Clause)"})
+	assert.Equal(t, 1, len(licenses))
 	assert.Equal(t, comp, licenses[0])
 }
 

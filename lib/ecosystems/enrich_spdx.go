@@ -64,7 +64,7 @@ func enrichSPDX(bom *spdx.Document, logger *zerolog.Logger) {
 			continue
 		}
 
-		enrichSPDXLicense(pkg, pkgVersionData)
+		enrichSPDXLicense(pkg, pkgVersionData, pkgData)
 	}
 }
 
@@ -96,10 +96,10 @@ func enrichSPDXSupplier(pkg *v2_3.Package, data *packages.Package) {
 	}
 }
 
-func enrichSPDXLicense(pkg *v2_3.Package, data *packages.VersionWithDependencies) {
-	expression := utils.GetSPDXLicenseExpressionFromEcosystemsLicense(data)
+func enrichSPDXLicense(pkg *v2_3.Package, pkgVersionData *packages.VersionWithDependencies, pkgData *packages.Package) {
+	expression := utils.GetSPDXLicenseExpressionFromEcosystemsLicense(pkgVersionData, pkgData)
 	if expression != "" {
-		pkg.PackageLicenseConcluded = *data.Licenses
+		pkg.PackageLicenseConcluded = *pkgVersionData.Licenses
 	}
 }
 
