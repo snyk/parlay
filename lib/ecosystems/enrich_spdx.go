@@ -18,6 +18,7 @@ package ecosystems
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/package-url/packageurl-go"
 	"github.com/rs/zerolog"
@@ -97,9 +98,9 @@ func enrichSPDXSupplier(pkg *v2_3.Package, data *packages.Package) {
 }
 
 func enrichSPDXLicense(pkg *v2_3.Package, pkgVersionData *packages.VersionWithDependencies, pkgData *packages.Package) {
-	expression := utils.GetSPDXLicenseExpressionFromEcosystemsLicense(pkgVersionData, pkgData)
-	if expression != "" {
-		pkg.PackageLicenseConcluded = *pkgVersionData.Licenses
+	licenses := utils.GetLicensesFromEcosystemsLicense(pkgVersionData, pkgData)
+	if len(licenses) > 0 {
+		pkg.PackageLicenseConcluded = strings.Join(licenses, ",")
 	}
 }
 
