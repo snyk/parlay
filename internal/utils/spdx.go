@@ -33,14 +33,14 @@ func GetPurlFromSPDXPackage(pkg *spdx_2_3.Package) (*packageurl.PackageURL, erro
 }
 
 func GetSPDXLicenseExpressionFromEcosystemsLicense(pkgVersionData *packages.VersionWithDependencies, pkgData *packages.Package) string {
-	licenses := ""
+	licenses := []string{}
 	if pkgVersionData != nil && pkgVersionData.Licenses != nil && *pkgVersionData.Licenses != "" {
-		licenses = *pkgVersionData.Licenses
-	} else if pkgData != nil && pkgData.Licenses != nil && *pkgData.Licenses != "" {
-		licenses = *pkgData.Licenses
+		licenses = strings.Split(*pkgVersionData.Licenses, ",")
+	} else if pkgData != nil && len(pkgData.NormalizedLicenses) > 0 {
+		licenses = pkgData.NormalizedLicenses
 	}
-	if licenses == "" {
+	if len(licenses) == 0 {
 		return ""
 	}
-	return fmt.Sprintf("(%s)", strings.Join(strings.Split(licenses, ","), " OR "))
+	return fmt.Sprintf("(%s)", strings.Join(licenses, " OR "))
 }

@@ -192,8 +192,8 @@ func TestEnrichLicense(t *testing.T) {
 	}
 	versionedLicenses := "BSD-3-Clause"
 	pkgVersionData := &packages.VersionWithDependencies{Licenses: &versionedLicenses}
-	latestLicenses := "Apache-2.0"
-	pkgData := &packages.Package{Licenses: &latestLicenses}
+	latestLicenses := []string{"Apache-2.0"}
+	pkgData := &packages.Package{NormalizedLicenses: latestLicenses}
 
 	enrichCDXLicense(component, pkgVersionData, pkgData)
 
@@ -211,8 +211,8 @@ func TestEnrichLicenseNoVersionedLicense(t *testing.T) {
 	}
 	versionedLicenses := ""
 	pkgVersionData := &packages.VersionWithDependencies{Licenses: &versionedLicenses}
-	latestLicenses := "Apache-2.0"
-	pkgData := &packages.Package{Licenses: &latestLicenses}
+	latestLicenses := []string{"Apache-2.0"}
+	pkgData := &packages.Package{NormalizedLicenses: latestLicenses}
 
 	enrichCDXLicense(component, pkgVersionData, pkgData)
 
@@ -230,8 +230,8 @@ func TestEnrichLicenseNoLatestLicense(t *testing.T) {
 	}
 	versionedLicenses := "BSD-3-Clause"
 	pkgVersionData := &packages.VersionWithDependencies{Licenses: &versionedLicenses}
-	latestLicenses := ""
-	pkgData := &packages.Package{Licenses: &latestLicenses}
+	latestLicenses := []string{""}
+	pkgData := &packages.Package{NormalizedLicenses: latestLicenses}
 
 	enrichCDXLicense(component, pkgVersionData, pkgData)
 
