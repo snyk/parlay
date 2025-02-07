@@ -18,6 +18,8 @@ package ecosystems
 
 import (
 	"bytes"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -31,20 +33,52 @@ import (
 	"github.com/snyk/parlay/lib/sbom"
 )
 
-func testEnrichSBOM(t *testing.T, ecosysteMsPackageResponse map[string]interface{}, ecosysteMsRegistryResponse map[string]interface{}, assertions func(bom *v2_3.Document)) {
-	httpmock.Activate()
-	defer httpmock.DeactivateAndReset()
+func parseJson(jsonStr string) map[string]any {
+	var result map[string]any
 
-	httpmock.RegisterResponder("GET", `=~^https://packages.ecosyste.ms/api/v1/registries/.*/packages/.*/versions`,
-		func(r *http.Request) (*http.Response, error) {
-			return httpmock.NewJsonResponse(200, ecosysteMsPackageResponse)
-		},
-	)
-	httpmock.RegisterResponder("GET", `=~^https://packages.ecosyste.ms/api/v1/registries`,
-		func(req *http.Request) (*http.Response, error) {
-			return httpmock.NewJsonResponse(200, ecosysteMsRegistryResponse)
-		},
-	)
+	err := json.Unmarshal([]byte(jsonStr), &result)
+	if err != nil {
+		panic(fmt.Errorf("failed to parse JSON: %w", err))
+	}
+
+	return result
+}
+
+func setupHttpmock(packageVersionsResponse, packageResponse *string) {
+	httpmock.Activate()
+
+	if packageVersionsResponse != nil {
+		httpmock.RegisterResponder("GET", `=~^https://packages.ecosyste.ms/api/v1/registries/.*/packages/.*/versions`,
+			func(r *http.Request) (*http.Response, error) {
+				return httpmock.NewJsonResponse(200, parseJson(*packageVersionsResponse))
+			},
+		)
+	}
+
+	if packageResponse != nil {
+		httpmock.RegisterResponder("GET", `=~^https://packages.ecosyste.ms/api/v1/registries`,
+			func(req *http.Request) (*http.Response, error) {
+				return httpmock.NewJsonResponse(200, parseJson(*packageResponse))
+			})
+	}
+}
+
+func TestEnrichSBOM_SPDX(t *testing.T) {
+	packageVersionResponse := `{
+		"licenses": "MIT"
+	}`
+	packageResponse := `{
+		"description": "description",
+		"normalized_licenses": ["BSD-3-Clause"],
+		"homepage": "https://github.com/spdx/tools-golang",
+		"repo_metadata": {
+			"owner_record": {
+				"name": "Acme Corp"
+			}
+		}
+	}`
+	setupHttpmock(&packageVersionResponse, &packageResponse)
+	defer httpmock.DeactivateAndReset()
 
 	doc, err := sbom.DecodeSBOMDocument([]byte(`{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT"}`))
 	require.NoError(t, err)
@@ -72,7 +106,11 @@ func testEnrichSBOM(t *testing.T, ecosysteMsPackageResponse map[string]interface
 
 	pkgs := bom.Packages
 
-	assertions(bom)
+	assert.Equal(t, "description", pkgs[0].PackageDescription)
+	assert.Equal(t, "MIT", pkgs[0].PackageLicenseConcluded)
+	assert.Equal(t, "https://github.com/spdx/tools-golang", pkgs[0].PackageHomePage)
+	assert.Equal(t, "Organization", pkgs[0].PackageSupplier.SupplierType)
+	assert.Equal(t, "Acme Corp", pkgs[0].PackageSupplier.Supplier)
 
 	httpmock.GetTotalCallCount()
 	calls := httpmock.GetCallCountInfo()
@@ -82,79 +120,76 @@ func testEnrichSBOM(t *testing.T, ecosysteMsPackageResponse map[string]interface
 	require.NoError(t, doc.Encode(buf))
 }
 
-func TestEnrichSBOM_SPDX(t *testing.T) {
-	testEnrichSBOM(
-		t,
-		map[string]interface{}{
-			"licenses": "MIT",
-		},
-		map[string]interface{}{
-			"description":         "description",
-			"normalized_licenses": []string{"BSD-3-Clause"},
-			"homepage":            "https://github.com/spdx/tools-golang",
-			"repo_metadata": map[string]interface{}{
-				"owner_record": map[string]interface{}{
-					"name": "Acme Corp",
-				},
-			},
-		},
-		func(bom *v2_3.Document) {
-			pkgs := bom.Packages
-			assert.Equal(t, "description", pkgs[0].PackageDescription)
-			assert.Equal(t, "MIT", pkgs[0].PackageLicenseConcluded)
-			assert.Equal(t, "https://github.com/spdx/tools-golang", pkgs[0].PackageHomePage)
-			assert.Equal(t, "Organization", pkgs[0].PackageSupplier.SupplierType)
-			assert.Equal(t, "Acme Corp", pkgs[0].PackageSupplier.Supplier)
-		},
-	)
-}
-
 func TestEnrichSBOM_MissingVersionedLicense(t *testing.T) {
-	testEnrichSBOM(
-		t,
-		map[string]interface{}{
-			"licenses": "",
-		},
-		map[string]interface{}{
-			"description":         "description",
-			"normalized_licenses": []string{"BSD-3-Clause", "Apache-2.0"},
-			"homepage":            "https://github.com/spdx/tools-golang",
-			"repo_metadata": map[string]interface{}{
-				"owner_record": map[string]interface{}{
-					"name": "Acme Corp",
+	packageVersionResponse := `{
+		"licenses": ""
+	}`
+	packageResponse := `{
+		"description": "description",
+		"normalized_licenses": ["BSD-3-Clause", "Apache-2.0"],
+		"homepage": "https://github.com/spdx/tools-golang",
+		"repo_metadata": {
+			"owner_record": {
+				"name": "Acme Corp"
+			}
+		}
+	}`
+	setupHttpmock(&packageVersionResponse, &packageResponse)
+	defer httpmock.DeactivateAndReset()
+
+	doc, err := sbom.DecodeSBOMDocument([]byte(`{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT"}`))
+	require.NoError(t, err)
+
+	bom, ok := doc.BOM.(*v2_3.Document)
+	require.True(t, ok)
+
+	bom.Packages = []*v2_3.Package{
+		{
+			PackageSPDXIdentifier: "pkg:golang/github.com/spdx/tools-golang@v0.5.2",
+			PackageName:           "github.com/spdx/tools-golang",
+			PackageVersion:        "v0.5.2",
+			PackageExternalReferences: []*v2_3.PackageExternalReference{
+				{
+					Category: common.CategoryPackageManager,
+					RefType:  "purl",
+					Locator:  "pkg:golang/github.com/spdx/tools-golang@v0.5.2",
 				},
 			},
 		},
-		func(bom *v2_3.Document) {
-			pkgs := bom.Packages
-			assert.Equal(t, "description", pkgs[0].PackageDescription)
-			assert.Equal(t, "BSD-3-Clause,Apache-2.0", pkgs[0].PackageLicenseConcluded)
-			assert.Equal(t, "https://github.com/spdx/tools-golang", pkgs[0].PackageHomePage)
-			assert.Equal(t, "Organization", pkgs[0].PackageSupplier.SupplierType)
-			assert.Equal(t, "Acme Corp", pkgs[0].PackageSupplier.Supplier)
-		},
-	)
+	}
+	logger := zerolog.Nop()
+
+	EnrichSBOM(doc, &logger)
+
+	pkgs := bom.Packages
+
+	assert.Equal(t, "description", pkgs[0].PackageDescription)
+	assert.Equal(t, "BSD-3-Clause,Apache-2.0", pkgs[0].PackageLicenseConcluded)
+	assert.Equal(t, "https://github.com/spdx/tools-golang", pkgs[0].PackageHomePage)
+	assert.Equal(t, "Organization", pkgs[0].PackageSupplier.SupplierType)
+	assert.Equal(t, "Acme Corp", pkgs[0].PackageSupplier.Supplier)
+
+	httpmock.GetTotalCallCount()
+	calls := httpmock.GetCallCountInfo()
+	assert.Equal(t, len(pkgs), calls[`GET =~^https://packages.ecosyste.ms/api/v1/registries`])
+
+	buf := bytes.NewBuffer(nil)
+	require.NoError(t, doc.Encode(buf))
 }
 
 func TestEnrichSBOM_SPDX_NoSupplierName(t *testing.T) {
-	httpmock.Activate()
+	packageResponse := `{
+		"description": "description",
+		"normalized_licenses": ["BSD-3-Clause"],
+		"homepage": "https://github.com/spdx/tools-golang",
+		"repo_metadata": {
+			"owner_record": {
+				"name": ""
+			}
+		}
+	}`
+	setupHttpmock(nil, &packageResponse)
 	defer httpmock.DeactivateAndReset()
-
-	httpmock.RegisterResponder("GET", `=~^https://packages.ecosyste.ms/api/v1/registries`,
-		func(req *http.Request) (*http.Response, error) {
-			return httpmock.NewJsonResponse(200, map[string]interface{}{
-				"description": "description",
-				"normalized_licenses": []string{
-					"BSD-3-Clause",
-				},
-				"homepage": "https://github.com/spdx/tools-golang",
-				"repo_metadata": map[string]interface{}{
-					"owner_record": map[string]interface{}{
-						"name": "",
-					},
-				},
-			})
-		})
 
 	doc, err := sbom.DecodeSBOMDocument([]byte(`{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT"}`))
 	require.NoError(t, err)
