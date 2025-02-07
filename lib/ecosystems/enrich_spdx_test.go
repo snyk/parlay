@@ -19,7 +19,6 @@ package ecosystems
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"testing"
 
@@ -33,24 +32,21 @@ import (
 	"github.com/snyk/parlay/lib/sbom"
 )
 
-func parseJson(jsonStr string) map[string]any {
+func parseJson(t *testing.T, jsonStr string) map[string]any {
+	t.Helper()
 	var result map[string]any
-
-	err := json.Unmarshal([]byte(jsonStr), &result)
-	if err != nil {
-		panic(fmt.Errorf("failed to parse JSON: %w", err))
-	}
-
+	require.NoError(t, json.Unmarshal([]byte(jsonStr), &result))
 	return result
 }
 
-func setupHttpmock(packageVersionsResponse, packageResponse *string) {
+func setupHttpmock(t *testing.T, packageVersionsResponse, packageResponse *string) {
+	t.Helper()
 	httpmock.Activate()
 
 	if packageVersionsResponse != nil {
 		httpmock.RegisterResponder("GET", `=~^https://packages.ecosyste.ms/api/v1/registries/.*/packages/.*/versions`,
 			func(r *http.Request) (*http.Response, error) {
-				return httpmock.NewJsonResponse(200, parseJson(*packageVersionsResponse))
+				return httpmock.NewJsonResponse(200, parseJson(t, *packageVersionsResponse))
 			},
 		)
 	}
@@ -58,7 +54,7 @@ func setupHttpmock(packageVersionsResponse, packageResponse *string) {
 	if packageResponse != nil {
 		httpmock.RegisterResponder("GET", `=~^https://packages.ecosyste.ms/api/v1/registries`,
 			func(req *http.Request) (*http.Response, error) {
-				return httpmock.NewJsonResponse(200, parseJson(*packageResponse))
+				return httpmock.NewJsonResponse(200, parseJson(t, *packageResponse))
 			})
 	}
 }
@@ -77,7 +73,7 @@ func TestEnrichSBOM_SPDX(t *testing.T) {
 			}
 		}
 	}`
-	setupHttpmock(&packageVersionResponse, &packageResponse)
+	setupHttpmock(t, &packageVersionResponse, &packageResponse)
 	defer httpmock.DeactivateAndReset()
 
 	doc, err := sbom.DecodeSBOMDocument([]byte(`{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT"}`))
@@ -134,7 +130,7 @@ func TestEnrichSBOM_MissingVersionedLicense(t *testing.T) {
 			}
 		}
 	}`
-	setupHttpmock(&packageVersionResponse, &packageResponse)
+	setupHttpmock(t, &packageVersionResponse, &packageResponse)
 	defer httpmock.DeactivateAndReset()
 
 	doc, err := sbom.DecodeSBOMDocument([]byte(`{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT"}`))
@@ -188,7 +184,7 @@ func TestEnrichSBOM_SPDX_NoSupplierName(t *testing.T) {
 			}
 		}
 	}`
-	setupHttpmock(nil, &packageResponse)
+	setupHttpmock(t, nil, &packageResponse)
 	defer httpmock.DeactivateAndReset()
 
 	doc, err := sbom.DecodeSBOMDocument([]byte(`{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT"}`))
