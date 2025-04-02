@@ -25,7 +25,7 @@ workflows:
           name: Scan repository for secrets
           context:
             - snyk-bot-slack
-          channel: team-unify-alerts
+          channel: snyk-vuln-alerts-unify
           filters:
             branches:
               ignore:
