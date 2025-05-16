@@ -1,6 +1,6 @@
 module github.com/snyk/parlay
 
-go 1.23
+go 1.24.1
 
 require (
 	github.com/CycloneDX/cyclonedx-go v0.9.2
@@ -9,8 +9,9 @@ require (
 	github.com/google/uuid v1.5.0
 	github.com/hashicorp/go-retryablehttp v0.7.7
 	github.com/jarcoal/httpmock v1.3.0
+	github.com/jvpascal/osvwrapper v0.0.0-20250516001142-6aad5e1eb362
 	github.com/oapi-codegen/runtime v1.1.1
-	github.com/package-url/packageurl-go v0.1.2
+	github.com/package-url/packageurl-go v0.1.3
 	github.com/remeh/sizedwaitgroup v1.0.0
 	github.com/rs/zerolog v1.29.1
 	github.com/spdx/tools-golang v0.5.4-0.20240304222056-8baafa1a79c4
@@ -39,6 +40,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
+	github.com/synk-labs/parlay v0.0.0-20250515234845-43e4661b65f3 // indirect
 	golang.org/x/sys v0.20.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect

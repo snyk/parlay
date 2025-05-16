@@ -11,6 +11,7 @@ import (
 	"github.com/snyk/parlay/internal/commands/ecosystems"
 	"github.com/snyk/parlay/internal/commands/scorecard"
 	"github.com/snyk/parlay/internal/commands/snyk"
+	"github.com/snyk/parlay/internal/commands/osv"
 )
 
 // These values are set at build time
@@ -52,6 +53,7 @@ func NewDefaultCommand() *cobra.Command {
 	cmd.AddCommand(snyk.NewSnykRootCommand(&logger))
 	cmd.AddCommand(deps.NewDepsRootCommand(&logger))
 	cmd.AddCommand(scorecard.NewRootCommand(&logger))
+	cmd.AddCommand(osv.NewRootCommand(&logger))
 
 	return &cmd
 }
