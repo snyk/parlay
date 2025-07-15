@@ -35,13 +35,15 @@ func enrichSPDX(bom *spdx.Document, logger *zerolog.Logger) {
 
 	logger.Debug().Msgf("Detected %d packages", len(packages))
 
+	cache := NewInMemoryCache()
+
 	for _, pkg := range packages {
 		purl, err := extractPurl(pkg)
 		if err != nil {
 			continue
 		}
 
-		packageResp, err := GetPackageData(*purl)
+		packageResp, err := cache.GetPackageData(*purl)
 		if err != nil {
 			continue
 		}
@@ -55,7 +57,7 @@ func enrichSPDX(bom *spdx.Document, logger *zerolog.Logger) {
 		enrichSPDXHomepage(pkg, pkgData)
 		enrichSPDXSupplier(pkg, pkgData)
 
-		packageVersionResp, err := GetPackageVersionData(*purl)
+		packageVersionResp, err := cache.GetPackageVersionData(*purl)
 		if err != nil {
 			continue
 		}
