@@ -18,6 +18,7 @@ package ecosystems
 
 import (
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/jarcoal/httpmock"
@@ -45,6 +46,57 @@ func TestGetPackageData(t *testing.T) {
 	httpmock.GetTotalCallCount()
 	calls := httpmock.GetCallCountInfo()
 	assert.Equal(t, 1, calls[`GET =~^https://packages.ecosyste.ms/api/v1/registries`])
+}
+
+func TestGetPackageDataUserAgent(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedUserAgent string
+	httpmock.RegisterResponder(
+		"GET",
+		`=~^https://packages.ecosyste.ms/api/v1/registries`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedUserAgent = req.Header.Get("User-Agent")
+			return httpmock.NewBytesResponse(200, []byte{}), nil
+		},
+	)
+
+	purl, err := packageurl.FromString("pkg:npm/lodash@4.17.21")
+	require.NoError(t, err)
+
+	_, err = GetPackageData(purl)
+	require.NoError(t, err)
+
+	expectedUserAgent := fmt.Sprintf("parlay (%s)", Version)
+	assert.Equal(t, expectedUserAgent, capturedUserAgent)
+	// Verify it contains "parlay" and the version in parentheses
+	assert.Contains(t, capturedUserAgent, "parlay")
+	assert.Contains(t, capturedUserAgent, "(")
+	assert.Contains(t, capturedUserAgent, ")")
+}
+
+func TestGetPackageVersionDataUserAgent(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedUserAgent string
+	httpmock.RegisterResponder(
+		"GET",
+		`=~^https://packages.ecosyste.ms/api/v1/registries`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedUserAgent = req.Header.Get("User-Agent")
+			return httpmock.NewBytesResponse(200, []byte{}), nil
+		},
+	)
+
+	purl, err := packageurl.FromString("pkg:npm/lodash@4.17.21")
+	require.NoError(t, err)
+
+	_, err = GetPackageVersionData(purl)
+	require.NoError(t, err)
+
+	assert.Equal(t, fmt.Sprintf("parlay (%s)", Version), capturedUserAgent)
 }
 
 func TestPurlToEcosystemsRegistry(t *testing.T) {

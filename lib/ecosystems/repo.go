@@ -18,6 +18,7 @@ package ecosystems
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/snyk/parlay/ecosystems/repos"
 )
@@ -25,7 +26,11 @@ import (
 const repos_server = "https://repos.ecosyste.ms/api/v1"
 
 func GetRepoData(url string) (*repos.RepositoriesLookupResponse, error) {
-	client, err := repos.NewClientWithResponses(repos_server)
+	client, err := repos.NewClientWithResponses(repos_server,
+		repos.WithRequestEditorFn(func(ctx context.Context, req *http.Request) error {
+			req.Header.Set("User-Agent", getUserAgent())
+			return nil
+		}))
 	if err != nil {
 		return nil, err
 	}
