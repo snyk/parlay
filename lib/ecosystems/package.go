@@ -19,6 +19,7 @@ package ecosystems
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/package-url/packageurl-go"
 
@@ -27,8 +28,19 @@ import (
 
 const server = "https://packages.ecosyste.ms/api/v1"
 
+// Version will be set by the build process
+var Version = "dev"
+
+func getUserAgent() string {
+	return fmt.Sprintf("parlay (%s)", Version)
+}
+
 func GetPackageData(purl packageurl.PackageURL) (*packages.GetRegistryPackageResponse, error) {
-	client, err := packages.NewClientWithResponses(server)
+	client, err := packages.NewClientWithResponses(server,
+		packages.WithRequestEditorFn(func(ctx context.Context, req *http.Request) error {
+			req.Header.Set("User-Agent", getUserAgent())
+			return nil
+		}))
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +56,11 @@ func GetPackageData(purl packageurl.PackageURL) (*packages.GetRegistryPackageRes
 }
 
 func GetPackageVersionData(purl packageurl.PackageURL) (*packages.GetRegistryPackageVersionResponse, error) {
-	client, err := packages.NewClientWithResponses(server)
+	client, err := packages.NewClientWithResponses(server,
+		packages.WithRequestEditorFn(func(ctx context.Context, req *http.Request) error {
+			req.Header.Set("User-Agent", getUserAgent())
+			return nil
+		}))
 	if err != nil {
 		return nil, err
 	}

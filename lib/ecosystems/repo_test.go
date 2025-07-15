@@ -17,6 +17,8 @@
 package ecosystems
 
 import (
+	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/jarcoal/httpmock"
@@ -40,4 +42,24 @@ func TestGetRepoData(t *testing.T) {
 	httpmock.GetTotalCallCount()
 	calls := httpmock.GetCallCountInfo()
 	assert.Equal(t, 1, calls["GET https://repos.ecosyste.ms/api/v1/repositories/lookup"])
+}
+
+func TestGetRepoDataUserAgent(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedUserAgent string
+	httpmock.RegisterResponder(
+		"GET",
+		"https://repos.ecosyste.ms/api/v1/repositories/lookup",
+		func(req *http.Request) (*http.Response, error) {
+			capturedUserAgent = req.Header.Get("User-Agent")
+			return httpmock.NewBytesResponse(200, []byte{}), nil
+		},
+	)
+
+	_, err := GetRepoData("https://github.com/golang/go")
+	require.NoError(t, err)
+
+	assert.Equal(t, fmt.Sprintf("parlay (%s)", Version), capturedUserAgent)
 }
