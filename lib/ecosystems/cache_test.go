@@ -17,6 +17,7 @@
 package ecosystems
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/jarcoal/httpmock"
@@ -197,28 +198,27 @@ func TestInMemoryCache_ConcurrentAccess(t *testing.T) {
 	purl, err := packageurl.FromString("pkg:npm/test-package@1.0.0")
 	require.NoError(t, err)
 
-	done := make(chan bool)
-	numGoroutines := 10
+	var wg sync.WaitGroup
+	numGoroutines := 100
 
 	for i := 0; i < numGoroutines; i++ {
+		wg.Add(1)
 		go func() {
+			defer wg.Done()
 			_, err := cache.GetPackageData(purl)
 			assert.NoError(t, err)
-			done <- true
 		}()
 	}
 
-	for i := 0; i < numGoroutines; i++ {
-		<-done
-	}
+	wg.Wait()
 
 	// Should only have one entry despite concurrent access
 	pkgCacheSize, versionCacheSize := cache.GetCacheStats()
 	assert.Equal(t, 1, pkgCacheSize)
 	assert.Equal(t, 0, versionCacheSize)
 
-	// API should have been called at least once, but maybe more due to race conditions
-	// can't guarantee exactly 1 call due to concurrent access, but it should at least less than 10
+	// API should have been called at least once, but should be much less than 100 due to caching
+	// Can't guarantee exactly 1 call due to race conditions, but should be significantly less than numGoroutines
 	callCount := httpmock.GetTotalCallCount()
-	assert.True(t, callCount >= 1 && callCount <= numGoroutines)
+	assert.True(t, callCount >= 1 && callCount < numGoroutines)
 }
