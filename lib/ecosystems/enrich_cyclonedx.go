@@ -30,8 +30,10 @@ import (
 	"github.com/snyk/parlay/internal/utils"
 )
 
-type cdxPackageEnricher = func(*cdx.Component, *packages.Package)
-type cdxPackageVersionEnricher = func(*cdx.Component, *packages.VersionWithDependencies, *packages.Package)
+type (
+	cdxPackageEnricher        = func(*cdx.Component, *packages.Package)
+	cdxPackageVersionEnricher = func(*cdx.Component, *packages.VersionWithDependencies, *packages.Package)
+)
 
 var cdxPackageEnrichers = []cdxPackageEnricher{
 	enrichCDXDescription,
@@ -195,6 +197,7 @@ func enrichCDXTopics(comp *cdx.Component, data *packages.Package) {
 
 func enrichCDX(bom *cdx.BOM, logger *zerolog.Logger) {
 	wg := sizedwaitgroup.New(20)
+	cache := NewInMemoryCache()
 
 	comps := utils.DiscoverCDXComponents(bom)
 	logger.Debug().Msgf("Detected %d packages", len(comps))
@@ -213,7 +216,7 @@ func enrichCDX(bom *cdx.BOM, logger *zerolog.Logger) {
 				return
 			}
 
-			packageResp, err := GetPackageData(purl)
+			packageResp, err := cache.GetPackageData(purl)
 			if err != nil {
 				l.Debug().
 					Err(err).
@@ -232,7 +235,7 @@ func enrichCDX(bom *cdx.BOM, logger *zerolog.Logger) {
 				enrichFunc(comp, packageResp.JSON200)
 			}
 
-			packageVersionResp, err := GetPackageVersionData(purl)
+			packageVersionResp, err := cache.GetPackageVersionData(purl)
 			if err != nil {
 				l.Debug().
 					Err(err).
@@ -250,7 +253,6 @@ func enrichCDX(bom *cdx.BOM, logger *zerolog.Logger) {
 			for _, enrichFunc := range cdxPackageVersionEnrichers {
 				enrichFunc(comp, packageVersionResp.JSON200, packageResp.JSON200)
 			}
-
 		}(comps[i])
 	}
 
