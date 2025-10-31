@@ -109,6 +109,7 @@ func TestPurlToEcosystemsRegistry(t *testing.T) {
 		{"pkg:nuget/Microsoft.AspNetCore.Http.Abstractions@2.2.0", "nuget.org"},
 		{"pkg:hex/plug@1.11.0", "hex.pm"},
 		{"pkg:maven/com.google.guava/guava@28.2-jre", "repo1.maven.org"},
+		{"pkg:maven/org.opensaml/opensaml-saml-api@4.3.2?repository_url=https%3A%2F%2Fbuild.shibboleth.net%2Fnexus%2Fcontent%2Frepositories%2Freleases%2F", "build.shibboleth.net"},
 		{"pkg:pypi/Django@2.2.7", "pypi.org"},
 		{"pkg:composer/symfony/http-foundation@5.3.0", "packagist.org"},
 		{"pkg:gem/rspec-core@3.10.1", "rubygems.org"},

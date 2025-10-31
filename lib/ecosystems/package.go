@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/package-url/packageurl-go"
 
@@ -75,7 +76,23 @@ func GetPackageVersionData(purl packageurl.PackageURL) (*packages.GetRegistryPac
 	return resp, nil
 }
 
+func repositoryURLfromPurl(purl packageurl.PackageURL) *url.URL {
+	if len(purl.Qualifiers) > 0 {
+		qualifiersMap := purl.Qualifiers.Map()
+		if repoURL, ok := qualifiersMap["repository_url"]; ok && repoURL != "" {
+			parsedURL, err := url.Parse(repoURL)
+			if err == nil && parsedURL.Host != "" {
+				return parsedURL
+			}
+		}
+	}
+	return nil
+}
+
 func purlToEcosystemsRegistry(purl packageurl.PackageURL) string {
+	if repoURL := repositoryURLfromPurl(purl); repoURL != nil {
+		return repoURL.Host
+	}
 	return map[string]string{
 		packageurl.TypeApk:       "alpine-edge",
 		packageurl.TypeBower:     "bower.io",
