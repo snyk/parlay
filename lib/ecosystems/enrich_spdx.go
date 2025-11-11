@@ -35,7 +35,7 @@ func enrichSPDX(bom *spdx.Document, logger *zerolog.Logger) {
 
 	logger.Debug().Msgf("Detected %d packages", len(packages))
 
-	cache := NewInMemoryCache()
+	cache := GetGlobalCache()
 
 	for _, pkg := range packages {
 		purl, err := extractPurl(pkg)
