@@ -113,10 +113,22 @@ func TestPurlToEcosystemsRegistry(t *testing.T) {
 		{"pkg:composer/symfony/http-foundation@5.3.0", "packagist.org"},
 		{"pkg:gem/rspec-core@3.10.1", "rubygems.org"},
 		{"pkg:cargo/rand@0.8.4", "crates.io"},
-		{"pkg:cocoapods/Firebase@7.0.0", "cocoapod.org"},
+		{"pkg:cocoapods/Firebase@7.0.0", "cocoapods.org"},
 		{"pkg:apk/alpine/curl@7.79.1-r0", "alpine-edge"},
 		{"pkg:swift/github.com/yonaskolb/XcodeGen@2.34.0", "swiftpackageindex.com"},
 		{"pkg:docker/library%2Falpine", "hub.docker.com"},
+		{"pkg:bower/jquery@3.6.0", "bower.io"},
+		{"pkg:brew/wget@1.21.3", "formulae.brew.sh"},
+		{"pkg:carthage/Alamofire/Alamofire@5.6.4", "carthage"},
+		{"pkg:clojars/ring/ring-core@1.9.5", "clojars.org"},
+		{"pkg:conda/numpy@1.23.5", "anaconda.org"},
+		{"pkg:cpan/DBI@1.643", "metacpan.org"},
+		{"pkg:cran/ggplot2@3.4.0", "cran.r-project.org"},
+		{"pkg:elm/elm/core@1.0.5", "package.elm-lang.org"},
+		{"pkg:hackage/aeson@2.1.0.0", "hackage.haskell.org"},
+		{"pkg:julia/Example@0.5.3", "juliahub.com"},
+		{"pkg:pub/http@0.13.5", "pub.dev"},
+		{"pkg:puppet/puppetlabs/stdlib@8.5.0", "forge.puppet.com"},
 	}
 
 	for _, tc := range testCases {
