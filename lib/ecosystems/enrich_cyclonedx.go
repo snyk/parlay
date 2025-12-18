@@ -197,7 +197,7 @@ func enrichCDXTopics(comp *cdx.Component, data *packages.Package) {
 
 func enrichCDX(bom *cdx.BOM, logger *zerolog.Logger) {
 	wg := sizedwaitgroup.New(20)
-	cache := NewInMemoryCache()
+	cache := GetGlobalCache()
 
 	comps := utils.DiscoverCDXComponents(bom)
 	logger.Debug().Msgf("Detected %d packages", len(comps))

@@ -132,6 +132,7 @@ func TestEnrichSBOM_CycloneDX_NestedComps(t *testing.T) {
 }
 
 func TestEnrichSBOMWithoutLicense(t *testing.T) {
+	ResetGlobalCache()
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 

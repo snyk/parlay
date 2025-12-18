@@ -117,6 +117,7 @@ func TestEnrichSBOM_SPDX(t *testing.T) {
 }
 
 func TestEnrichSBOM_MissingVersionedLicense(t *testing.T) {
+	ResetGlobalCache()
 	packageVersionResponse := `{
 		"licenses": ""
 	}`

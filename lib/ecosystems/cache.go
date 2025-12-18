@@ -35,11 +35,32 @@ type InMemoryCache struct {
 	mu                  sync.RWMutex
 }
 
+var (
+	globalCache     *InMemoryCache
+	globalCacheOnce sync.Once
+)
+
 func NewInMemoryCache() *InMemoryCache {
 	return &InMemoryCache{
 		packageCache:        make(map[string]*packages.GetRegistryPackageResponse),
 		packageVersionCache: make(map[string]*packages.GetRegistryPackageVersionResponse),
 	}
+}
+
+// GetGlobalCache returns a singleton cache instance that persists for the lifetime of the process.
+// This cache is shared across all SBOM enrichments to avoid repeated API calls for the same packages,
+// including 404 responses for non-existent packages.
+func GetGlobalCache() *InMemoryCache {
+	globalCacheOnce.Do(func() {
+		globalCache = NewInMemoryCache()
+	})
+	return globalCache
+}
+
+// ResetGlobalCache resets the global cache. This is primarily for testing purposes.
+func ResetGlobalCache() {
+	globalCache = nil
+	globalCacheOnce = sync.Once{}
 }
 
 func (c *InMemoryCache) GetPackageData(purl packageurl.PackageURL) (*packages.GetRegistryPackageResponse, error) {

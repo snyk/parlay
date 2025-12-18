@@ -184,6 +184,75 @@ func TestInMemoryCache_APIError(t *testing.T) {
 	assert.Equal(t, 0, versionCacheSize)
 }
 
+func TestInMemoryCache_404NotFound(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	// HTTP client returns a successful response even with 404 status
+	// We want to cache 404 responses to avoid hammering the server
+	httpmock.RegisterResponder(
+		"GET",
+		`=~^https://packages.ecosyste.ms/api/v1/registries`,
+		httpmock.NewStringResponder(404, `{"error": "not found"}`),
+	)
+
+	cache := NewInMemoryCache()
+	purl, err := packageurl.FromString("pkg:golang/stdlib@1.0.0")
+	require.NoError(t, err)
+
+	// HTTP client doesn't treat 404 as error
+	resp1, err := cache.GetPackageData(purl)
+	assert.NoError(t, err)
+	assert.Equal(t, 404, resp1.StatusCode())
+
+	resp2, err := cache.GetPackageData(purl)
+	assert.NoError(t, err)
+	assert.Equal(t, 404, resp2.StatusCode())
+	assert.Equal(t, resp1, resp2)
+
+	// Second call should use cache - only 1 API call total
+	callCount := httpmock.GetTotalCallCount()
+	assert.Equal(t, 1, callCount, "Expected only 1 API call, but got %d. 404 responses should be cached.", callCount)
+
+	pkgCacheSize, versionCacheSize := cache.GetCacheStats()
+	assert.Equal(t, 1, pkgCacheSize)
+	assert.Equal(t, 0, versionCacheSize)
+}
+
+func TestInMemoryCache_404NotFoundVersionData(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	// Test that 404 responses are also cached for version data
+	httpmock.RegisterResponder(
+		"GET",
+		`=~^https://packages.ecosyste.ms/api/v1/registries`,
+		httpmock.NewStringResponder(404, `{"error": "not found"}`),
+	)
+
+	cache := NewInMemoryCache()
+	purl, err := packageurl.FromString("pkg:golang/stdlib@1.0.0")
+	require.NoError(t, err)
+
+	// HTTP client doesn't treat 404 as error
+	resp1, err := cache.GetPackageVersionData(purl)
+	assert.NoError(t, err)
+	assert.Equal(t, 404, resp1.StatusCode())
+
+	resp2, err := cache.GetPackageVersionData(purl)
+	assert.NoError(t, err)
+	assert.Equal(t, 404, resp2.StatusCode())
+	assert.Equal(t, resp1, resp2)
+
+	// Second call should use cache - only 1 API call total
+	callCount := httpmock.GetTotalCallCount()
+	assert.Equal(t, 1, callCount, "Expected only 1 API call, but got %d. 404 responses should be cached.", callCount)
+
+	pkgCacheSize, versionCacheSize := cache.GetCacheStats()
+	assert.Equal(t, 0, pkgCacheSize)
+	assert.Equal(t, 1, versionCacheSize)
+}
+
 func TestInMemoryCache_ConcurrentAccess(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
@@ -221,4 +290,47 @@ func TestInMemoryCache_ConcurrentAccess(t *testing.T) {
 	// Can't guarantee exactly 1 call due to race conditions, but should be significantly less than numGoroutines
 	callCount := httpmock.GetTotalCallCount()
 	assert.True(t, callCount >= 1 && callCount < numGoroutines)
+}
+
+func TestGetGlobalCache_Singleton(t *testing.T) {
+	// GetGlobalCache should return the same instance every time
+	cache1 := GetGlobalCache()
+	cache2 := GetGlobalCache()
+
+	assert.Equal(t, cache1, cache2, "GetGlobalCache should return the same instance")
+}
+
+func TestGetGlobalCache_SharesDataAcrossEnrichments(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	// Reset global cache for this test
+	globalCache = nil
+	globalCacheOnce = sync.Once{}
+
+	mockResponse := `{"error": "not found"}`
+	httpmock.RegisterResponder(
+		"GET",
+		`=~^https://packages.ecosyste.ms/api/v1/registries`,
+		httpmock.NewStringResponder(404, mockResponse),
+	)
+
+	cache := GetGlobalCache()
+	purl, err := packageurl.FromString("pkg:golang/stdlib@1.0.0")
+	require.NoError(t, err)
+
+	// First enrichment call
+	resp1, err := cache.GetPackageData(purl)
+	assert.NoError(t, err)
+	assert.Equal(t, 404, resp1.StatusCode())
+
+	// Simulate a second enrichment by getting the global cache again
+	cache2 := GetGlobalCache()
+	resp2, err := cache2.GetPackageData(purl)
+	assert.NoError(t, err)
+	assert.Equal(t, 404, resp2.StatusCode())
+
+	// Should have only made 1 API call total, because the cache is shared
+	callCount := httpmock.GetTotalCallCount()
+	assert.Equal(t, 1, callCount, "Expected only 1 API call across enrichments, but got %d. Global cache should be shared.", callCount)
 }
