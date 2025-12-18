@@ -1,0 +1,24 @@
+name: Test Parlay Action
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test-parlay-action:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Ensure enriched SBOM is missing MIT license
+        run: fgrep -v MIT testing/sbom.cyclonedx.json
+
+      - name: Use Parlay Action
+        uses: ./action
+        with:
+          input: testing/sbom.cyclonedx.json
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Ensure enriched SBOM has MIT license
+        run: fgrep MIT testing/sbom.cyclonedx.json
