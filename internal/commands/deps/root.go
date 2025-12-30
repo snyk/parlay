@@ -20,6 +20,7 @@ func NewDepsRootCommand(logger *zerolog.Logger) *cobra.Command {
 	}
 
 	cmd.AddCommand(NewRepoCommand(logger))
+	cmd.AddCommand(NewEnrichCommand(logger))
 
 	return &cmd
 }
