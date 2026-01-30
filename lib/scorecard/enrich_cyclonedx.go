@@ -18,7 +18,7 @@ package scorecard
 
 import (
 	"net/http"
-	"strings"
+	"regexp"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/package-url/packageurl-go"
@@ -27,6 +27,8 @@ import (
 	"github.com/snyk/parlay/internal/utils"
 	"github.com/snyk/parlay/lib/ecosystems"
 )
+
+var httpProtocolsRe = regexp.MustCompile(`^https?:\/\/`)
 
 func cdxEnrichExternalReference(comp *cdx.Component, url, comment string, refType cdx.ExternalReferenceType) {
 	ext := cdx.ExternalReference{
@@ -66,10 +68,13 @@ func enrichCDX(bom *cdx.BOM) {
 				return
 			}
 
-			scorecardUrl := strings.ReplaceAll(*resp.JSON200.RepositoryUrl, "https://", "https://api.securityscorecards.dev/projects/")
+			scorecardUrl := httpProtocolsRe.ReplaceAllString(*resp.JSON200.RepositoryUrl, "https://api.securityscorecards.dev/projects/")
 			response, err := http.Get(scorecardUrl)
-			response.Body.Close()
-			if err != nil || response.StatusCode != http.StatusOK {
+			if err != nil {
+				return
+			}
+			defer response.Body.Close()
+			if response.StatusCode != http.StatusOK {
 				return
 			}
 
