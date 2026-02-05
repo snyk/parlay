@@ -33,6 +33,12 @@ import (
 
 type cdxEnricher = func(*Config, *cdx.Component, *packageurl.PackageURL)
 
+type cdxPurlGroup struct {
+	purl       packageurl.PackageURL
+	components []*cdx.Component
+	bomRef     string
+}
+
 var cdxEnrichers = []cdxEnricher{
 	enrichCDXSnykAdvisorData,
 	enrichCDXSnykVulnerabilityDBData,
@@ -91,26 +97,46 @@ func enrichCycloneDX(cfg *Config, bom *cdx.BOM, logger *zerolog.Logger) *cdx.BOM
 	comps := utils.DiscoverCDXComponents(bom)
 	logger.Debug().Msgf("Detected %d packages", len(comps))
 
+	// Group components by PURL to deduplicate API calls
+	purlGroups := make(map[string]*cdxPurlGroup)
 	for i := range comps {
-		wg.Add()
-		go func(component *cdx.Component) {
-			defer wg.Done()
-			l := logger.With().Str("bom-ref", component.BOMRef).Logger()
+		component := comps[i]
+		l := logger.With().Str("bom-ref", component.BOMRef).Logger()
 
-			purl, err := packageurl.FromString(component.PackageURL)
-			if err != nil {
-				l.Debug().
-					Err(err).
-					Msg("Could not identify package")
-				return
-			}
-			for _, enrichFunc := range cdxEnrichers {
-				enrichFunc(cfg, component, &purl)
-			}
-			resp, err := GetPackageVulnerabilities(cfg, &purl, auth, orgID, logger)
+		purl, err := packageurl.FromString(component.PackageURL)
+		if err != nil {
+			l.Debug().
+				Err(err).
+				Msg("Could not identify package")
+			continue
+		}
+		for _, enrichFunc := range cdxEnrichers {
+			enrichFunc(cfg, component, &purl)
+		}
+
+		key := purl.ToString()
+		group, ok := purlGroups[key]
+		if !ok {
+			group = &cdxPurlGroup{purl: purl, bomRef: component.BOMRef}
+			purlGroups[key] = group
+		}
+		group.components = append(group.components, component)
+	}
+
+	// Fetch vulnerabilities for each unique PURL
+	for _, group := range purlGroups {
+		group := group
+		wg.Add()
+		go func() {
+			defer wg.Done()
+			l := logger.With().
+				Str("bom-ref", group.bomRef).
+				Str("purl", group.purl.ToString()).
+				Logger()
+
+			resp, err := GetPackageVulnerabilities(cfg, &group.purl, auth, orgID, logger)
 			if err != nil {
 				l.Err(err).
-					Str("purl", purl.ToString()).
 					Msg("Failed to fetch vulnerabilities for package")
 				return
 			}
@@ -126,10 +152,12 @@ func enrichCycloneDX(cfg *Config, bom *cdx.BOM, logger *zerolog.Logger) *cdx.BOM
 
 			if packageDoc.Data != nil {
 				mutex.Lock()
-				vulnerabilities[*component] = *packageDoc.Data
+				for _, component := range group.components {
+					vulnerabilities[*component] = *packageDoc.Data
+				}
 				mutex.Unlock()
 			}
-		}(comps[i])
+		}()
 	}
 	wg.Wait()
 

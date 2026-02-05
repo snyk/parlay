@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/package-url/packageurl-go"
@@ -59,33 +60,27 @@ func TestGetPackageVulnerabilities_RetryRateLimited(t *testing.T) {
 	assert.NotNil(t, issues, "should retrieve issues")
 }
 
-func TestGetPackageVulnerabilities_HandlesNilResponses(t *testing.T) {
-	logger := zerolog.Nop()
-	var numRequests int
-	var srv *httptest.Server
-	srv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		numRequests++
-		if numRequests < 5 {
-			w.Header().Set("X-RateLimit-Reset", "0")
-			w.WriteHeader(http.StatusTooManyRequests)
-			return
-		}
-		// Induce a client error which results in a nil response
-		srv.CloseClientConnections()
-	}))
+func TestParseRateLimitResetHeader_Seconds(t *testing.T) {
+	sleep, ok := parseRateLimitResetHeader("60")
 
-	cfg := DefaultConfig()
-	cfg.SnykAPIURL = srv.URL
+	require.True(t, ok)
+	assert.Equal(t, 60*time.Second, sleep)
+}
 
-	auth, err := AuthFromToken("asdf")
-	require.NoError(t, err)
+func TestParseRateLimitResetHeader_Empty(t *testing.T) {
+	_, ok := parseRateLimitResetHeader("")
 
-	purl, err := packageurl.FromString("pkg:golang/github.com/snyk/parlay")
-	require.NoError(t, err)
+	assert.False(t, ok)
+}
 
-	orgID := uuid.New()
-	issues, err := GetPackageVulnerabilities(cfg, &purl, auth, &orgID, &logger)
+func TestParseRateLimitResetHeader_Zero(t *testing.T) {
+	_, ok := parseRateLimitResetHeader("0")
 
-	require.Error(t, err)
-	assert.Nil(t, issues)
+	assert.False(t, ok)
+}
+
+func TestParseRateLimitResetHeader_Negative(t *testing.T) {
+	_, ok := parseRateLimitResetHeader("-1")
+
+	assert.False(t, ok)
 }

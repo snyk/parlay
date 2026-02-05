@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/deepmap/oapi-codegen/pkg/securityprovider"
@@ -118,11 +117,20 @@ func getRetryClient(logger *zerolog.Logger) *http.Client {
 			logger.Warn().Msgf("Unexpected status code (%s) for %s %s", r.Status, r.Request.Method, r.Request.URL.String())
 		}
 	}
+	baseTransport := rc.HTTPClient.Transport
+	if baseTransport == nil {
+		baseTransport = http.DefaultTransport
+	}
+	rc.HTTPClient.Transport = &rateLimitTransport{
+		base:    baseTransport,
+		limiter: snykRateLimiter,
+	}
 	rc.Backoff = func(min, max time.Duration, attemptNum int, resp *http.Response) time.Duration {
-		if resp != nil {
-			if sleep, ok := parseRateLimitHeader(resp.Header.Get("X-RateLimit-Reset")); ok {
+		if resp != nil && resp.StatusCode == http.StatusTooManyRequests {
+			if sleep, ok := parseRateLimitResetHeader(resp.Header.Get("X-RateLimit-Reset")); ok {
+				snykRateLimiter.backoff(sleep)
 				logger.Warn().
-					Dur("Retry-After", sleep).
+					Dur("X-RateLimit-Reset", sleep).
 					Msg("Getting rate-limited, waiting...")
 				return sleep
 			}
@@ -131,16 +139,4 @@ func getRetryClient(logger *zerolog.Logger) *http.Client {
 	}
 
 	return rc.StandardClient()
-}
-
-func parseRateLimitHeader(v string) (time.Duration, bool) {
-	if v == "" {
-		return 0, false
-	}
-
-	if sec, err := strconv.ParseInt(v, 10, 64); err == nil {
-		return time.Duration(sec) * time.Second, true
-	}
-
-	return 0, false
 }
