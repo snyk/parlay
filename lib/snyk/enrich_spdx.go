@@ -34,6 +34,12 @@ import (
 
 type spdxEnricher = func(*Config, *spdx_2_3.Package, *packageurl.PackageURL)
 
+type spdxPurlGroup struct {
+	purl     packageurl.PackageURL
+	packages []*spdx_2_3.Package
+	spdxID   string
+}
+
 var spdxEnrichers = []spdxEnricher{
 	enrichSPDXSnykAdvisorData,
 	enrichSPDXSnykVulnerabilityDBData,
@@ -97,25 +103,42 @@ func enrichSPDX(cfg *Config, bom *spdx.Document, logger *zerolog.Logger) *spdx.D
 	packages := bom.Packages
 	logger.Debug().Msgf("Detected %d packages", len(packages))
 
-	for i, pkg := range packages {
+	// Group packages by PURL to deduplicate API calls
+	purlGroups := make(map[string]*spdxPurlGroup)
+	for _, pkg := range packages {
+		l := logger.With().Str("SPDXID", string(pkg.PackageSPDXIdentifier)).Logger()
+
+		purl, err := utils.GetPurlFromSPDXPackage(pkg)
+		if err != nil || purl == nil {
+			l.Debug().Msg("Could not identify package")
+			continue
+		}
+		for _, enrichFn := range spdxEnrichers {
+			enrichFn(cfg, pkg, purl)
+		}
+
+		key := purl.ToString()
+		group, ok := purlGroups[key]
+		if !ok {
+			group = &spdxPurlGroup{purl: *purl, spdxID: string(pkg.PackageSPDXIdentifier)}
+			purlGroups[key] = group
+		}
+		group.packages = append(group.packages, pkg)
+	}
+
+	// Fetch vulnerabilities for each unique PURL
+	for _, group := range purlGroups {
 		wg.Add()
-
-		go func(pkg *spdx_2_3.Package, i int) {
+		go func() {
 			defer wg.Done()
-			l := logger.With().Str("SPDXID", string(pkg.PackageSPDXIdentifier)).Logger()
+			l := logger.With().
+				Str("SPDXID", group.spdxID).
+				Str("purl", group.purl.ToString()).
+				Logger()
 
-			purl, err := utils.GetPurlFromSPDXPackage(pkg)
-			if err != nil || purl == nil {
-				l.Debug().Msg("Could not identify package")
-				return
-			}
-			for _, enrichFn := range spdxEnrichers {
-				enrichFn(cfg, pkg, purl)
-			}
-			resp, err := GetPackageVulnerabilities(cfg, purl, auth, orgID, logger)
+			resp, err := GetPackageVulnerabilities(cfg, &group.purl, auth, orgID, logger)
 			if err != nil {
 				l.Err(err).
-					Str("purl", purl.ToString()).
 					Msg("Failed to fetch vulnerabilities for package")
 				return
 			}
@@ -131,10 +154,12 @@ func enrichSPDX(cfg *Config, bom *spdx.Document, logger *zerolog.Logger) *spdx.D
 
 			if packageDoc.Data != nil {
 				mutex.Lock()
-				vulnerabilities[pkg] = *packageDoc.Data
+				for _, pkg := range group.packages {
+					vulnerabilities[pkg] = *packageDoc.Data
+				}
 				mutex.Unlock()
 			}
-		}(pkg, i)
+		}()
 	}
 
 	wg.Wait()
