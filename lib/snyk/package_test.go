@@ -17,9 +17,11 @@
 package snyk
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/package-url/packageurl-go"
@@ -29,6 +31,8 @@ import (
 )
 
 func TestGetPackageVulnerabilities_RetryRateLimited(t *testing.T) {
+	retryMax = 2
+	t.Cleanup(func() { retryMax = 20 })
 	logger := zerolog.Nop()
 	var numRequests int
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -60,16 +64,11 @@ func TestGetPackageVulnerabilities_RetryRateLimited(t *testing.T) {
 }
 
 func TestGetPackageVulnerabilities_HandlesNilResponses(t *testing.T) {
+	retryMax = 2
+	t.Cleanup(func() { retryMax = 20 })
 	logger := zerolog.Nop()
-	var numRequests int
 	var srv *httptest.Server
 	srv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		numRequests++
-		if numRequests < 5 {
-			w.Header().Set("X-RateLimit-Reset", "0")
-			w.WriteHeader(http.StatusTooManyRequests)
-			return
-		}
 		// Induce a client error which results in a nil response
 		srv.CloseClientConnections()
 	}))
@@ -88,4 +87,83 @@ func TestGetPackageVulnerabilities_HandlesNilResponses(t *testing.T) {
 
 	require.Error(t, err)
 	assert.Nil(t, issues)
+}
+
+func TestRateLimiterWait_BlocksDuringBackoff(t *testing.T) {
+	rl := newRateLimiter()
+	rl.backoff(100 * time.Millisecond)
+
+	start := time.Now()
+	err := rl.wait(context.Background())
+	elapsed := time.Since(start)
+
+	require.NoError(t, err)
+	assert.GreaterOrEqual(t, elapsed, 80*time.Millisecond, "wait should block for ~backoff duration")
+}
+
+func TestRateLimiterWait_ClearsBackoffAfterExpiry(t *testing.T) {
+	rl := newRateLimiter()
+	rl.backoff(10 * time.Millisecond)
+	time.Sleep(20 * time.Millisecond)
+
+	err := rl.wait(context.Background())
+	require.NoError(t, err)
+
+	rl.mu.Lock()
+	assert.True(t, rl.backoffUntil.IsZero(), "backoffUntil should be cleared after expiry")
+	rl.mu.Unlock()
+}
+
+func TestRateLimiterWait_RespectsContextCancellation(t *testing.T) {
+	rl := newRateLimiter()
+	rl.backoff(5 * time.Second)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	err := rl.wait(ctx)
+	assert.ErrorIs(t, err, context.Canceled)
+}
+
+func TestParseRateLimitResetHeader(t *testing.T) {
+	tests := []struct {
+		name         string
+		input        string
+		wantOk       bool
+		wantDuration time.Duration
+	}{
+		{
+			name:         "seconds",
+			input:        "60",
+			wantOk:       true,
+			wantDuration: 60 * time.Second,
+		},
+		{
+			name:         "empty",
+			input:        "",
+			wantOk:       false,
+			wantDuration: 0,
+		},
+		{
+			name:         "zero",
+			input:        "0",
+			wantOk:       false,
+			wantDuration: 0,
+		},
+		{
+			name:         "negative",
+			input:        "-1",
+			wantOk:       false,
+			wantDuration: 0,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			sleep, ok := parseRateLimitResetHeader(tc.input)
+
+			assert.Equal(t, tc.wantOk, ok)
+			assert.Equal(t, tc.wantDuration, sleep)
+		})
+	}
 }
