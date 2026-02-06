@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
@@ -54,6 +55,61 @@ func TestEnrichSBOM_CycloneDXWithVulnerabilities(t *testing.T) {
 	assert.Equal(t, (*vuln.Ratings)[0].Method, cdx.ScoringMethodCVSSv31)
 	assert.Equal(t, (*vuln.Ratings)[1].Source, &cdx.Source{Name: "NVD"})
 	assert.Equal(t, (*vuln.Ratings)[1].Method, cdx.ScoringMethodCVSSv3)
+}
+
+func TestEnrichSBOM_CycloneDXDeduplicatesRequests(t *testing.T) {
+	var numRequests int32
+	mux := http.NewServeMux()
+	mux.HandleFunc(
+		"GET /rest/self",
+		func(w http.ResponseWriter, r *http.Request) {
+			respond(w, selfBody)
+		})
+	mux.HandleFunc(
+		"GET /rest/orgs/{org_id}/packages/{purl}/issues",
+		func(w http.ResponseWriter, r *http.Request) {
+			atomic.AddInt32(&numRequests, 1)
+			respond(w, numpyIssues)
+		})
+
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+
+	cfg := DefaultConfig()
+	cfg.APIToken = "asdf"
+	cfg.SnykAPIURL = srv.URL
+
+	logger := zerolog.Nop()
+	svc := NewService(cfg, &logger)
+
+	bom := &cdx.BOM{
+		Components: &[]cdx.Component{
+			{
+				BOMRef:     "pkg:pypi/numpy@1.16.0",
+				Name:       "numpy",
+				Version:    "1.16.0",
+				PackageURL: "pkg:pypi/numpy@1.16.0",
+			},
+			{
+				BOMRef:     "pkg:pypi/numpy@1.16.0#dup",
+				Name:       "numpy",
+				Version:    "1.16.0",
+				PackageURL: "pkg:pypi/numpy@1.16.0",
+			},
+		},
+	}
+	doc := &sbom.SBOMDocument{BOM: bom}
+
+	svc.EnrichSBOM(doc)
+
+	assert.Equal(t, int32(1), atomic.LoadInt32(&numRequests))
+	require.NotNil(t, bom.Vulnerabilities)
+	vulnByRef := map[string]int{}
+	for _, vuln := range *bom.Vulnerabilities {
+		vulnByRef[vuln.BOMRef]++
+	}
+	assert.Greater(t, vulnByRef["pkg:pypi/numpy@1.16.0"], 0)
+	assert.Greater(t, vulnByRef["pkg:pypi/numpy@1.16.0#dup"], 0)
 }
 
 func TestEnrichSBOM_CycloneDXExternalRefs(t *testing.T) {
@@ -197,6 +253,79 @@ func TestEnrichSBOM_SPDXWithVulnerabilities(t *testing.T) {
 	assert.Equal(t, "advisory", vulnRef.RefType)
 	assert.Equal(t, "https://security.snyk.io/vuln/SNYK-PYTHON-NUMPY-73513", vulnRef.Locator)
 	assert.Equal(t, "Arbitrary Code Execution", vulnRef.ExternalRefComment)
+}
+
+func TestEnrichSBOM_SPDXDeduplicatesRequests(t *testing.T) {
+	var numRequests int32
+	mux := http.NewServeMux()
+	mux.HandleFunc(
+		"GET /rest/self",
+		func(w http.ResponseWriter, r *http.Request) {
+			respond(w, selfBody)
+		})
+	mux.HandleFunc(
+		"GET /rest/orgs/{org_id}/packages/{purl}/issues",
+		func(w http.ResponseWriter, r *http.Request) {
+			atomic.AddInt32(&numRequests, 1)
+			respond(w, numpyIssues)
+		})
+
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+
+	cfg := DefaultConfig()
+	cfg.APIToken = "asdf"
+	cfg.SnykAPIURL = srv.URL
+
+	logger := zerolog.Nop()
+	svc := NewService(cfg, &logger)
+
+	bom := &spdx_2_3.Document{
+		Packages: []*spdx_2_3.Package{
+			{
+				PackageSPDXIdentifier: "pkg:pypi/numpy@1.16.0",
+				PackageName:           "numpy",
+				PackageVersion:        "1.16.0",
+				PackageExternalReferences: []*spdx_2_3.PackageExternalReference{
+					{
+						Category: spdx.CategoryPackageManager,
+						RefType:  "purl",
+						Locator:  "pkg:pypi/numpy@1.16.0",
+					},
+				},
+			},
+			{
+				PackageSPDXIdentifier: "pkg:pypi/numpy@1.16.0-dup",
+				PackageName:           "numpy",
+				PackageVersion:        "1.16.0",
+				PackageExternalReferences: []*spdx_2_3.PackageExternalReference{
+					{
+						Category: spdx.CategoryPackageManager,
+						RefType:  "purl",
+						Locator:  "pkg:pypi/numpy@1.16.0",
+					},
+				},
+			},
+		},
+	}
+	doc := &sbom.SBOMDocument{BOM: bom}
+
+	svc.EnrichSBOM(doc)
+
+	assert.Equal(t, int32(1), atomic.LoadInt32(&numRequests))
+	expectedLocator := "https://security.snyk.io/vuln/SNYK-PYTHON-NUMPY-73513"
+	for _, pkg := range bom.Packages {
+		hasVulnRef := false
+		for _, ref := range pkg.PackageExternalReferences {
+			if ref.Category == spdx.CategorySecurity &&
+				ref.RefType == "advisory" &&
+				ref.Locator == expectedLocator {
+				hasVulnRef = true
+				break
+			}
+		}
+		assert.Truef(t, hasVulnRef, "expected vulnerability reference for %s", pkg.PackageSPDXIdentifier)
+	}
 }
 
 func TestEnrichSBOM_SPDXExternalRefs(t *testing.T) {
