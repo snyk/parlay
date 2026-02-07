@@ -10,6 +10,7 @@
 * [ecosyste.ms](https://ecosyste.ms)
 * [Snyk](https://snyk.io)
 * [OpenSSF Scorecard](https://securityscorecards.dev/)
+* [deps.dev](https://deps.dev)
 
 By enrich, we mean add additional information. You put in an SBOM, and you get a richer SBOM back. In many cases SBOMs have a minimum of information, often just the name and version of a given package. By enriching that with additional information we can make better decisions about the packages we're using.
 
@@ -191,7 +192,7 @@ Snyk will add a new [vulnerability](https://cyclonedx.org/docs/1.4/json/#vulnera
   }
 ```
 
-For SPDX, vulnerability informatio is added as additional `externalRefs`:
+For SPDX, vulnerability information is added as additional `externalRefs`:
 
 ```json
 {
@@ -246,6 +247,74 @@ This will currently add an external reference to the [Scorecard API](https://api
 
 We're currently looking at the best way of encoding some of the scorecard data in the SBOM itself as well.
 
+## Enriching with deps.dev
+
+The [deps.dev](https://deps.dev) service provides repository insights and security data for open source packages. `parlay` can enrich SBOMs with repository metadata from deps.dev.
+
+```
+parlay deps enrich testing/sbom-with-vcs.cyclonedx.json
+```
+
+This will add repository information as properties for components that have VCS external references:
+
+```json
+{
+  "bom-ref": "68-subtext@6.0.12",
+  "type": "library",
+  "name": "subtext",
+  "version": "6.0.12",
+  "purl": "pkg:npm/subtext@6.0.12",
+  "externalReferences": [
+    {
+      "url": "https://github.com/hapijs/subtext",
+      "type": "vcs"
+    }
+  ],
+  "properties": [
+    {
+      "name": "deps:open_issues_count",
+      "value": "7"
+    },
+    {
+      "name": "deps:stars_count",
+      "value": "24"
+    },
+    {
+      "name": "deps:forks_count",
+      "value": "25"
+    },
+    {
+      "name": "deps:license",
+      "value": "non-standard"
+    },
+    {
+      "name": "deps:description",
+      "value": "HTTP payload parser"
+    },
+    {
+      "name": "deps:scorecard",
+      "value": "4.30"
+    }
+  ]
+}
+```
+
+For SPDX format, the same information is added as external references:
+
+```json
+{
+  "referenceCategory": "OTHER",
+  "referenceType": "deps:stars_count", 
+  "referenceLocator": "24",
+  "comment": "deps.dev deps:stars_count"
+}
+```
+
+You can also return raw JSON information about a specific repository from deps.dev:
+
+```
+parlay deps repo github.com/hapijs/subtext
+```
 
 ## What about enriching with other data sources?
 
@@ -256,10 +325,10 @@ There are lots of other sources of package data, and it would be great to add su
 
 `parlay` is a fan of stdin and stdout. You can pipe SBOMs from other tools into `parlay`, and pipe between the separate `enrich` commands too.
 
-Maybe you want to enrich an SBOM with both ecosyste.ms and Snyk data:
+Maybe you want to enrich an SBOM with ecosyste.ms, Snyk, and deps.dev data:
 
 ```
-cat testing/sbom.cyclonedx.json | ./parlay e enrich - | ./parlay s enrich - | jq
+cat testing/sbom.cyclonedx.json | ./parlay e enrich - | ./parlay s enrich - | ./parlay d enrich - | jq
 ```
 
 Maybe you want to take the output from Syft and add vulnerabilitity data?
@@ -268,7 +337,7 @@ Maybe you want to take the output from Syft and add vulnerabilitity data?
 syft -o cyclonedx-json nginx | parlay s enrich - | jq
 ```
 
-Maybe you want to geneate an SBOM with `cdxgen`, enrich that with extra information, and test that with `bomber`:
+Maybe you want to generate an SBOM with `cdxgen`, enrich that with extra information, and test that with `bomber`:
 
 ```
 cdxgen -o | parlay e enrich -  | bomber scan --provider snyk -
@@ -348,3 +417,7 @@ The various services used to enrich the SBOM data have data for a subset of purl
 * `pypi`
 
 Note that Scorecard data is available only for a subset of projects from supported Git repositories. See the [Scorecard project](https://github.com/ossf/scorecard) for more information.
+
+### deps.dev
+
+deps.dev enrichment works with any component that has VCS external references pointing to supported Git repositories (GitHub, GitLab, etc.).
