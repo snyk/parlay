@@ -90,6 +90,7 @@ func GetPackageVulnerabilities(cfg *Config, purl *packageurl.PackageURL, auth *s
 	client, err := issues.NewClientWithResponses(
 		cfg.SnykAPIURL+"/rest",
 		issues.WithRequestEditorFn(auth.Intercept),
+		issues.WithRequestEditorFn(addParlayUserAgent),
 		issues.WithHTTPClient(getRetryClient(logger)))
 	if err != nil {
 		return nil, err

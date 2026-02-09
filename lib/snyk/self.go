@@ -33,7 +33,8 @@ const experimentalVersion = "2023-04-28~experimental"
 func SnykOrgID(cfg *Config, auth *securityprovider.SecurityProviderApiKey) (*uuid.UUID, error) {
 	experimental, err := users.NewClientWithResponses(
 		cfg.SnykAPIURL+"/rest",
-		users.WithRequestEditorFn(auth.Intercept))
+		users.WithRequestEditorFn(auth.Intercept),
+		users.WithRequestEditorFn(addParlayUserAgent))
 	if err != nil {
 		return nil, err
 	}
