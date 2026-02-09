@@ -24,6 +24,7 @@ builds:
   - "-w"
   - "-X github.com/snyk/parlay/internal/commands.version={{.Version}}"
   - "-X github.com/snyk/parlay/lib/ecosystems.Version={{.Version}}"
+  - "-X github.com/snyk/parlay/lib/snyk.Version={{.Version}}"
 
 archives:
 - format: tar.gz

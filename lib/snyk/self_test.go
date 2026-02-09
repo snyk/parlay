@@ -65,3 +65,19 @@ func TestSnykOrgID_Unauthorized(t *testing.T) {
 	assert.ErrorContains(t, err, "Failed to get user info (401 Unauthorized)")
 	assert.Nil(t, actualOrg)
 }
+
+func TestSnykOrgID_SetsUserAgent(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Contains(t, r.Header.Get("User-Agent"), "parlay")
+		respond(w, selfBody)
+	}))
+	defer srv.Close()
+
+	cfg := DefaultConfig()
+	cfg.SnykAPIURL = srv.URL
+	auth, err := securityprovider.NewSecurityProviderApiKey("header", "authorization", "asdf")
+	require.NoError(t, err)
+
+	_, err = SnykOrgID(cfg, auth)
+	require.NoError(t, err)
+}

@@ -16,6 +16,15 @@
 
 package snyk
 
+import (
+	"context"
+	"fmt"
+	"net/http"
+)
+
+// Version will be set by the build process
+var Version = "dev"
+
 type Config struct {
 	SnykAPIURL string
 	APIToken   string
@@ -25,4 +34,13 @@ func DefaultConfig() *Config {
 	return &Config{
 		SnykAPIURL: "https://api.snyk.io",
 	}
+}
+
+func getUserAgent() string {
+	return fmt.Sprintf("parlay (%s)", Version)
+}
+
+func addParlayUserAgent(ctx context.Context, req *http.Request) error {
+	req.Header.Set("User-Agent", getUserAgent())
+	return nil
 }

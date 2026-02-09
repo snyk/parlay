@@ -89,3 +89,24 @@ func TestGetPackageVulnerabilities_HandlesNilResponses(t *testing.T) {
 	require.Error(t, err)
 	assert.Nil(t, issues)
 }
+
+func TestGetPackageVulnerabilities_SetsUserAgent(t *testing.T) {
+	logger := zerolog.Nop()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Contains(t, r.Header.Get("User-Agent"), "parlay")
+	}))
+	defer srv.Close()
+
+	cfg := DefaultConfig()
+	cfg.SnykAPIURL = srv.URL
+
+	auth, err := AuthFromToken("asdf")
+	require.NoError(t, err)
+
+	purl, err := packageurl.FromString("pkg:golang/github.com/snyk/parlay")
+	require.NoError(t, err)
+
+	orgID := uuid.New()
+	_, err = GetPackageVulnerabilities(cfg, &purl, auth, &orgID, &logger)
+	require.NoError(t, err)
+}
