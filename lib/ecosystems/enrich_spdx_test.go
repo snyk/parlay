@@ -19,6 +19,7 @@ package ecosystems
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -211,6 +212,137 @@ func TestEnrichSBOM_SPDX_NoSupplierName(t *testing.T) {
 	logger := zerolog.Nop()
 
 	EnrichSBOM(doc, &logger)
+
+	buf := bytes.NewBuffer(nil)
+	require.NoError(t, doc.Encode(buf))
+}
+
+func TestEnrichSBOM_SPDX_MultiplePackages(t *testing.T) {
+	ResetGlobalCache()
+	packageVersionResponse := `{
+		"licenses": "MIT"
+	}`
+	packageResponse := `{
+		"description": "a package",
+		"normalized_licenses": ["MIT"],
+		"homepage": "https://github.com/example/pkg",
+		"repo_metadata": {
+			"owner_record": {
+				"name": "Example Org"
+			}
+		}
+	}`
+	setupHttpmock(t, &packageVersionResponse, &packageResponse)
+	defer httpmock.DeactivateAndReset()
+
+	doc, err := sbom.DecodeSBOMDocument([]byte(`{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT"}`))
+	require.NoError(t, err)
+
+	bom, ok := doc.BOM.(*v2_3.Document)
+	require.True(t, ok)
+
+	// Create 50 packages to exercise concurrent processing
+	bom.Packages = make([]*v2_3.Package, 50)
+	for i := range bom.Packages {
+		bom.Packages[i] = &v2_3.Package{
+			PackageSPDXIdentifier: common.ElementID(fmt.Sprintf("SPDXRef-pkg%d", i)),
+			PackageName:           fmt.Sprintf("github.com/example/pkg%d", i),
+			PackageVersion:        "v1.0.0",
+			PackageExternalReferences: []*v2_3.PackageExternalReference{
+				{
+					Category: common.CategoryPackageManager,
+					RefType:  "purl",
+					Locator:  fmt.Sprintf("pkg:golang/github.com/example/pkg%d@v1.0.0", i),
+				},
+			},
+		}
+	}
+	logger := zerolog.Nop()
+
+	EnrichSBOM(doc, &logger)
+
+	// Verify all packages were enriched
+	for i, pkg := range bom.Packages {
+		assert.Equal(t, "a package", pkg.PackageDescription, "package %d description", i)
+		assert.Equal(t, "https://github.com/example/pkg", pkg.PackageHomePage, "package %d homepage", i)
+		assert.Equal(t, "MIT", pkg.PackageLicenseConcluded, "package %d license", i)
+		assert.Equal(t, "Organization", pkg.PackageSupplier.SupplierType, "package %d supplier type", i)
+		assert.Equal(t, "Example Org", pkg.PackageSupplier.Supplier, "package %d supplier", i)
+	}
+
+	buf := bytes.NewBuffer(nil)
+	require.NoError(t, doc.Encode(buf))
+}
+
+func TestEnrichSBOM_SPDX_PackagesWithoutPurl(t *testing.T) {
+	ResetGlobalCache()
+	packageVersionResponse := `{
+		"licenses": "Apache-2.0"
+	}`
+	packageResponse := `{
+		"description": "enriched",
+		"homepage": "https://github.com/example/valid",
+		"repo_metadata": {}
+	}`
+	setupHttpmock(t, &packageVersionResponse, &packageResponse)
+	defer httpmock.DeactivateAndReset()
+
+	doc, err := sbom.DecodeSBOMDocument([]byte(`{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT"}`))
+	require.NoError(t, err)
+
+	bom, ok := doc.BOM.(*v2_3.Document)
+	require.True(t, ok)
+
+	bom.Packages = []*v2_3.Package{
+		{
+			PackageSPDXIdentifier: "SPDXRef-valid",
+			PackageName:           "github.com/example/valid",
+			PackageVersion:        "v1.0.0",
+			PackageExternalReferences: []*v2_3.PackageExternalReference{
+				{
+					Category: common.CategoryPackageManager,
+					RefType:  "purl",
+					Locator:  "pkg:golang/github.com/example/valid@v1.0.0",
+				},
+			},
+		},
+		{
+			// Package without any external references (no purl)
+			PackageSPDXIdentifier: "SPDXRef-nopurl",
+			PackageName:           "internal-package",
+			PackageVersion:        "0.0.1",
+		},
+		{
+			PackageSPDXIdentifier: "SPDXRef-valid2",
+			PackageName:           "github.com/example/valid2",
+			PackageVersion:        "v2.0.0",
+			PackageExternalReferences: []*v2_3.PackageExternalReference{
+				{
+					Category: common.CategoryPackageManager,
+					RefType:  "purl",
+					Locator:  "pkg:golang/github.com/example/valid2@v2.0.0",
+				},
+			},
+		},
+	}
+	logger := zerolog.Nop()
+
+	EnrichSBOM(doc, &logger)
+
+	// Valid packages should be enriched
+	assert.Equal(t, "enriched", bom.Packages[0].PackageDescription)
+	assert.Equal(t, "https://github.com/example/valid", bom.Packages[0].PackageHomePage)
+	assert.Equal(t, "Apache-2.0", bom.Packages[0].PackageLicenseConcluded)
+
+	// Package without purl should be untouched
+	assert.Equal(t, "", bom.Packages[1].PackageDescription)
+	assert.Equal(t, "", bom.Packages[1].PackageHomePage)
+	assert.Equal(t, "", bom.Packages[1].PackageLicenseConcluded)
+
+	// Second valid package should also be enriched
+	assert.Equal(t, "enriched", bom.Packages[2].PackageDescription)
+	assert.Equal(t, "https://github.com/example/valid", bom.Packages[2].PackageHomePage)
+	assert.Equal(t, "Apache-2.0", bom.Packages[2].PackageLicenseConcluded)
 
 	buf := bytes.NewBuffer(nil)
 	require.NoError(t, doc.Encode(buf))
