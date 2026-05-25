@@ -68,7 +68,27 @@ func enrichSPDX(bom *spdx.Document, logger *zerolog.Logger) {
 		}
 
 		enrichSPDXLicense(pkg, pkgVersionData, pkgData)
+		enrichSPDXHash(pkg, pkgVersionData, logger)
 	}
+}
+
+// enrichSPDXHash appends a Checksum derived from ecosyste.ms' per-version
+// integrity field. Existing checksums are preserved.
+func enrichSPDXHash(pkg *v2_3.Package, pkgVersionData *packages.VersionWithDependencies, logger *zerolog.Logger) {
+	if pkgVersionData.Integrity == nil {
+		return
+	}
+	_, alg, value, ok := parseIntegrity(*pkgVersionData.Integrity)
+	if !ok {
+		logger.Debug().
+			Str("integrity", *pkgVersionData.Integrity).
+			Msg("Skipping checksum enrichment: unrecognised integrity format")
+		return
+	}
+	pkg.PackageChecksums = append(pkg.PackageChecksums, common.Checksum{
+		Algorithm: alg,
+		Value:     value,
+	})
 }
 
 func extractPurl(pkg *v2_3.Package) (*packageurl.PackageURL, error) {
