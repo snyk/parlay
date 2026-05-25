@@ -286,6 +286,45 @@ func TestEnrichSBOM_CycloneDX_PopulatesHashFromIntegrity(t *testing.T) {
 	}, *hashes)
 }
 
+func TestEnrichSBOM_CycloneDX_MalformedIntegrityLeavesHashesUntouched(t *testing.T) {
+	// End-to-end guard: if ecosyste.ms ever serves an integrity value the
+	// parser can't decode, the pipeline must leave the component's Hashes
+	// alone rather than emitting a bogus entry.
+	ResetGlobalCache()
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder("GET", `=~^https://packages.ecosyste.ms/api/v1/registries/.*/packages/.*/versions`,
+		func(r *http.Request) (*http.Response, error) {
+			return httpmock.NewJsonResponse(200, map[string]any{
+				"integrity": "sha999-not-a-real-hash",
+			})
+		},
+	)
+	httpmock.RegisterResponder("GET", `=~^https://packages.ecosyste.ms/api/v1/registries`,
+		func(req *http.Request) (*http.Response, error) {
+			return httpmock.NewJsonResponse(200, map[string]any{})
+		})
+
+	bom := &cdx.BOM{
+		Components: &[]cdx.Component{
+			{
+				BOMRef:     "pkg:pypi/fastapi@0.115.0",
+				Type:       cdx.ComponentTypeLibrary,
+				Name:       "fastapi",
+				Version:    "0.115.0",
+				PackageURL: "pkg:pypi/fastapi@0.115.0",
+			},
+		},
+	}
+	doc := &sbom.SBOMDocument{BOM: bom}
+	logger := zerolog.Nop()
+
+	EnrichSBOM(doc, &logger)
+
+	assert.Nil(t, (*bom.Components)[0].Hashes)
+}
+
 func TestEnrichCDXHash_AppendsParsedIntegrity(t *testing.T) {
 	component := &cdx.Component{
 		Type:    cdx.ComponentTypeLibrary,
