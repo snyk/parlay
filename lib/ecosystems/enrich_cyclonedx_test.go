@@ -294,9 +294,8 @@ func TestEnrichCDXHash_AppendsParsedIntegrity(t *testing.T) {
 	}
 	integrity := "sha256-17ea4276b66cf0ecf3a8f10df1e34d40fe26be590ca1e25b1c33a0ff05451631"
 	pkgVersionData := &packages.VersionWithDependencies{Integrity: &integrity}
-	logger := zerolog.Nop()
 
-	enrichCDXHash(component, pkgVersionData, &packages.Package{}, &logger)
+	enrichCDXHash(component, pkgVersionData, &packages.Package{})
 
 	require.NotNil(t, component.Hashes)
 	assert.Equal(t, []cdx.Hash{
@@ -312,9 +311,8 @@ func TestEnrichCDXHash_AppendsToExistingHashes(t *testing.T) {
 	existing := cdx.Hash{Algorithm: cdx.HashAlgoSHA256, Value: "0000000000000000000000000000000000000000000000000000000000000000"}
 	component := &cdx.Component{Hashes: &[]cdx.Hash{existing}}
 	integrity := "sha256-17ea4276b66cf0ecf3a8f10df1e34d40fe26be590ca1e25b1c33a0ff05451631"
-	logger := zerolog.Nop()
 
-	enrichCDXHash(component, &packages.VersionWithDependencies{Integrity: &integrity}, &packages.Package{}, &logger)
+	enrichCDXHash(component, &packages.VersionWithDependencies{Integrity: &integrity}, &packages.Package{})
 
 	require.NotNil(t, component.Hashes)
 	assert.Len(t, *component.Hashes, 2)
@@ -324,9 +322,8 @@ func TestEnrichCDXHash_AppendsToExistingHashes(t *testing.T) {
 func TestEnrichCDXHash_NilIntegrityIsNoop(t *testing.T) {
 	// Go modules, Maven and other registries return null integrity — skip silently.
 	component := &cdx.Component{}
-	logger := zerolog.Nop()
 
-	enrichCDXHash(component, &packages.VersionWithDependencies{Integrity: nil}, &packages.Package{}, &logger)
+	enrichCDXHash(component, &packages.VersionWithDependencies{Integrity: nil}, &packages.Package{})
 
 	assert.Nil(t, component.Hashes)
 }
@@ -334,9 +331,8 @@ func TestEnrichCDXHash_NilIntegrityIsNoop(t *testing.T) {
 func TestEnrichCDXHash_UnparseableIsNoop(t *testing.T) {
 	component := &cdx.Component{}
 	bad := "sha999-not-actually-a-hash"
-	logger := zerolog.Nop()
 
-	enrichCDXHash(component, &packages.VersionWithDependencies{Integrity: &bad}, &packages.Package{}, &logger)
+	enrichCDXHash(component, &packages.VersionWithDependencies{Integrity: &bad}, &packages.Package{})
 
 	assert.Nil(t, component.Hashes)
 }

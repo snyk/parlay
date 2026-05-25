@@ -178,9 +178,8 @@ func TestEnrichSBOM_MissingVersionedLicense(t *testing.T) {
 func TestEnrichSPDXHash_AppendsParsedIntegrity(t *testing.T) {
 	pkg := &v2_3.Package{}
 	integrity := "sha256-17ea4276b66cf0ecf3a8f10df1e34d40fe26be590ca1e25b1c33a0ff05451631"
-	logger := zerolog.Nop()
 
-	enrichSPDXHash(pkg, &packages.VersionWithDependencies{Integrity: &integrity}, &logger)
+	enrichSPDXHash(pkg, &packages.VersionWithDependencies{Integrity: &integrity})
 
 	assert.Equal(t, []common.Checksum{
 		{
@@ -194,9 +193,8 @@ func TestEnrichSPDXHash_AppendsToExistingChecksums(t *testing.T) {
 	existing := common.Checksum{Algorithm: common.SHA1, Value: "0000000000000000000000000000000000000000"}
 	pkg := &v2_3.Package{PackageChecksums: []common.Checksum{existing}}
 	integrity := "sha256-17ea4276b66cf0ecf3a8f10df1e34d40fe26be590ca1e25b1c33a0ff05451631"
-	logger := zerolog.Nop()
 
-	enrichSPDXHash(pkg, &packages.VersionWithDependencies{Integrity: &integrity}, &logger)
+	enrichSPDXHash(pkg, &packages.VersionWithDependencies{Integrity: &integrity})
 
 	assert.Len(t, pkg.PackageChecksums, 2)
 	assert.Equal(t, existing, pkg.PackageChecksums[0])
@@ -204,9 +202,17 @@ func TestEnrichSPDXHash_AppendsToExistingChecksums(t *testing.T) {
 
 func TestEnrichSPDXHash_NilIntegrityIsNoop(t *testing.T) {
 	pkg := &v2_3.Package{}
-	logger := zerolog.Nop()
 
-	enrichSPDXHash(pkg, &packages.VersionWithDependencies{Integrity: nil}, &logger)
+	enrichSPDXHash(pkg, &packages.VersionWithDependencies{Integrity: nil})
+
+	assert.Nil(t, pkg.PackageChecksums)
+}
+
+func TestEnrichSPDXHash_UnparseableIsNoop(t *testing.T) {
+	pkg := &v2_3.Package{}
+	bad := "sha999-not-actually-a-hash"
+
+	enrichSPDXHash(pkg, &packages.VersionWithDependencies{Integrity: &bad})
 
 	assert.Nil(t, pkg.PackageChecksums)
 }

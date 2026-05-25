@@ -57,8 +57,11 @@ func parseIntegrity(s string) (cdx.HashAlgorithm, common.ChecksumAlgorithm, stri
 			return alg.cdxAlg, alg.spdxAlg, strings.ToLower(value), true
 		}
 	}
-	// Base64 (standard or URL-safe), as used by npm SRI.
-	for _, enc := range []*base64.Encoding{base64.StdEncoding, base64.URLEncoding} {
+	// Base64 (standard or URL-safe, padded or raw), as used by npm SRI.
+	for _, enc := range []*base64.Encoding{
+		base64.StdEncoding, base64.URLEncoding,
+		base64.RawStdEncoding, base64.RawURLEncoding,
+	} {
 		if b, err := enc.DecodeString(value); err == nil && len(b) == alg.byteCount {
 			return alg.cdxAlg, alg.spdxAlg, hex.EncodeToString(b), true
 		}

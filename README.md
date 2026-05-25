@@ -131,7 +131,7 @@ parlay ecosystems repo https://github.com/open-policy-agent/conftest
 
 ### Component hashes
 
-parlay populates per-component hashes (CycloneDX `component.hashes[]` and SPDX `package.checksums[]`) from the ecosyste.ms `integrity` field. This is currently available for registries that publish a distribution digest — including PyPI, npm, RubyGems, Cargo, and Composer. Registries without an `integrity` value (today: Go modules and Maven Central) are left untouched. Existing hashes already on the component, such as the container-layer hashes that `syft` emits, are preserved.
+parlay populates per-component hashes (CycloneDX `component.hashes[]` and SPDX `package.checksums[]`) from the ecosyste.ms `integrity` field. This is currently available for registries that publish a distribution digest via ecosyste.ms — today: PyPI, npm, and RubyGems. Registries where ecosyste.ms does not surface an integrity value (including Go modules, Maven Central, Cargo, and Packagist) are left untouched. Existing hashes already on the component, such as the container-layer hashes that `syft` emits, are preserved.
 
 ### License data
 

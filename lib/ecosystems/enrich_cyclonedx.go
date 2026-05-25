@@ -52,6 +52,7 @@ var cdxPackageEnrichers = []cdxPackageEnricher{
 
 var cdxPackageVersionEnrichers = []cdxPackageVersionEnricher{
 	enrichCDXLicense,
+	enrichCDXHash,
 }
 
 func enrichCDXDescription(comp *cdx.Component, data *packages.Package) {
@@ -71,15 +72,12 @@ func enrichCDXLicense(comp *cdx.Component, pkgVersionData *packages.VersionWithD
 // enrichCDXHash appends a Hash derived from ecosyste.ms' per-version
 // integrity field. Existing hashes (e.g. container-layer hashes added by
 // syft) are preserved.
-func enrichCDXHash(comp *cdx.Component, pkgVersionData *packages.VersionWithDependencies, _ *packages.Package, logger *zerolog.Logger) {
+func enrichCDXHash(comp *cdx.Component, pkgVersionData *packages.VersionWithDependencies, _ *packages.Package) {
 	if pkgVersionData.Integrity == nil {
 		return
 	}
 	alg, _, value, ok := parseIntegrity(*pkgVersionData.Integrity)
 	if !ok {
-		logger.Debug().
-			Str("integrity", *pkgVersionData.Integrity).
-			Msg("Skipping hash enrichment: unrecognised integrity format")
 		return
 	}
 	hash := cdx.Hash{Algorithm: alg, Value: value}
@@ -275,7 +273,6 @@ func enrichCDX(bom *cdx.BOM, logger *zerolog.Logger) {
 			for _, enrichFunc := range cdxPackageVersionEnrichers {
 				enrichFunc(comp, packageVersionResp.JSON200, packageResp.JSON200)
 			}
-			enrichCDXHash(comp, packageVersionResp.JSON200, packageResp.JSON200, &l)
 		}(comps[i])
 	}
 
