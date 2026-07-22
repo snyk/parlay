@@ -17,6 +17,7 @@
 package sbom
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/CycloneDX/cyclonedx-go"
@@ -29,6 +30,8 @@ import (
 var (
 	fixedCycloneDX1_4JSON = []byte(`{"bomFormat":"CycloneDX","specVersion":"1.4","version":1}`)
 	fixedCycloneDX1_4XML  = []byte(`<bom xmlns="http://cyclonedx.org/schema/bom/1.4" version="1"></bom>`)
+	fixedCycloneDX1_7JSON = []byte(`{"bomFormat":"CycloneDX","specVersion":"1.7","version":1,"citations":[{"note":"source"}]}`)
+	fixedCycloneDX1_7XML  = []byte(`<bom xmlns="http://cyclonedx.org/schema/bom/1.7" version="1"><citations><citation><note>source</note></citation></citations></bom>`)
 	fixedSPDX2_3JSON      = []byte(`{"SPDXID":"SPDXRef-DOCUMENT","spdxVersion":"SPDX-2.3"}`)
 	fixedSPDX2_2JSON      = []byte(`{"SPDXID":"SPDXRef-DOCUMENT","spdxVersion":"SPDX-2.2"}`)
 )
@@ -55,6 +58,42 @@ func TestDecodeSBOMDocument_CycloneDX1_4XML(t *testing.T) {
 	assert.Equal(t, SBOMFormatCycloneDX1_4XML, doc.Format)
 	assert.NotNil(t, doc.Encode)
 	assert.Equal(t, cyclonedx.SpecVersion1_4, bom.SpecVersion)
+}
+
+func TestDecodeSBOMDocument_CycloneDX1_7JSON(t *testing.T) {
+	doc, err := DecodeSBOMDocument(fixedCycloneDX1_7JSON)
+	require.NoError(t, err)
+
+	bom, ok := doc.BOM.(*cyclonedx.BOM)
+	require.True(t, ok)
+
+	assert.Equal(t, cyclonedx.SpecVersion1_7, bom.SpecVersion)
+	require.NotNil(t, bom.Citations)
+	require.Len(t, *bom.Citations, 1)
+	assert.Equal(t, "source", (*bom.Citations)[0].Note)
+
+	var output bytes.Buffer
+	require.NoError(t, doc.Encode(&output))
+	assert.Contains(t, output.String(), `"specVersion":"1.7"`)
+	assert.Contains(t, output.String(), `"citations":[{"note":"source"}]`)
+}
+
+func TestDecodeSBOMDocument_CycloneDX1_7XML(t *testing.T) {
+	doc, err := DecodeSBOMDocument(fixedCycloneDX1_7XML)
+	require.NoError(t, err)
+
+	bom, ok := doc.BOM.(*cyclonedx.BOM)
+	require.True(t, ok)
+
+	assert.Equal(t, cyclonedx.SpecVersion1_7, bom.SpecVersion)
+	require.NotNil(t, bom.Citations)
+	require.Len(t, *bom.Citations, 1)
+	assert.Equal(t, "source", (*bom.Citations)[0].Note)
+
+	var output bytes.Buffer
+	require.NoError(t, doc.Encode(&output))
+	assert.Contains(t, output.String(), `xmlns="http://cyclonedx.org/schema/bom/1.7"`)
+	assert.Contains(t, output.String(), `<citations><citation><note>source</note></citation></citations>`)
 }
 
 func TestDecodeSBOMDocument_SPDX2_3JSON(t *testing.T) {
