@@ -3,7 +3,7 @@ module github.com/snyk/parlay
 go 1.26.3
 
 require (
-	github.com/CycloneDX/cyclonedx-go v0.9.2
+	github.com/CycloneDX/cyclonedx-go v0.11.0
 	github.com/deepmap/oapi-codegen v1.12.4
 	github.com/edoardottt/depsdev v0.0.3
 	github.com/google/uuid v1.5.0
@@ -16,7 +16,7 @@ require (
 	github.com/spdx/tools-golang v0.5.4-0.20240304222056-8baafa1a79c4
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.15.0
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 )
 
 require (
