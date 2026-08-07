@@ -25,6 +25,7 @@ workflows:
           name: Scan repository for secrets
           context:
             - snyk-bot-slack
+            - prodsec-orb-runtime
           channel: snyk-vuln-alerts-unify
           filters:
             branches:
@@ -32,4 +33,6 @@ workflows:
                 - main
       - security-scans:
           name: Security Scans
-          context: analysis_unify
+          context:
+            - analysis_unify
+            - prodsec-orb-runtime
