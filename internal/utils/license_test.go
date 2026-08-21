@@ -62,6 +62,10 @@ func TestClassifyLicenses(t *testing.T) {
 			in:   []string{"MIT", "MIT"},
 			want: []utils.License{{SPDXID: "MIT"}},
 		},
+		"repeats differing only in case collapse": {
+			in:   []string{"MIT", "mit"},
+			want: []utils.License{{SPDXID: "MIT"}},
+		},
 		"blanks are dropped": {
 			in:   []string{"", "  "},
 			want: []utils.License{},

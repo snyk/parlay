@@ -11,6 +11,7 @@ import (
 
 func TestGetLicensesFromEcosystemsLicense(t *testing.T) {
 	versionedLicenses := "GPLv2,MIT"
+	nameWithComma := "MIT,The Apache Software License, Version 2.0"
 	empty := ""
 
 	for name, tc := range map[string]struct {
@@ -32,6 +33,10 @@ func TestGetLicensesFromEcosystemsLicense(t *testing.T) {
 			pkgVersionData: &packages.VersionWithDependencies{Licenses: &versionedLicenses},
 			pkgData:        &packages.Package{},
 			want:           []string{"GPLv2", "MIT"},
+		},
+		"a version continuation stays with the license it belongs to": {
+			pkgVersionData: &packages.VersionWithDependencies{Licenses: &nameWithComma},
+			want:           []string{"MIT", "The Apache Software License, Version 2.0"},
 		},
 		"no data at all": {
 			want: nil,

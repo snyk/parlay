@@ -133,6 +133,8 @@ parlay ecosystems repo https://github.com/open-policy-agent/conftest
 
 parlay enriches components and packages with their license information from ecosyste.ms on a best-effort basis. It prefers the license data of the package version at hand; however, it may not always be possible to retrieve the license for a specific version (see [ecosyste.ms issue here](https://github.com/ecosyste-ms/packages/issues/1027) for more info). In this case, parlay will fall back to enriching with the license data of the package's latest release. In rare cases — where the licensing model of a package changed over time — this may result in license data inaccuracies.
 
+Licenses are resolved against the SPDX license list. A license string that is not valid SPDX — registries such as Maven accept any string — is captured as a `LicenseRef-` with the original text recorded, so that the documents parlay emits stay valid. Where a package carries several licenses they are emitted as a choice between them (`(MIT OR Apache-2.0)`), following the convention that a package listing several licenses may be used under any one of them.
+
 
 ## Enriching with Snyk
 

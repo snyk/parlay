@@ -19,6 +19,7 @@ package utils
 import (
 	"fmt"
 	"hash/fnv"
+	"regexp"
 	"strings"
 
 	"github.com/github/go-spdx/v2/spdxexp"
@@ -43,7 +44,17 @@ type License struct {
 // emits still validate. See https://github.com/snyk/parlay/issues/80.
 func ClassifyLicenses(licenses []string) []License {
 	out := make([]License, 0, len(licenses))
-	seen := make(map[string]bool, len(licenses))
+
+	// Keyed on the resolved license rather than the incoming string, so that
+	// strings differing only in case or punctuation collapse into one entry.
+	seen := make(map[License]bool, len(licenses))
+	add := func(l License) {
+		if seen[l] {
+			return
+		}
+		seen[l] = true
+		out = append(out, l)
+	}
 
 	for _, raw := range licenses {
 		raw = strings.TrimSpace(raw)
@@ -57,11 +68,6 @@ func ClassifyLicenses(licenses []string) []License {
 			continue
 		}
 
-		if seen[raw] {
-			continue
-		}
-		seen[raw] = true
-
 		// Refs are rejected so that a ref arriving from ecosyste.ms is captured
 		// as extracted licensing info here, rather than dangling undefined.
 		normalized, invalid := spdxexp.ValidateAndNormalizeLicensesWithOptions(
@@ -69,7 +75,7 @@ func ClassifyLicenses(licenses []string) []License {
 			spdxexp.ValidateLicensesOptions{FailAllLicenseRefs: true, FailAllDocumentRefs: true},
 		)
 		if len(invalid) == 0 && len(normalized) == 1 {
-			out = append(out, License{SPDXID: normalized[0]})
+			add(License{SPDXID: normalized[0]})
 			continue
 		}
 
@@ -79,9 +85,36 @@ func ClassifyLicenses(licenses []string) []License {
 			// rather than emit a meaningless shared ref.
 			continue
 		}
-		out = append(out, License{SPDXID: id, Raw: raw})
+		add(License{SPDXID: id, Raw: raw})
 	}
 
+	return out
+}
+
+// A license name carrying its version after a comma, "The Apache Software
+// License, Version 2.0" being the one Maven hands out most, is one license
+// rather than two. Nothing else about a fragment says whether the comma before
+// it separates licenses or belongs to a name, so only a version is rejoined.
+var licenseVersionFragment = regexp.MustCompile(`(?i)^\s*(version|ver|v|revision|rev)?\.?\s*\d[\d.]*\s*$`)
+
+// SplitLicenseList splits the comma separated license list ecosyste.ms holds
+// for a package version.
+//
+// ponytail: only version fragments are rejoined, so a name split across a
+// comma any other way still ends up as two licenses. Recognising those needs
+// the license list itself, which is a bigger heuristic than the one case that
+// actually shows up.
+func SplitLicenseList(licenses string) []string {
+	parts := strings.Split(licenses, ",")
+
+	out := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if len(out) > 0 && licenseVersionFragment.MatchString(part) {
+			out[len(out)-1] += "," + part
+			continue
+		}
+		out = append(out, part)
+	}
 	return out
 }
 
@@ -124,10 +157,24 @@ func licenseRefID(raw string) string {
 	return "LicenseRef-" + id
 }
 
+// cdxOrLaterIDs are the "or later" licenses CycloneDX still lists as license
+// identifiers. SPDX allows a "+" suffix on any identifier, but CycloneDX
+// validates ids against a closed list that only kept these six.
+var cdxOrLaterIDs = map[string]bool{
+	"GPL-1.0+": true, "GPL-2.0+": true, "GPL-3.0+": true,
+	"LGPL-2.0+": true, "LGPL-2.1+": true, "LGPL-3.0+": true,
+}
+
 // IsIdentifier reports whether the license is a single SPDX license identifier,
 // the only form CycloneDX can carry in a license id field.
 func (l License) IsIdentifier() bool {
-	return l.Raw == "" && !strings.ContainsAny(l.SPDXID, " ()")
+	if l.Raw != "" || strings.ContainsAny(l.SPDXID, " ()") {
+		return false
+	}
+	if strings.HasSuffix(l.SPDXID, "+") {
+		return cdxOrLaterIDs[l.SPDXID]
+	}
+	return true
 }
 
 // DisambiguateLicenseRef derives a distinct identifier for a license string

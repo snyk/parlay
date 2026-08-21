@@ -39,14 +39,15 @@ func CDXLicenses(licenses []License) *cdx.Licenses {
 	}
 
 	ids := make([]string, 0, len(licenses))
+	allSPDX := true
 	for _, l := range licenses {
 		if l.Raw != "" {
-			ids = nil
+			allSPDX = false
 			break
 		}
 		ids = append(ids, l.SPDXID)
 	}
-	if ids != nil {
+	if allSPDX {
 		return &cdx.Licenses{{Expression: LicenseExpression(ids)}}
 	}
 

@@ -241,23 +241,19 @@ func TestEnrichSBOM_SPDX_InvalidLicense(t *testing.T) {
 
 	EnrichSBOM(doc, &logger)
 
-	// The valid identifier survives; only the unparseable part becomes a ref.
+	// The valid identifier survives; only the unparseable part becomes a ref,
+	// keeping the version that follows the comma with the name it belongs to.
 	assert.Equal(t,
-		"(MIT OR LicenseRef-The-Apache-Software-License OR LicenseRef-Version-2.0)",
+		"(MIT OR LicenseRef-The-Apache-Software-License-Version-2.0)",
 		bom.Packages[0].PackageLicenseConcluded,
 	)
 
-	// Both packages carry the same licenses, so the refs are declared once.
+	// Both packages carry the same licenses, so the ref is declared once.
 	assert.Equal(t, []*v2_3.OtherLicense{
 		{
-			LicenseIdentifier: "LicenseRef-The-Apache-Software-License",
-			ExtractedText:     "The Apache Software License",
-			LicenseName:       "The Apache Software License",
-		},
-		{
-			LicenseIdentifier: "LicenseRef-Version-2.0",
-			ExtractedText:     "Version 2.0",
-			LicenseName:       "Version 2.0",
+			LicenseIdentifier: "LicenseRef-The-Apache-Software-License-Version-2.0",
+			ExtractedText:     "The Apache Software License, Version 2.0",
+			LicenseName:       "The Apache Software License, Version 2.0",
 		},
 	}, bom.OtherLicenses)
 

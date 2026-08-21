@@ -38,6 +38,8 @@ func enrichSPDX(bom *spdx.Document, logger *zerolog.Logger) {
 
 	// Licenses that are not valid SPDX are captured once per document, so
 	// packages sharing one share a single extracted licensing info entry.
+	// The loop below owns this map and bom.OtherLicenses, so it has to stay
+	// sequential, unlike the CycloneDX side which enriches concurrently.
 	licenseRefs := make(map[string]string, len(bom.OtherLicenses))
 	for _, other := range bom.OtherLicenses {
 		licenseRefs[other.LicenseIdentifier] = other.ExtractedText
@@ -122,9 +124,11 @@ func enrichSPDXLicense(bom *spdx.Document, pkg *v2_3.Package, licenseRefs map[st
 			continue
 		}
 
+		// Keep deriving a new identifier until one is free, so that a license
+		// never lands on another license's extracted text.
 		id := license.SPDXID
-		if text, taken := licenseRefs[id]; taken && text != license.Raw {
-			id = utils.DisambiguateLicenseRef(id, license.Raw)
+		for text, taken := licenseRefs[id]; taken && text != license.Raw; text, taken = licenseRefs[id] {
+			id = utils.DisambiguateLicenseRef(id, license.Raw+id)
 		}
 		if _, taken := licenseRefs[id]; !taken {
 			licenseRefs[id] = license.Raw
