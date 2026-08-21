@@ -9,54 +9,41 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetSPDXLicenseExpressionFromEcosystemsLicense(t *testing.T) {
-	assert := assert.New(t)
+func TestGetLicensesFromEcosystemsLicense(t *testing.T) {
 	versionedLicenses := "GPLv2,MIT"
-	pkgVersionData := packages.VersionWithDependencies{Licenses: &versionedLicenses}
-	latestLicenses := []string{"Apache-2.0"}
-	pkgData := packages.Package{NormalizedLicenses: latestLicenses}
-	expression := utils.GetLicenseExpressionFromEcosystemsLicense(&pkgVersionData, &pkgData)
-	assert.Equal("(GPLv2 OR MIT)", expression)
-}
+	empty := ""
 
-func TestGetSPDXLicenseExpressionFromEcosystemsLicense_NoData(t *testing.T) {
-	assert := assert.New(t)
-	expression := utils.GetLicenseExpressionFromEcosystemsLicense(nil, nil)
-	assert.Equal("", expression)
-}
-
-func TestGetSPDXLicenseExpressionFromEcosystemsLicense_NoVersionedData(t *testing.T) {
-	assert := assert.New(t)
-	pkgVersionData := packages.VersionWithDependencies{}
-	latestLicenses := []string{"Apache-2.0"}
-	pkgData := packages.Package{NormalizedLicenses: latestLicenses}
-	expression := utils.GetLicenseExpressionFromEcosystemsLicense(&pkgVersionData, &pkgData)
-	assert.Equal("(Apache-2.0)", expression)
-}
-
-func TestGetSPDXLicenseExpressionFromEcosystemsLicense_NoLatestData(t *testing.T) {
-	assert := assert.New(t)
-	versionedLicenses := "GPLv2,MIT"
-	pkgVersionData := packages.VersionWithDependencies{Licenses: &versionedLicenses}
-	pkgData := packages.Package{}
-	expression := utils.GetLicenseExpressionFromEcosystemsLicense(&pkgVersionData, &pkgData)
-	assert.Equal("(GPLv2 OR MIT)", expression)
-}
-
-func TestGetSPDXLicenseExpressionFromEcosystemsLicense_NoLicenses(t *testing.T) {
-	assert := assert.New(t)
-	pkgVersionData := packages.VersionWithDependencies{}
-	pkgData := packages.Package{}
-	expression := utils.GetLicenseExpressionFromEcosystemsLicense(&pkgVersionData, &pkgData)
-	assert.Equal("", expression)
-}
-
-func TestGetSPDXLicenseExpressionFromEcosystemsLicense_EmptyLicenses(t *testing.T) {
-	assert := assert.New(t)
-	versionedLicenses := ""
-	pkgVersionData := packages.VersionWithDependencies{Licenses: &versionedLicenses}
-	latestLicenses := []string{}
-	pkgData := packages.Package{NormalizedLicenses: latestLicenses}
-	expression := utils.GetLicenseExpressionFromEcosystemsLicense(&pkgVersionData, &pkgData)
-	assert.Equal("", expression)
+	for name, tc := range map[string]struct {
+		pkgVersionData *packages.VersionWithDependencies
+		pkgData        *packages.Package
+		want           []string
+	}{
+		"version licenses win": {
+			pkgVersionData: &packages.VersionWithDependencies{Licenses: &versionedLicenses},
+			pkgData:        &packages.Package{NormalizedLicenses: []string{"Apache-2.0"}},
+			want:           []string{"GPLv2", "MIT"},
+		},
+		"falls back to the package licenses": {
+			pkgVersionData: &packages.VersionWithDependencies{},
+			pkgData:        &packages.Package{NormalizedLicenses: []string{"Apache-2.0"}},
+			want:           []string{"Apache-2.0"},
+		},
+		"no package data": {
+			pkgVersionData: &packages.VersionWithDependencies{Licenses: &versionedLicenses},
+			pkgData:        &packages.Package{},
+			want:           []string{"GPLv2", "MIT"},
+		},
+		"no data at all": {
+			want: nil,
+		},
+		"empty licenses": {
+			pkgVersionData: &packages.VersionWithDependencies{Licenses: &empty},
+			pkgData:        &packages.Package{NormalizedLicenses: []string{}},
+			want:           nil,
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, tc.want, utils.GetLicensesFromEcosystemsLicense(tc.pkgVersionData, tc.pkgData))
+		})
+	}
 }

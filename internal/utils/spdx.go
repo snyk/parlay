@@ -32,6 +32,12 @@ func GetPurlFromSPDXPackage(pkg *spdx_2_3.Package) (*packageurl.PackageURL, erro
 	return &purl, nil
 }
 
+// GetLicensesFromEcosystemsLicense reads the license strings ecosyste.ms holds
+// for a package version, falling back to the ones for the package itself.
+//
+// ponytail: the versioned field is a comma separated list, so a single license
+// name containing a comma splits into two. Rejoining the fragments needs a
+// heuristic; capturing them verbatim as separate LicenseRefs is good enough.
 func GetLicensesFromEcosystemsLicense(pkgVersionData *packages.VersionWithDependencies, pkgData *packages.Package) []string {
 	if pkgVersionData != nil && pkgVersionData.Licenses != nil && *pkgVersionData.Licenses != "" {
 		return strings.Split(*pkgVersionData.Licenses, ",")
@@ -39,12 +45,4 @@ func GetLicensesFromEcosystemsLicense(pkgVersionData *packages.VersionWithDepend
 		return pkgData.NormalizedLicenses
 	}
 	return nil
-}
-
-func GetLicenseExpressionFromEcosystemsLicense(pkgVersionData *packages.VersionWithDependencies, pkgData *packages.Package) string {
-	licenses := GetLicensesFromEcosystemsLicense(pkgVersionData, pkgData)
-	if len(licenses) == 0 {
-		return ""
-	}
-	return fmt.Sprintf("(%s)", strings.Join(licenses, " OR "))
 }
