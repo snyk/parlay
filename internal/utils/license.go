@@ -95,7 +95,7 @@ func ClassifyLicenses(licenses []string) []License {
 // License, Version 2.0" being the one Maven hands out most, is one license
 // rather than two. Nothing else about a fragment says whether the comma before
 // it separates licenses or belongs to a name, so only a version is rejoined.
-var licenseVersionFragment = regexp.MustCompile(`(?i)^\s*(version|ver|v|revision|rev)?\.?\s*\d[\d.]*\s*$`)
+var licenseVersionFragment = regexp.MustCompile(`(?i)^\s*(v(er(sion)?)?)?\.?\s*\d[\d.]*\s*$`)
 
 // SplitLicenseList splits the comma separated license list ecosyste.ms holds
 // for a package version.
@@ -120,37 +120,22 @@ func SplitLicenseList(licenses string) []string {
 
 // LicenseExpression joins license identifiers into one SPDX license expression.
 func LicenseExpression(ids []string) string {
-	switch len(ids) {
-	case 0:
-		return ""
-	case 1:
-		return ids[0]
-	default:
-		return "(" + strings.Join(ids, " OR ") + ")"
+	if len(ids) < 2 {
+		return strings.Join(ids, "")
 	}
+	return "(" + strings.Join(ids, " OR ") + ")"
 }
 
+// An idstring is limited to letters, numbers, "." and "-", so a run of
+// anything else collapses to a single "-".
+var licenseRefStrip = regexp.MustCompile(`[^A-Za-z0-9.]+`)
+
 // licenseRefID builds a "LicenseRef-[idstring]" identifier from a license
-// string. An idstring is limited to letters, numbers, "." and "-", so anything
-// else collapses to a "-". Two strings differing only in stripped characters
-// therefore share a ref, which is fine: they dedupe to a single entry.
+// string. Two strings differing only in stripped characters land on the same
+// identifier; DisambiguateLicenseRef separates them where that matters.
 func licenseRefID(raw string) string {
 	// An incoming ref keeps its name rather than gaining a second prefix.
-	id := strings.Map(func(r rune) rune {
-		switch {
-		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9', r == '.', r == '-':
-			return r
-		default:
-			return '-'
-		}
-	}, strings.TrimPrefix(raw, "LicenseRef-"))
-
-	// Collapse the runs left behind by the mapping above.
-	for strings.Contains(id, "--") {
-		id = strings.ReplaceAll(id, "--", "-")
-	}
-	id = strings.Trim(id, "-")
-
+	id := strings.Trim(licenseRefStrip.ReplaceAllString(strings.TrimPrefix(raw, "LicenseRef-"), "-"), "-")
 	if id == "" {
 		return ""
 	}

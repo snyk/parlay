@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"cmp"
+
 	cdx "github.com/CycloneDX/cyclonedx-go"
 )
 
@@ -39,15 +41,14 @@ func CDXLicenses(licenses []License) *cdx.Licenses {
 	}
 
 	ids := make([]string, 0, len(licenses))
-	allSPDX := true
 	for _, l := range licenses {
 		if l.Raw != "" {
-			allSPDX = false
+			ids = nil
 			break
 		}
 		ids = append(ids, l.SPDXID)
 	}
-	if allSPDX {
+	if ids != nil {
 		return &cdx.Licenses{{Expression: LicenseExpression(ids)}}
 	}
 
@@ -57,11 +58,7 @@ func CDXLicenses(licenses []License) *cdx.Licenses {
 			out = append(out, cdx.LicenseChoice{License: &cdx.License{ID: l.SPDXID}})
 			continue
 		}
-		name := l.Raw
-		if name == "" {
-			name = l.SPDXID
-		}
-		out = append(out, cdx.LicenseChoice{License: &cdx.License{Name: name}})
+		out = append(out, cdx.LicenseChoice{License: &cdx.License{Name: cmp.Or(l.Raw, l.SPDXID)}})
 	}
 	return &out
 }

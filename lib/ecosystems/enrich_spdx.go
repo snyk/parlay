@@ -124,11 +124,12 @@ func enrichSPDXLicense(bom *spdx.Document, pkg *v2_3.Package, licenseRefs map[st
 			continue
 		}
 
-		// Keep deriving a new identifier until one is free, so that a license
-		// never lands on another license's extracted text.
+		// ponytail: one suffix attempt, so a license lands on another
+		// license's extracted text only if their raw strings both sanitize
+		// alike and collide in fnv32. Loop until free if that ever shows up.
 		id := license.SPDXID
-		for text, taken := licenseRefs[id]; taken && text != license.Raw; text, taken = licenseRefs[id] {
-			id = utils.DisambiguateLicenseRef(id, license.Raw+id)
+		if text, taken := licenseRefs[id]; taken && text != license.Raw {
+			id = utils.DisambiguateLicenseRef(id, license.Raw)
 		}
 		if _, taken := licenseRefs[id]; !taken {
 			licenseRefs[id] = license.Raw
