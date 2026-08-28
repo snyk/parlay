@@ -129,6 +129,10 @@ You can also return raw JSON information about a specific repository:
 parlay ecosystems repo https://github.com/open-policy-agent/conftest
 ```
 
+### Component hashes
+
+parlay populates per-component hashes (CycloneDX `component.hashes[]` and SPDX `package.checksums[]`) from the ecosyste.ms `integrity` field. This is currently available for registries that publish a distribution digest via ecosyste.ms — today: PyPI, npm, and RubyGems. Registries where ecosyste.ms does not surface an integrity value (including Go modules, Maven Central, Cargo, and Packagist) are left untouched. Existing hashes already on the component, such as the container-layer hashes that `syft` emits, are preserved.
+
 ### License data
 
 parlay enriches components and packages with their license information from ecosyste.ms on a best-effort basis. It prefers the license data of the package version at hand; however, it may not always be possible to retrieve the license for a specific version (see [ecosyste.ms issue here](https://github.com/ecosyste-ms/packages/issues/1027) for more info). In this case, parlay will fall back to enriching with the license data of the package's latest release. In rare cases — where the licensing model of a package changed over time — this may result in license data inaccuracies.
