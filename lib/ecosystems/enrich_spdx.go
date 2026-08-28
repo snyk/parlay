@@ -55,6 +55,7 @@ func enrichSPDX(bom *spdx.Document, logger *zerolog.Logger) {
 
 		enrichSPDXDescription(pkg, pkgData)
 		enrichSPDXHomepage(pkg, pkgData)
+		enrichSPDXRepositoryURL(pkg, pkgData)
 		enrichSPDXSupplier(pkg, pkgData)
 
 		packageVersionResp, err := cache.GetPackageVersionData(*purl)
@@ -111,6 +112,18 @@ func enrichSPDXHomepage(pkg *v2_3.Package, data *packages.Package) {
 		return
 	}
 	pkg.PackageHomePage = *data.Homepage
+}
+
+func enrichSPDXRepositoryURL(pkg *v2_3.Package, data *packages.Package) {
+	if data.RepositoryUrl == nil {
+		return
+	}
+	ref := &v2_3.PackageExternalReference{
+		Category: spdx.CategoryOther,
+		RefType:  "vcs",
+		Locator:  *data.RepositoryUrl,
+	}
+	pkg.PackageExternalReferences = append(pkg.PackageExternalReferences, ref)
 }
 
 func enrichSPDXDescription(pkg *v2_3.Package, data *packages.Package) {
