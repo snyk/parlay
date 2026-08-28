@@ -18,7 +18,6 @@ package ecosystems
 
 import (
 	"errors"
-	"strings"
 
 	"github.com/package-url/packageurl-go"
 	"github.com/rs/zerolog"
@@ -36,6 +35,15 @@ func enrichSPDX(bom *spdx.Document, logger *zerolog.Logger) {
 	logger.Debug().Msgf("Detected %d packages", len(packages))
 
 	cache := GetGlobalCache()
+
+	// Licenses that are not valid SPDX are captured once per document, so
+	// packages sharing one share a single extracted licensing info entry.
+	// The loop below owns this map and bom.OtherLicenses, so it has to stay
+	// sequential, unlike the CycloneDX side which enriches concurrently.
+	licenseRefs := make(map[string]string, len(bom.OtherLicenses))
+	for _, other := range bom.OtherLicenses {
+		licenseRefs[other.LicenseIdentifier] = other.ExtractedText
+	}
 
 	for _, pkg := range packages {
 		purl, err := extractPurl(pkg)
@@ -67,7 +75,7 @@ func enrichSPDX(bom *spdx.Document, logger *zerolog.Logger) {
 			continue
 		}
 
-		enrichSPDXLicense(pkg, pkgVersionData, pkgData)
+		enrichSPDXLicense(bom, pkg, licenseRefs, pkgVersionData, pkgData)
 	}
 }
 
@@ -99,11 +107,42 @@ func enrichSPDXSupplier(pkg *v2_3.Package, data *packages.Package) {
 	}
 }
 
-func enrichSPDXLicense(pkg *v2_3.Package, pkgVersionData *packages.VersionWithDependencies, pkgData *packages.Package) {
-	licenses := utils.GetLicensesFromEcosystemsLicense(pkgVersionData, pkgData)
-	if len(licenses) > 0 {
-		pkg.PackageLicenseConcluded = strings.Join(licenses, ",")
+// enrichSPDXLicense sets the concluded license, declaring an extracted
+// licensing info entry for every license that is not valid SPDX. licenseRefs
+// holds the extracted text already declared per identifier, so that entries are
+// shared across packages without two different licenses sharing an identifier.
+func enrichSPDXLicense(bom *spdx.Document, pkg *v2_3.Package, licenseRefs map[string]string, pkgVersionData *packages.VersionWithDependencies, pkgData *packages.Package) {
+	licenses := utils.ClassifyLicenses(utils.GetLicensesFromEcosystemsLicense(pkgVersionData, pkgData))
+	if len(licenses) == 0 {
+		return
 	}
+
+	ids := make([]string, 0, len(licenses))
+	for _, license := range licenses {
+		if license.Raw == "" {
+			ids = append(ids, license.SPDXID)
+			continue
+		}
+
+		// ponytail: one suffix attempt, so a license lands on another
+		// license's extracted text only if their raw strings both sanitize
+		// alike and collide in fnv32. Loop until free if that ever shows up.
+		id := license.SPDXID
+		if text, taken := licenseRefs[id]; taken && text != license.Raw {
+			id = utils.DisambiguateLicenseRef(id, license.Raw)
+		}
+		if _, taken := licenseRefs[id]; !taken {
+			licenseRefs[id] = license.Raw
+			bom.OtherLicenses = append(bom.OtherLicenses, &v2_3.OtherLicense{
+				LicenseIdentifier: id,
+				ExtractedText:     license.Raw,
+				LicenseName:       license.Raw,
+			})
+		}
+		ids = append(ids, id)
+	}
+
+	pkg.PackageLicenseConcluded = utils.LicenseExpression(ids)
 }
 
 func enrichSPDXHomepage(pkg *v2_3.Package, data *packages.Package) {

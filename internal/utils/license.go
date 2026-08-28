@@ -1,0 +1,173 @@
+/*
+ * © 2023 Snyk Limited All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package utils
+
+import (
+	"fmt"
+	"hash/fnv"
+	"regexp"
+	"strings"
+
+	"github.com/github/go-spdx/v2/spdxexp"
+)
+
+// License is one license string from ecosyste.ms, resolved against the SPDX
+// license list.
+type License struct {
+	// SPDXID is the normalized SPDX expression, or a "LicenseRef-" identifier
+	// when Raw is not valid SPDX.
+	SPDXID string
+
+	// Raw is the original ecosyste.ms string, set only when it is not valid
+	// SPDX and had to be captured as a LicenseRef.
+	Raw string
+}
+
+// ClassifyLicenses resolves each license string against the SPDX license list.
+// ecosyste.ms passes package metadata through as-is, and registries such as
+// Maven accept any string, so the result is not always valid SPDX. Strings that
+// are not get turned into LicenseRef- identifiers, so that the documents parlay
+// emits still validate. See https://github.com/snyk/parlay/issues/80.
+func ClassifyLicenses(licenses []string) []License {
+	out := make([]License, 0, len(licenses))
+
+	// Keyed on the resolved license rather than the incoming string, so that
+	// strings differing only in case or punctuation collapse into one entry.
+	seen := make(map[License]bool, len(licenses))
+	add := func(l License) {
+		if seen[l] {
+			return
+		}
+		seen[l] = true
+		out = append(out, l)
+	}
+
+	for _, raw := range licenses {
+		raw = strings.TrimSpace(raw)
+		if raw == "" {
+			continue
+		}
+
+		// Both only carry meaning on their own, and neither can be joined into
+		// an expression, so a package saying nothing keeps saying nothing.
+		if raw == "NONE" || raw == "NOASSERTION" {
+			continue
+		}
+
+		// Refs are rejected so that a ref arriving from ecosyste.ms is captured
+		// as extracted licensing info here, rather than dangling undefined.
+		normalized, invalid := spdxexp.ValidateAndNormalizeLicensesWithOptions(
+			[]string{raw},
+			spdxexp.ValidateLicensesOptions{FailAllLicenseRefs: true, FailAllDocumentRefs: true},
+		)
+		if len(invalid) == 0 && len(normalized) == 1 {
+			add(License{SPDXID: normalized[0]})
+			continue
+		}
+
+		id := licenseRefID(raw)
+		if id == "" {
+			// ponytail: nothing left to identify the license by, so drop it
+			// rather than emit a meaningless shared ref.
+			continue
+		}
+		add(License{SPDXID: id, Raw: raw})
+	}
+
+	return out
+}
+
+// A license name carrying its version after a comma, "The Apache Software
+// License, Version 2.0" being the one Maven hands out most, is one license
+// rather than two. Nothing else about a fragment says whether the comma before
+// it separates licenses or belongs to a name, so only a version is rejoined.
+var licenseVersionFragment = regexp.MustCompile(`(?i)^\s*(v(er(sion)?)?)?\.?\s*\d[\d.]*\s*$`)
+
+// SplitLicenseList splits the comma separated license list ecosyste.ms holds
+// for a package version.
+//
+// ponytail: only version fragments are rejoined, so a name split across a
+// comma any other way still ends up as two licenses. Recognising those needs
+// the license list itself, which is a bigger heuristic than the one case that
+// actually shows up.
+func SplitLicenseList(licenses string) []string {
+	parts := strings.Split(licenses, ",")
+
+	out := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if len(out) > 0 && licenseVersionFragment.MatchString(part) {
+			out[len(out)-1] += "," + part
+			continue
+		}
+		out = append(out, part)
+	}
+	return out
+}
+
+// LicenseExpression joins license identifiers into one SPDX license expression.
+func LicenseExpression(ids []string) string {
+	if len(ids) < 2 {
+		return strings.Join(ids, "")
+	}
+	return "(" + strings.Join(ids, " OR ") + ")"
+}
+
+// An idstring is limited to letters, numbers, "." and "-", so a run of
+// anything else collapses to a single "-".
+var licenseRefStrip = regexp.MustCompile(`[^A-Za-z0-9.]+`)
+
+// licenseRefID builds a "LicenseRef-[idstring]" identifier from a license
+// string. Two strings differing only in stripped characters land on the same
+// identifier; DisambiguateLicenseRef separates them where that matters.
+func licenseRefID(raw string) string {
+	// An incoming ref keeps its name rather than gaining a second prefix.
+	id := strings.Trim(licenseRefStrip.ReplaceAllString(strings.TrimPrefix(raw, "LicenseRef-"), "-"), "-")
+	if id == "" {
+		return ""
+	}
+	return "LicenseRef-" + id
+}
+
+// cdxOrLaterIDs are the "or later" licenses CycloneDX still lists as license
+// identifiers. SPDX allows a "+" suffix on any identifier, but CycloneDX
+// validates ids against a closed list that only kept these six.
+var cdxOrLaterIDs = map[string]bool{
+	"GPL-1.0+": true, "GPL-2.0+": true, "GPL-3.0+": true,
+	"LGPL-2.0+": true, "LGPL-2.1+": true, "LGPL-3.0+": true,
+}
+
+// IsIdentifier reports whether the license is a single SPDX license identifier,
+// the only form CycloneDX can carry in a license id field.
+func (l License) IsIdentifier() bool {
+	if l.Raw != "" || strings.ContainsAny(l.SPDXID, " ()") {
+		return false
+	}
+	if strings.HasSuffix(l.SPDXID, "+") {
+		return cdxOrLaterIDs[l.SPDXID]
+	}
+	return true
+}
+
+// DisambiguateLicenseRef derives a distinct identifier for a license string
+// that sanitizes down to an identifier already taken by a different string.
+// Without it the two would share one extracted licensing info entry, which
+// would put packages under a license they are not under.
+func DisambiguateLicenseRef(id, raw string) string {
+	h := fnv.New32a()
+	h.Write([]byte(raw))
+	return fmt.Sprintf("%s-%08x", id, h.Sum32())
+}

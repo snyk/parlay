@@ -82,7 +82,7 @@ func TestEnrichSBOM_CycloneDX(t *testing.T) {
 	component := components[0]
 	licenses := *component.Licenses
 
-	comp := cdx.LicenseChoice(cdx.LicenseChoice{Expression: "(MIT)"})
+	comp := cdx.LicenseChoice(cdx.LicenseChoice{Expression: "MIT"})
 
 	assert.Equal(t, "description", components[0].Description)
 	assert.Equal(t, comp, licenses[0])
@@ -199,9 +199,29 @@ func TestEnrichLicense(t *testing.T) {
 	enrichCDXLicense(component, pkgVersionData, pkgData)
 
 	licenses := *component.Licenses
-	comp := cdx.LicenseChoice(cdx.LicenseChoice{Expression: "(BSD-3-Clause)"})
+	comp := cdx.LicenseChoice(cdx.LicenseChoice{Expression: "BSD-3-Clause"})
 	assert.Equal(t, 1, len(licenses))
 	assert.Equal(t, comp, licenses[0])
+}
+
+func TestEnrichLicenseInvalidLicense(t *testing.T) {
+	component := &cdx.Component{
+		Type:    cdx.ComponentTypeLibrary,
+		Name:    "cyclonedx-go",
+		Version: "v0.3.0",
+	}
+	versionedLicenses := "MIT,Eclipse Public License 1.0"
+	pkgVersionData := &packages.VersionWithDependencies{Licenses: &versionedLicenses}
+	pkgData := &packages.Package{}
+
+	enrichCDXLicense(component, pkgVersionData, pkgData)
+
+	// CycloneDX cannot mix an expression with named licenses, so a component
+	// with any non-SPDX license falls back to a list.
+	assert.Equal(t, cdx.Licenses{
+		{License: &cdx.License{ID: "MIT"}},
+		{License: &cdx.License{Name: "Eclipse Public License 1.0"}},
+	}, *component.Licenses)
 }
 
 func TestEnrichLicenseNoVersionedLicense(t *testing.T) {
@@ -218,7 +238,7 @@ func TestEnrichLicenseNoVersionedLicense(t *testing.T) {
 	enrichCDXLicense(component, pkgVersionData, pkgData)
 
 	licenses := *component.Licenses
-	comp := cdx.LicenseChoice(cdx.LicenseChoice{Expression: "(Apache-2.0)"})
+	comp := cdx.LicenseChoice(cdx.LicenseChoice{Expression: "Apache-2.0"})
 	assert.Equal(t, 1, len(licenses))
 	assert.Equal(t, comp, licenses[0])
 }
@@ -237,7 +257,7 @@ func TestEnrichLicenseNoLatestLicense(t *testing.T) {
 	enrichCDXLicense(component, pkgVersionData, pkgData)
 
 	licenses := *component.Licenses
-	comp := cdx.LicenseChoice(cdx.LicenseChoice{Expression: "(BSD-3-Clause)"})
+	comp := cdx.LicenseChoice(cdx.LicenseChoice{Expression: "BSD-3-Clause"})
 	assert.Equal(t, 1, len(licenses))
 	assert.Equal(t, comp, licenses[0])
 }

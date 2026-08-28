@@ -61,10 +61,9 @@ func enrichCDXDescription(comp *cdx.Component, data *packages.Package) {
 }
 
 func enrichCDXLicense(comp *cdx.Component, pkgVersionData *packages.VersionWithDependencies, pkgData *packages.Package) {
-	expression := utils.GetLicenseExpressionFromEcosystemsLicense(pkgVersionData, pkgData)
-	if expression != "" {
-		licenses := cdx.LicenseChoice{Expression: expression}
-		comp.Licenses = &cdx.Licenses{licenses}
+	licenses := utils.ClassifyLicenses(utils.GetLicensesFromEcosystemsLicense(pkgVersionData, pkgData))
+	if len(licenses) > 0 {
+		comp.Licenses = utils.CDXLicenses(licenses)
 	}
 }
 
