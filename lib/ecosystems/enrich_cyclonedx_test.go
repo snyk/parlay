@@ -131,6 +131,55 @@ func TestEnrichSBOM_CycloneDX_NestedComps(t *testing.T) {
 	assert.Equal(t, 4, calls[`GET =~^https://packages.ecosyste.ms/api/v1/registries`])
 }
 
+func TestEnrichSBOM_CycloneDX_CocoapodsSubspec(t *testing.T) {
+	ResetGlobalCache()
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder("GET", `=~^https://packages\.ecosyste\.ms/api/v1/registries/cocoapods\.org/packages/KSCrash/versions/1\.17\.6$`,
+		func(r *http.Request) (*http.Response, error) {
+			return httpmock.NewJsonResponse(200, map[string]interface{}{
+				"licenses": "MIT",
+			})
+		},
+	)
+	httpmock.RegisterResponder("GET", `=~^https://packages\.ecosyste\.ms/api/v1/registries/cocoapods\.org/packages/KSCrash$`,
+		func(r *http.Request) (*http.Response, error) {
+			return httpmock.NewJsonResponse(200, map[string]interface{}{
+				"repo_metadata": map[string]interface{}{
+					"owner_record": map[string]interface{}{
+						"name": "Karl Stenerud",
+					},
+				},
+			})
+		},
+	)
+
+	bom := &cdx.BOM{
+		Components: &[]cdx.Component{
+			{
+				BOMRef:     "KSCrash/Reporting/Filters@1.17.6",
+				Type:       cdx.ComponentTypeLibrary,
+				Name:       "KSCrash/Reporting/Filters",
+				Version:    "1.17.6",
+				PackageURL: "pkg:cocoapods/KSCrash%2FReporting%2FFilters@1.17.6#Base",
+			},
+		},
+	}
+	doc := &sbom.SBOMDocument{BOM: bom}
+	logger := zerolog.Nop()
+
+	EnrichSBOM(doc, &logger)
+
+	component := (*bom.Components)[0]
+	if assert.NotNil(t, component.Supplier) {
+		assert.Equal(t, "Karl Stenerud", component.Supplier.Name)
+	}
+	if assert.NotNil(t, component.Licenses) {
+		assert.Equal(t, cdx.LicenseChoice{Expression: "(MIT)"}, (*component.Licenses)[0])
+	}
+}
+
 func TestEnrichSBOMWithoutLicense(t *testing.T) {
 	ResetGlobalCache()
 	httpmock.Activate()
