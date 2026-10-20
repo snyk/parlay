@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/package-url/packageurl-go"
 
@@ -124,6 +125,16 @@ func purlToEcosystemsRegistry(purl packageurl.PackageURL) string {
 
 func purlToEcosystemsName(purl packageurl.PackageURL) string {
 	name := purl.Name
+
+	// ecosyste.ms only indexes root pods. Pod names cannot contain "/", so
+	// anything after the first "/" is a subspec path.
+	if purl.Type == packageurl.TypeCocoapods {
+		if purl.Namespace != "" {
+			name = purl.Namespace + "/" + name
+		}
+		root, _, _ := strings.Cut(name, "/")
+		return root
+	}
 
 	if purl.Namespace == "" {
 		return name

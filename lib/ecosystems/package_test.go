@@ -201,6 +201,31 @@ func TestPurlToEcosystemsName(t *testing.T) {
 			purlStr:      "pkg:apk/alpine/lf@30-r3",
 			expectedName: "lf",
 		},
+		{
+			// Test case 9: When the package manager type is "cocoapods"
+			// and the purl refers to a root pod, the name is returned as is.
+			purlStr:      "pkg:cocoapods/KSCrash@1.17.6#Recording",
+			expectedName: "KSCrash",
+		},
+		{
+			// Test case 10: When the package manager type is "cocoapods"
+			// and the name is a nested subspec, the root pod name is returned
+			// because ecosyste.ms only knows root pods.
+			purlStr:      "pkg:cocoapods/KSCrash%2FReporting@1.17.6#Filters",
+			expectedName: "KSCrash",
+		},
+		{
+			// Test case 11: When the package manager type is "cocoapods"
+			// and the name is a deeply nested subspec.
+			purlStr:      "pkg:cocoapods/KSCrash%2FReporting%2FFilters@1.17.6#Base",
+			expectedName: "KSCrash",
+		},
+		{
+			// Test case 12: When the package manager type is "cocoapods"
+			// and the subspec path is parsed into a namespace.
+			purlStr:      "pkg:cocoapods/KSCrash/Reporting@1.17.6",
+			expectedName: "KSCrash",
+		},
 	}
 
 	for _, testCase := range testCases {
