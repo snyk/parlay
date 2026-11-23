@@ -1,6 +1,6 @@
 module github.com/snyk/parlay
 
-go 1.26.3
+go 1.26.11
 
 require (
 	github.com/CycloneDX/cyclonedx-go v0.9.2
