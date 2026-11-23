@@ -24,6 +24,12 @@ var (
 	pandasIssues []byte
 	//go:embed testdata/no_issues.json
 	noIssues []byte
+	//go:embed testdata/jinja2_issues_no_problems.json
+	jinja2IssuesNoProblems []byte
+	//go:embed testdata/urllib3_issues_no_slots.json
+	urllib3IssuesNoSlots []byte
+	//go:embed testdata/pyyaml_issues_bare_severity.json
+	pyyamlIssuesBareSeverity []byte
 )
 
 func TestEnrichSBOM_CycloneDXWithVulnerabilities(t *testing.T) {
@@ -225,6 +231,103 @@ func TestEnrichSBOM_CycloneDXWithoutVulnerabilities(t *testing.T) {
 	assert.Nil(t, bom.Vulnerabilities, "should not extend vulnerabilities if there are none")
 }
 
+func TestEnrichSBOM_CycloneDXIssueWithoutProblems(t *testing.T) {
+	// problems is optional in the API spec (specs/snyk.json lists no required attributes), and an
+	// issue with no CVE or CWE assigned yet comes back without it. The SPDX path already records
+	// such an issue, so CycloneDX must not drop it.
+	svc := setupTestEnv(t)
+
+	bom := &cdx.BOM{
+		Components: &[]cdx.Component{
+			{
+				BOMRef:     "pkg:pypi/jinja2@2.11.0",
+				Name:       "jinja2",
+				Version:    "2.11.0",
+				PackageURL: "pkg:pypi/jinja2@2.11.0",
+			},
+		},
+	}
+	doc := &sbom.SBOMDocument{BOM: bom}
+
+	svc.EnrichSBOM(doc)
+
+	require.NotNil(t, bom.Vulnerabilities, "issue without problems was dropped from the BOM")
+	assert.Len(t, *bom.Vulnerabilities, 1)
+	vuln := (*bom.Vulnerabilities)[0]
+	assert.Equal(t, "pkg:pypi/jinja2@2.11.0", vuln.BOMRef)
+	assert.Equal(t, "SNYK-PYTHON-JINJA2-1012994", vuln.ID)
+	assert.Equal(t, "Sandbox Bypass", vuln.Description)
+
+	require.NotNil(t, vuln.Ratings)
+	assert.Len(t, *vuln.Ratings, 1)
+	assert.Equal(t, cdx.SeverityHigh, (*vuln.Ratings)[0].Severity)
+}
+
+func TestEnrichSBOM_CycloneDXIssueWithoutSlots(t *testing.T) {
+	// slots is optional too, so reading Slots.References unconditionally panics on an issue that
+	// carries problems but no slots
+	svc := setupTestEnv(t)
+
+	bom := &cdx.BOM{
+		Components: &[]cdx.Component{
+			{
+				BOMRef:     "pkg:pypi/urllib3@1.25.8",
+				Name:       "urllib3",
+				Version:    "1.25.8",
+				PackageURL: "pkg:pypi/urllib3@1.25.8",
+			},
+		},
+	}
+	doc := &sbom.SBOMDocument{BOM: bom}
+
+	svc.EnrichSBOM(doc)
+
+	require.NotNil(t, bom.Vulnerabilities)
+	assert.Len(t, *bom.Vulnerabilities, 1)
+	vuln := (*bom.Vulnerabilities)[0]
+	assert.Equal(t, "SNYK-PYTHON-URLLIB3-1014645", vuln.ID)
+	require.NotNil(t, vuln.CWEs)
+	assert.Equal(t, []int{93}, *vuln.CWEs)
+	require.NotNil(t, vuln.References)
+	assert.Equal(t, "CVE-2020-26137", (*vuln.References)[0].ID)
+	assert.Nil(t, vuln.Advisories)
+}
+
+func TestEnrichSBOM_CycloneDXSeverityWithoutLevelVersionOrVector(t *testing.T) {
+	// Severity3 has no required fields either, so level, version and vector can all be absent.
+	// Those feed levelToCdxSeverity, versionToCdxMethod and rating.Vector, which dereferenced them
+	// unconditionally.
+	svc := setupTestEnv(t)
+
+	bom := &cdx.BOM{
+		Components: &[]cdx.Component{
+			{
+				BOMRef:     "pkg:pypi/pyyaml@5.3",
+				Name:       "pyyaml",
+				Version:    "5.3",
+				PackageURL: "pkg:pypi/pyyaml@5.3",
+			},
+		},
+	}
+	doc := &sbom.SBOMDocument{BOM: bom}
+
+	svc.EnrichSBOM(doc)
+
+	require.NotNil(t, bom.Vulnerabilities)
+	assert.Len(t, *bom.Vulnerabilities, 1)
+	vuln := (*bom.Vulnerabilities)[0]
+	assert.Equal(t, "SNYK-PYTHON-PYYAML-590151", vuln.ID)
+
+	require.NotNil(t, vuln.Ratings)
+	assert.Len(t, *vuln.Ratings, 1)
+	rating := (*vuln.Ratings)[0]
+	assert.Equal(t, cdx.SeverityUnknown, rating.Severity)
+	assert.Equal(t, cdx.ScoringMethodOther, rating.Method)
+	assert.Empty(t, rating.Vector)
+	require.NotNil(t, rating.Score)
+	assert.InDelta(t, 9.8, *rating.Score, 0.001)
+}
+
 func TestEnrichSBOM_SPDXWithVulnerabilities(t *testing.T) {
 	svc := setupTestEnv(t)
 
@@ -396,6 +499,24 @@ func setupTestEnv(t *testing.T) Service {
 		"GET /rest/orgs/{org_id}/packages/pkg%3Apypi%2Fpandas%400.15.0/issues",
 		func(w http.ResponseWriter, r *http.Request) {
 			respond(w, pandasIssues)
+		})
+
+	mux.HandleFunc(
+		"GET /rest/orgs/{org_id}/packages/pkg%3Apypi%2Fjinja2%402.11.0/issues",
+		func(w http.ResponseWriter, r *http.Request) {
+			respond(w, jinja2IssuesNoProblems)
+		})
+
+	mux.HandleFunc(
+		"GET /rest/orgs/{org_id}/packages/pkg%3Apypi%2Furllib3%401.25.8/issues",
+		func(w http.ResponseWriter, r *http.Request) {
+			respond(w, urllib3IssuesNoSlots)
+		})
+
+	mux.HandleFunc(
+		"GET /rest/orgs/{org_id}/packages/pkg%3Apypi%2Fpyyaml%405.3/issues",
+		func(w http.ResponseWriter, r *http.Request) {
+			respond(w, pyyamlIssuesBareSeverity)
 		})
 
 	srv := httptest.NewServer(mux)

@@ -214,58 +214,65 @@ func enrichCycloneDX(cfg *Config, bom *cdx.BOM, logger *zerolog.Logger) *cdx.BOM
 						}
 					}
 				}
-				if issue.Attributes.Slots.References != nil {
-					for _, ref := range *issue.Attributes.Slots.References {
-						ad := cdx.Advisory{
-							Title: *ref.Title,
-							URL:   *ref.Url,
-						}
-						if vuln.Advisories == nil {
-							ads := []cdx.Advisory{ad}
-							vuln.Advisories = &ads
-						} else {
-							*vuln.Advisories = append(*vuln.Advisories, ad)
-						}
-					}
-				}
-
-				if issue.Attributes.Severities != nil {
-					for _, sev := range *issue.Attributes.Severities {
-						var source cdx.Source
-						if sev.Source != nil {
-							source = cdx.Source{
-								Name: *sev.Source,
-							}
-						} else {
-							source = cdx.Source{
-								Name: "Snyk",
-							}
-						}
-
-						if source.Name == "Snyk" {
-							source.URL = snykVulnerabilityDBWebURL
-						}
-
-						if sev.Score != nil {
-							score := float64(*sev.Score)
-							rating := cdx.VulnerabilityRating{
-								Source:   &source,
-								Score:    &score,
-								Severity: levelToCdxSeverity(sev.Level),
-								Method:   versionToCdxMethod(sev.Version),
-								Vector:   *sev.Vector,
-							}
-							if vuln.Ratings == nil {
-								ratings := []cdx.VulnerabilityRating{rating}
-								vuln.Ratings = &ratings
-							} else {
-								*vuln.Ratings = append(*vuln.Ratings, rating)
-							}
-						}
-					}
-				}
-				vulns = append(vulns, vuln)
 			}
+
+			if issue.Attributes.Slots != nil && issue.Attributes.Slots.References != nil {
+				for _, ref := range *issue.Attributes.Slots.References {
+					if ref.Url == nil {
+						continue // an advisory with no URL carries nothing CycloneDX can record
+					}
+					ad := cdx.Advisory{URL: *ref.Url}
+					if ref.Title != nil {
+						ad.Title = *ref.Title
+					}
+					if vuln.Advisories == nil {
+						ads := []cdx.Advisory{ad}
+						vuln.Advisories = &ads
+					} else {
+						*vuln.Advisories = append(*vuln.Advisories, ad)
+					}
+				}
+			}
+
+			if issue.Attributes.Severities != nil {
+				for _, sev := range *issue.Attributes.Severities {
+					var source cdx.Source
+					if sev.Source != nil {
+						source = cdx.Source{
+							Name: *sev.Source,
+						}
+					} else {
+						source = cdx.Source{
+							Name: "Snyk",
+						}
+					}
+
+					if source.Name == "Snyk" {
+						source.URL = snykVulnerabilityDBWebURL
+					}
+
+					if sev.Score != nil {
+						score := float64(*sev.Score)
+						rating := cdx.VulnerabilityRating{
+							Source:   &source,
+							Score:    &score,
+							Severity: levelToCdxSeverity(sev.Level),
+							Method:   versionToCdxMethod(sev.Version),
+						}
+						if sev.Vector != nil {
+							rating.Vector = *sev.Vector
+						}
+						if vuln.Ratings == nil {
+							ratings := []cdx.VulnerabilityRating{rating}
+							vuln.Ratings = &ratings
+						} else {
+							*vuln.Ratings = append(*vuln.Ratings, rating)
+						}
+					}
+				}
+			}
+
+			vulns = append(vulns, vuln)
 		}
 	}
 
@@ -279,6 +286,9 @@ func enrichCycloneDX(cfg *Config, bom *cdx.BOM, logger *zerolog.Logger) *cdx.BOM
 }
 
 func levelToCdxSeverity(level *string) (severity cdx.Severity) {
+	if level == nil {
+		return cdx.SeverityUnknown
+	}
 	switch *level {
 	case "critical":
 		severity = cdx.SeverityCritical
@@ -295,6 +305,9 @@ func levelToCdxSeverity(level *string) (severity cdx.Severity) {
 }
 
 func versionToCdxMethod(version *string) (method cdx.ScoringMethod) {
+	if version == nil {
+		return cdx.ScoringMethodOther
+	}
 	switch *version {
 	case "3.0":
 		method = cdx.ScoringMethodCVSSv3
