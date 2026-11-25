@@ -1,0 +1,10 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.7",
+  "version": 1,
+  "citations": [
+    {
+      "note": "source"
+    }
+  ]
+}
