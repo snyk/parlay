@@ -1,0 +1,31 @@
+{
+  "jsonapi": { "version": "1.0" },
+  "data": [
+    {
+      "id": "SNYK-PYTHON-URLLIB3-1014645",
+      "type": "package_issue",
+      "attributes": {
+        "title": "CRLF injection",
+        "type": "package_vulnerability",
+        "created_at": "2020-05-06T08:00:00Z",
+        "updated_at": "2020-06-01T08:00:00Z",
+        "description": "## Overview\nAffected versions of this package are vulnerable to CRLF injection.",
+        "effective_severity_level": "medium",
+        "problems": [
+          { "id": "CVE-2020-26137", "source": "CVE" },
+          { "id": "CWE-93", "source": "CWE" }
+        ],
+        "severities": [
+          {
+            "type": "primary",
+            "source": "Snyk",
+            "level": "medium",
+            "score": 6.5,
+            "version": "3.1",
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:H/A:N"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "jsonapi": { "version": "1.0" },
+  "data": [
+    {
+      "id": "SNYK-PYTHON-PYYAML-590151",
+      "type": "package_issue",
+      "attributes": {
+        "title": "Arbitrary Code Execution",
+        "type": "package_vulnerability",
+        "created_at": "2020-06-19T10:00:00Z",
+        "updated_at": "2020-07-01T10:00:00Z",
+        "effective_severity_level": "critical",
+        "severities": [
+          { "type": "primary", "source": "Snyk", "score": 9.8 }
+        ]
+      }
+    }
+  ]
+}
