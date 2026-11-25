@@ -29,6 +29,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/snyk/parlay/ecosystems/packages"
 	"github.com/snyk/parlay/lib/sbom"
 )
 
@@ -172,6 +173,82 @@ func TestEnrichSBOM_MissingVersionedLicense(t *testing.T) {
 
 	buf := bytes.NewBuffer(nil)
 	require.NoError(t, doc.Encode(buf))
+}
+
+func TestEnrichSPDXHash_AppendsParsedIntegrity(t *testing.T) {
+	pkg := &v2_3.Package{}
+	integrity := "sha256-17ea4276b66cf0ecf3a8f10df1e34d40fe26be590ca1e25b1c33a0ff05451631"
+
+	enrichSPDXHash(pkg, &packages.VersionWithDependencies{Integrity: &integrity})
+
+	assert.Equal(t, []common.Checksum{
+		{
+			Algorithm: common.SHA256,
+			Value:     "17ea4276b66cf0ecf3a8f10df1e34d40fe26be590ca1e25b1c33a0ff05451631",
+		},
+	}, pkg.PackageChecksums)
+}
+
+func TestEnrichSPDXHash_AppendsToExistingChecksums(t *testing.T) {
+	existing := common.Checksum{Algorithm: common.SHA1, Value: "0000000000000000000000000000000000000000"}
+	pkg := &v2_3.Package{PackageChecksums: []common.Checksum{existing}}
+	integrity := "sha256-17ea4276b66cf0ecf3a8f10df1e34d40fe26be590ca1e25b1c33a0ff05451631"
+
+	enrichSPDXHash(pkg, &packages.VersionWithDependencies{Integrity: &integrity})
+
+	assert.Len(t, pkg.PackageChecksums, 2)
+	assert.Equal(t, existing, pkg.PackageChecksums[0])
+}
+
+func TestEnrichSPDXHash_NilIntegrityIsNoop(t *testing.T) {
+	pkg := &v2_3.Package{}
+
+	enrichSPDXHash(pkg, &packages.VersionWithDependencies{Integrity: nil})
+
+	assert.Nil(t, pkg.PackageChecksums)
+}
+
+func TestEnrichSPDXHash_UnparseableIsNoop(t *testing.T) {
+	pkg := &v2_3.Package{}
+	bad := "sha999-not-actually-a-hash"
+
+	enrichSPDXHash(pkg, &packages.VersionWithDependencies{Integrity: &bad})
+
+	assert.Nil(t, pkg.PackageChecksums)
+}
+
+func TestEnrichSBOM_SPDX_PopulatesChecksumFromIntegrity(t *testing.T) {
+	ResetGlobalCache()
+	packageVersionResponse := `{
+		"integrity": "sha256-17ea4276b66cf0ecf3a8f10df1e34d40fe26be590ca1e25b1c33a0ff05451631"
+	}`
+	packageResponse := `{}`
+	setupHttpmock(t, &packageVersionResponse, &packageResponse)
+	defer httpmock.DeactivateAndReset()
+
+	doc, err := sbom.DecodeSBOMDocument([]byte(`{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT"}`))
+	require.NoError(t, err)
+	bom := doc.BOM.(*v2_3.Document)
+	bom.Packages = []*v2_3.Package{
+		{
+			PackageSPDXIdentifier: "pkg:pypi/fastapi@0.115.0",
+			PackageName:           "fastapi",
+			PackageVersion:        "0.115.0",
+			PackageExternalReferences: []*v2_3.PackageExternalReference{
+				{Category: common.CategoryPackageManager, RefType: "purl", Locator: "pkg:pypi/fastapi@0.115.0"},
+			},
+		},
+	}
+	logger := zerolog.Nop()
+
+	EnrichSBOM(doc, &logger)
+
+	assert.Equal(t, []common.Checksum{
+		{
+			Algorithm: common.SHA256,
+			Value:     "17ea4276b66cf0ecf3a8f10df1e34d40fe26be590ca1e25b1c33a0ff05451631",
+		},
+	}, bom.Packages[0].PackageChecksums)
 }
 
 func TestEnrichSBOM_SPDX_NoSupplierName(t *testing.T) {

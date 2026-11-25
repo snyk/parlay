@@ -52,6 +52,7 @@ var cdxPackageEnrichers = []cdxPackageEnricher{
 
 var cdxPackageVersionEnrichers = []cdxPackageVersionEnricher{
 	enrichCDXLicense,
+	enrichCDXHash,
 }
 
 func enrichCDXDescription(comp *cdx.Component, data *packages.Package) {
@@ -65,6 +66,25 @@ func enrichCDXLicense(comp *cdx.Component, pkgVersionData *packages.VersionWithD
 	if expression != "" {
 		licenses := cdx.LicenseChoice{Expression: expression}
 		comp.Licenses = &cdx.Licenses{licenses}
+	}
+}
+
+// enrichCDXHash appends a Hash derived from ecosyste.ms' per-version
+// integrity field. Existing hashes (e.g. container-layer hashes added by
+// syft) are preserved.
+func enrichCDXHash(comp *cdx.Component, pkgVersionData *packages.VersionWithDependencies, _ *packages.Package) {
+	if pkgVersionData.Integrity == nil {
+		return
+	}
+	alg, _, value, ok := parseIntegrity(*pkgVersionData.Integrity)
+	if !ok {
+		return
+	}
+	hash := cdx.Hash{Algorithm: alg, Value: value}
+	if comp.Hashes == nil {
+		comp.Hashes = &[]cdx.Hash{hash}
+	} else {
+		*comp.Hashes = append(*comp.Hashes, hash)
 	}
 }
 
