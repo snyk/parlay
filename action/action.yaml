@@ -1,0 +1,100 @@
+name: "Snyk Parlay Enricher"
+description: "Download and run snyk/parlay to enrich SBOMs"
+inputs:
+  input:
+    description: "Input SBOM path"
+    required: true
+  enricher:
+    description: "Enricher to use"
+    required: false
+    default: "ecosystems"
+  output:
+    description: "Output SBOM path (should be a file, not a directory)"
+    required: false
+  version:
+    description: "Parlay version (default: latest)"
+    required: false
+  token:
+    description: "GitHub token"
+    required: true
+    default: ${{ github.token }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up variables
+      id: vars
+      shell: bash
+      run: |
+        OS=$(uname -s)
+        ARCH=$(uname -m)
+        if [[ "$OS" == "Darwin" ]]; then
+          OS="Darwin"
+        elif [[ "$OS" == "Linux" ]]; then
+          OS="Linux"
+        elif [[ "$OS" == "Windows_NT" ]]; then
+          OS="Windows"
+        else
+          echo "Unsupported OS: $OS"
+          exit 1
+        fi
+
+        if [[ "$ARCH" == "x86_64" ]]; then
+          ARCH="x86_64"
+        elif [[ "$ARCH" == "arm64" || "$ARCH" == "aarch64" ]]; then
+          ARCH="arm64"
+        elif [[ "$ARCH" == "ppc64le" ]]; then
+          ARCH="ppc64le"
+        else
+          echo "Unsupported ARCH: $ARCH"
+          exit 1
+        fi
+
+        EXT="tar.gz"
+        if [[ "$OS" == "Windows" ]]; then
+          EXT="zip"
+        fi
+
+        FILENAME="parlay_${OS}_${ARCH}.${EXT}"
+        echo "filename=$FILENAME" >> $GITHUB_OUTPUT
+        echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
+
+    - name: Ensure gh CLI is installed
+      shell: bash
+      run: |
+        if ! command -v gh &> /dev/null; then
+          curl -sSL https://raw.githubusercontent.com/catthehacker/docker_images/refs/heads/master/linux/ubuntu/scripts/gh.sh | bash
+        fi
+
+    - name: Download parlay release
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+      run: |
+
+        gh release download "${{ steps.vars.outputs.version }}" \
+          --repo snyk/parlay \
+          --pattern "${{ steps.vars.outputs.filename }}" \
+          --clobber
+
+    - name: Unpack parlay
+      shell: bash
+      run: |
+        if [[ "${{ steps.vars.outputs.filename }}" == *.zip ]]; then
+          unzip -o "${{ steps.vars.outputs.filename }}" -d /usr/local/bin
+        else
+          tar -xzf "${{ steps.vars.outputs.filename }}" -C /usr/local/bin
+        fi
+        chmod +x /usr/local/bin/parlay
+        rm "${{ steps.vars.outputs.filename }}"
+
+    - name: Run parlay
+      shell: bash
+      run: |
+        if [[ -z "${{ inputs.output }}" ]]; then
+          OUTPUT=$(mktemp --suffix=-enriched-sbom.json)
+        fi
+        parlay ${{ inputs.enricher }} enrich "${{ inputs.input }}" > "$OUTPUT"
+        if [[ -z "${{ inputs.output }}" ]]; then
+          mv "$OUTPUT" ${{ inputs.input }}
+        fi
