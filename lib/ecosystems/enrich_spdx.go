@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/package-url/packageurl-go"
+	"github.com/remeh/sizedwaitgroup"
 	"github.com/rs/zerolog"
 	"github.com/spdx/tools-golang/spdx"
 	"github.com/spdx/tools-golang/spdx/v2/common"
@@ -36,39 +37,46 @@ func enrichSPDX(bom *spdx.Document, logger *zerolog.Logger) {
 	logger.Debug().Msgf("Detected %d packages", len(packages))
 
 	cache := GetGlobalCache()
+	wg := sizedwaitgroup.New(20)
+	for i := range packages {
+		wg.Add()
+		go func(pkg *v2_3.Package) {
+			defer wg.Done()
 
-	for _, pkg := range packages {
-		purl, err := extractPurl(pkg)
-		if err != nil {
-			continue
-		}
+			purl, err := extractPurl(pkg)
+			if err != nil {
+				return
+			}
 
-		packageResp, err := cache.GetPackageData(*purl)
-		if err != nil {
-			continue
-		}
+			packageResp, err := cache.GetPackageData(*purl)
+			if err != nil {
+				return
+			}
 
-		pkgData := packageResp.JSON200
-		if pkgData == nil {
-			continue
-		}
+			pkgData := packageResp.JSON200
+			if pkgData == nil {
+				return
+			}
 
-		enrichSPDXDescription(pkg, pkgData)
-		enrichSPDXHomepage(pkg, pkgData)
-		enrichSPDXSupplier(pkg, pkgData)
+			enrichSPDXDescription(pkg, pkgData)
+			enrichSPDXHomepage(pkg, pkgData)
+			enrichSPDXSupplier(pkg, pkgData)
 
-		packageVersionResp, err := cache.GetPackageVersionData(*purl)
-		if err != nil {
-			continue
-		}
+			packageVersionResp, err := cache.GetPackageVersionData(*purl)
+			if err != nil {
+				return
+			}
 
-		pkgVersionData := packageVersionResp.JSON200
-		if pkgVersionData == nil {
-			continue
-		}
+			pkgVersionData := packageVersionResp.JSON200
+			if pkgVersionData == nil {
+				return
+			}
 
-		enrichSPDXLicense(pkg, pkgVersionData, pkgData)
+			enrichSPDXLicense(pkg, pkgVersionData, pkgData)
+		}(packages[i])
 	}
+
+	wg.Wait()
 }
 
 func extractPurl(pkg *v2_3.Package) (*packageurl.PackageURL, error) {
